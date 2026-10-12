@@ -21,6 +21,7 @@ const AppleIcon = (props) => (
 
 export default function Navbar() {
   const location = useLocation();
+  const isHomePage = location.pathname === '/';
   const pathParts = location.pathname.split('/product/');
   const productId = pathParts[1] ? pathParts[1] : null;
   const isAppleProductId = productId && (
@@ -33,9 +34,9 @@ export default function Navbar() {
   const isIphonePage = true;
 
   const getNavBtnClass = (isOpen) => {
-    return `transition-colors duration-200 font-semibold text-[13px] tracking-tight cursor-pointer bg-transparent border-0 focus:outline-none ${isOpen
-      ? (isIphonePage ? 'text-black font-bold font-sans' : 'text-white font-bold')
-      : (isIphonePage ? 'text-zinc-600 hover:text-black font-sans' : 'text-zinc-400 hover:text-white')
+    return `transition-colors duration-150 font-[600] text-[13px] tracking-normal cursor-pointer bg-transparent border-0 focus:outline-none whitespace-nowrap font-sans ${isOpen
+      ? 'text-black font-[600]'
+      : 'text-[#1d1d1f] hover:text-black'
       }`;
   };
 
@@ -69,67 +70,94 @@ export default function Navbar() {
       }
       .iphone-dropdown-theme a.nav-dropdown-link:hover,
       .iphone-dropdown-theme button.nav-dropdown-link:hover {
-        color: #0071e3 !important;
+        color: #000000 !important;
       }
       .iphone-dropdown-theme span {
         color: #71717a !important;
       }
 
       .pill-nav-container > div[class*="absolute"][class*="z-50"] {
-        border-radius: 999px !important;
+        border-radius: 9999px !important;
         overflow: hidden !important;
         height: 100% !important;
         display: flex !important;
         align-items: center !important;
       }
 
-      /* FULL WIDTH NAVBAR STRETCHED TO MATCH BANNER */
+      /* SMART AUTO-HIDE & REVEAL FLOATING PILL NAVBAR */
       .pill-nav-stage {
-        position: sticky;
+        position: fixed;
         top: 0;
+        left: 0;
+        right: 0;
         z-index: 100;
         display: flex;
         justify-content: center;
-        padding: 0;
+        align-items: center;
         width: 100%;
-        max-width: 100%;
+        padding-top: 16px;
+        padding-bottom: 18px;
         pointer-events: none;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
         will-change: transform;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
       }
+
+      .pill-nav-stage.nav-hidden {
+        transform: translateY(-130%);
+        pointer-events: none !important;
+      }
+
+      .pill-nav-stage.nav-visible {
+        transform: translateY(0);
+      }
+
       .pill-nav-container {
-        width: 100%;
-        max-width: 100%;
+        width: calc(100% - 80px);
+        max-width: 1440px;
+        margin: 0 auto;
+        height: 58px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
-        padding: 0 !important;
-        border-radius: 0 !important;
-        background: rgba(255, 255, 255, 0.95) !important;
-        backdrop-filter: blur(20px) saturate(180%) !important;
-        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-        border-top: none !important;
-        border-left: none !important;
-        border-right: none !important;
-        transition: background 0.2s ease, box-shadow 0.2s ease, padding 0.2s ease;
-        height: 58px;
+        padding: 0 24px !important;
+        border-radius: 9999px !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04) !important;
         pointer-events: auto;
+        position: relative;
+        box-sizing: border-box;
       }
-      .pill-nav-stage.shrink .pill-nav-container {
-        padding: 0 !important;
-        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.09) !important;
-        background: rgba(255, 255, 255, 0.98) !important;
+
+      @media (max-width: 1023px) {
+        .pill-nav-stage {
+          padding-top: 12px;
+          padding-bottom: 16px;
+        }
+        .pill-nav-container {
+          width: calc(100% - 40px);
+          padding: 0 20px !important;
+          height: 56px;
+        }
       }
-      
+
+      @media (max-width: 639px) {
+        .pill-nav-stage {
+          padding-top: 10px;
+          padding-bottom: 14px;
+        }
+        .pill-nav-container {
+          width: calc(100% - 24px);
+          padding: 0 14px !important;
+          height: 52px;
+        }
+      }
+
       .pill-nav-container .cta-btn-pill {
         color: #fff !important;
         background: #141414 !important;
         padding: 8px 16px !important;
-        border-radius: 999px !important;
+        border-radius: 9999px !important;
         transition: background .15s ease !important;
         font-size: 11px !important;
         font-weight: 700 !important;
@@ -157,20 +185,7 @@ export default function Navbar() {
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const [isShrunk, setIsShrunk] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      if (scrollY > 60) {
-        setIsShrunk(true);
-      } else if (scrollY < 20) {
-        setIsShrunk(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Body scroll locking and ESC key listener for Mobile Navigation Drawer & Search Overlay
   useEffect(() => {
@@ -230,6 +245,52 @@ export default function Navbar() {
     if (accessoriesTimeoutRef.current) clearTimeout(accessoriesTimeoutRef.current);
     if (supportTimeoutRef.current) clearTimeout(supportTimeoutRef.current);
   };
+
+  // Smart Auto-Hide on Scroll Down & Reveal on Scroll Up
+  const [isNavVisible, setIsNavVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+          const prevScrollY = lastScrollYRef.current;
+          const diff = currentScrollY - prevScrollY;
+
+          // Always visible at the very top of the page
+          if (currentScrollY <= 40) {
+            setIsNavVisible(true);
+          } else if (diff > 8) {
+            // Scrolling down by more than 8px -> smoothly hide navbar
+            if (!isSearchOpen && !isMobileMenuOpen) {
+              setIsNavVisible(false);
+              clearAllTimeouts();
+              closeAllDropdowns();
+            }
+          } else if (diff < -8) {
+            // Scrolling up by more than 8px -> smoothly reveal navbar
+            setIsNavVisible(true);
+          }
+
+          lastScrollYRef.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isSearchOpen, isMobileMenuOpen]);
+
+  // Ensure navbar is immediately visible on route navigation
+  useEffect(() => {
+    setIsNavVisible(true);
+    lastScrollYRef.current = 0;
+  }, [location.pathname]);
 
   const handleMacMouseEnter = () => {
     clearAllTimeouts();
@@ -733,7 +794,7 @@ export default function Navbar() {
                     closeDropdown();
                     setHoveredProduct(null);
                   }}
-                  className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-[#0071e3] transition-colors block py-1"
+                  className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1"
                 >
                   {config.mainLink.label}
                 </Link>
@@ -748,7 +809,7 @@ export default function Navbar() {
                     closeDropdown();
                     setHoveredProduct(null);
                   }}
-                  className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-[#0071e3] transition-colors block py-1"
+                  className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1"
                 >
                   {item.label}
                 </Link>
@@ -764,7 +825,7 @@ export default function Navbar() {
                   closeDropdown();
                   setHoveredProduct(null);
                 }}
-                className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-[#0071e3] transition-colors block py-1"
+                className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1"
               >
                 {prod.title || prod.name}
               </Link>
@@ -1116,8 +1177,14 @@ export default function Navbar() {
   return (
     <>
       {styleTag}
-      <div className={`pill-nav-stage ${isShrunk ? 'shrink' : ''}`}>
-        <nav className="pill-nav-container select-none relative z-40 text-black border-none bg-transparent">
+      {!isHomePage && (
+        <div
+          className="w-full shrink-0 h-[76px] sm:h-[84px] lg:h-[92px] pointer-events-none select-none"
+          aria-hidden="true"
+        />
+      )}
+      <div className={`pill-nav-stage ${isNavVisible ? 'nav-visible' : 'nav-hidden'}`}>
+        <nav className="pill-nav-container select-none relative z-40 text-black">
 
           {/* Sliding Search Overlay Input Pill */}
           {isSearchOpen && (
@@ -1235,22 +1302,22 @@ export default function Navbar() {
             </div>
           )}
 
-          <div className="w-full mx-auto px-3.5 sm:px-6 md:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="w-full mx-auto px-0 h-full flex items-center justify-between gap-2 sm:gap-4 min-w-0">
 
             {/* Left: Logo */}
-            <Link to="/" className="flex items-center shrink-0 group py-1">
+            <Link to="/" className="flex items-center shrink min-w-0 group py-1">
               <img 
                 src="/iincept_navbar_logo.png" 
                 alt="iiNCEPT" 
-                className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-105" 
+                className="h-6.5 sm:h-8 md:h-10 w-auto max-h-7 sm:max-h-9 md:max-h-10 object-contain transition-transform duration-200 group-hover:scale-105" 
                 style={{
                   mixBlendMode: 'multiply'
                 }}
               />
             </Link>
 
-            {/* Center: Navigation Menu (Spacious Khule Khule Layout) */}
-            <div className="hidden lg:flex items-center justify-center gap-7 xl:gap-11 2xl:gap-14 text-[11px] font-extrabold tracking-widest relative flex-1 mx-2">
+            {/* Center: Navigation Menu (Spacious Apple-Style Layout) */}
+            <div className="hidden lg:flex items-center justify-center gap-[32px] xl:gap-[40px] font-[600] text-[13px] relative flex-1 mx-2 whitespace-nowrap">
               {activeMenuItems.map((item, idx) => {
                 const labelLower = (item.label || '').toLowerCase();
 
@@ -1443,7 +1510,7 @@ export default function Navbar() {
             </div>
 
             {/* Right: Icon Group */}
-            <div className="flex items-center gap-3 sm:gap-4.5 shrink-0 text-zinc-800">
+            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 text-zinc-800">
 
               {/* Search Trigger Icon */}
               <button

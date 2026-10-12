@@ -30,7 +30,7 @@ export default function MainLayout() {
   }, [location.pathname, location.search]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-slate-900 font-sans antialiased">
+    <div className="min-h-screen flex flex-col bg-white text-slate-900 font-sans antialiased overflow-x-hidden w-full relative">
       {/* Top Banner Promotion / Support Utilities */}
       <Header />
 

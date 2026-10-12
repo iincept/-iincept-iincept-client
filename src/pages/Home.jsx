@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchProducts } from '../redux/productSlice';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
@@ -19,6 +20,9 @@ const DEFAULT_CATEGORY_STRIP = [
 ];
 
 const DEFAULT_HERO_IMAGE = 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80';
+
+// Configurable Autoplay Timer Interval for Homepage Hero Slider (in milliseconds)
+const HERO_SLIDER_AUTOPLAY_INTERVAL = 5000;
 
 const formatRupee = (val) => {
   if (val === undefined || val === null || val === '') return '';
@@ -46,6 +50,161 @@ const DEFAULT_DEAL_BANNERS = [
     displayOrder: 1
   }
 ];
+
+const DEFAULT_TESTIMONIALS = [
+  {
+    name: 'Rajesh Sharma',
+    role: 'IT Head, Fintech Firm',
+    location: 'Bengaluru',
+    stars: 5,
+    avatar: '/avatars/avatar2.jpg',
+    text: '“Purchased MacBook Air M4 from the authorised store. Staff was extremely knowledgeable and helped with EMI options. Delivery was next day. Highly recommended.”',
+    isActive: true
+  },
+  {
+    name: 'Priya Patel',
+    role: 'Procurement Lead, D2C Brand',
+    location: 'Mumbai',
+    stars: 5,
+    avatar: '/avatars/avatar1.jpg',
+    text: '“Best experience buying iPhone 17 Pro. Got bank offer + trade-in value explained clearly. Genuine product with full warranty. Will buy again.”',
+    isActive: true
+  },
+  {
+    name: 'Vikram Malhotra',
+    role: 'Operations Manager, Consulting Firm',
+    location: 'Delhi NCR',
+    stars: 5,
+    avatar: '/avatars/avatar3.jpg',
+    text: '“Corporate order for 25 iPads was handled smoothly. Dedicated manager, proper invoicing and on-time delivery. Excellent B2B support.”',
+    isActive: true
+  },
+  {
+    name: 'Sneha Kulkarni',
+    role: 'Admin Head, Enterprise BPO',
+    location: 'Pune',
+    stars: 5,
+    avatar: '/avatars/avatar4.jpg',
+    text: '“Reliable for repeat bulk orders, delivered to three city offices without issue. Smooth billing and genuine Apple products throughout.”',
+    isActive: true
+  },
+  {
+    name: 'Amitav Sen',
+    role: 'Creative Director, Design Studio',
+    location: 'Hyderabad',
+    stars: 5,
+    avatar: '/avatars/avatar5.jpg',
+    text: '“Upgraded our whole design team to MacBook Pro M4s with iincept. Super fast delivery, authentic GST invoice, and unbeatable corporate discount.”',
+    isActive: true
+  },
+  {
+    name: 'Ananya Deshmukh',
+    role: 'Senior Consultant, Tech Advisory',
+    location: 'Ahmedabad',
+    stars: 5,
+    avatar: '/avatars/avatar6.jpg',
+    text: '“Seamless ordering for iPad Air and Apple Pencil. Packaging was immaculate and received genuine AppleCare+ support. Wonderful customer care!”',
+    isActive: true
+  }
+];
+
+const formatTestimonialItem = (t, idx) => {
+  const defaults = [
+    {
+      name: 'Rajesh Sharma',
+      role: 'IT Head, Fintech Firm',
+      location: 'Bengaluru',
+      avatar: '/avatars/avatar2.jpg',
+      text: '“Purchased MacBook Air M4 from the authorised store. Staff was extremely knowledgeable and helped with EMI options. Delivery was next day. Highly recommended.”'
+    },
+    {
+      name: 'Priya Patel',
+      role: 'Procurement Lead, D2C Brand',
+      location: 'Mumbai',
+      avatar: '/avatars/avatar1.jpg',
+      text: '“Best experience buying iPhone 17 Pro. Got bank offer + trade-in value explained clearly. Genuine product with full warranty. Will buy again.”'
+    },
+    {
+      name: 'Vikram Malhotra',
+      role: 'Operations Manager, Consulting Firm',
+      location: 'Delhi NCR',
+      avatar: '/avatars/avatar3.jpg',
+      text: '“Corporate order for 25 iPads was handled smoothly. Dedicated manager, proper invoicing and on-time delivery. Excellent B2B support.”'
+    },
+    {
+      name: 'Sneha Kulkarni',
+      role: 'Admin Head, Enterprise BPO',
+      location: 'Pune',
+      avatar: '/avatars/avatar4.jpg',
+      text: '“Reliable for repeat bulk orders, delivered to three city offices without issue. Smooth billing and genuine Apple products throughout.”'
+    },
+    {
+      name: 'Amitav Sen',
+      role: 'Creative Director, Design Studio',
+      location: 'Hyderabad',
+      avatar: '/avatars/avatar5.jpg',
+      text: '“Upgraded our whole design team to MacBook Pro M4s with iincept. Super fast delivery, authentic GST invoice, and unbeatable corporate discount.”'
+    },
+    {
+      name: 'Ananya Deshmukh',
+      role: 'Senior Consultant, Tech Advisory',
+      location: 'Ahmedabad',
+      avatar: '/avatars/avatar6.jpg',
+      text: '“Seamless ordering for iPad Air and Apple Pencil. Packaging was immaculate and received genuine AppleCare+ support. Wonderful customer care!”'
+    }
+  ];
+  const d = defaults[idx % defaults.length];
+
+  let name = (t.name || '').trim();
+  let role = (t.role || t.title || t.designation || '').trim();
+  let location = (t.location || t.city || t.sub || '').trim();
+
+  if (t.author && !t.author.toLowerCase().includes('customer name')) {
+    const cleanAuthor = t.author.replace(/^[—\-–]\s*/, '').trim();
+    const parts = cleanAuthor.split(',').map(s => s.trim()).filter(Boolean);
+
+    if (parts.length >= 3) {
+      if (!location) location = parts[parts.length - 1];
+      if (!role) role = parts.slice(parts.length > 3 ? 1 : 0, parts.length - 1).join(', ');
+      if (!name) name = parts.length > 3 ? parts[0] : d.name;
+    } else if (parts.length === 2) {
+      if (!location) location = parts[1];
+      if (!role) role = parts[0];
+      if (!name) name = d.name;
+    } else if (parts.length === 1 && !name) {
+      if (['IT Head', 'Procurement', 'Ops', 'Admin', 'Manager', 'Lead', 'Head'].some(w => parts[0].includes(w))) {
+        role = role || parts[0];
+        name = d.name;
+      } else {
+        name = parts[0];
+      }
+    }
+  }
+
+  name = name || d.name;
+  role = role || d.role;
+  location = location || d.location;
+
+  let avatar = t.avatar || t.avatarUrl || t.image;
+  if (!avatar || avatar.includes('upload_1790758201407_72.png') || avatar.includes('upload_1791723433996_239.png')) {
+    avatar = d.avatar;
+  }
+
+  let text = (t.text || '').trim();
+  if (!text || text.toLowerCase().includes('enter customer review') || text === '""' || text === "''") {
+    text = d.text;
+  }
+
+  return {
+    ...t,
+    name,
+    role,
+    location,
+    avatar,
+    stars: 5,
+    text
+  };
+};
 
 export default function Home() {
   const location = useLocation();
@@ -80,8 +239,21 @@ export default function Home() {
 
   const scrollTestimonials = (direction) => {
     if (testimonialSliderRef.current) {
-      const scrollAmount = direction === 'left' ? -380 : 380;
-      testimonialSliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      const slider = testimonialSliderRef.current;
+      const step = 370;
+      if (direction === 'left') {
+        if (slider.scrollLeft <= 10) {
+          slider.scrollTo({ left: slider.scrollWidth - slider.clientWidth, behavior: 'smooth' });
+        } else {
+          slider.scrollBy({ left: -step, behavior: 'smooth' });
+        }
+      } else {
+        if (slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 15) {
+          slider.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          slider.scrollBy({ left: step, behavior: 'smooth' });
+        }
+      }
     }
   };
 
@@ -130,6 +302,57 @@ export default function Home() {
       homeHeroImage: DEFAULT_HERO_IMAGE
     };
   });
+
+  // Hero Banner Slider States
+  const [heroSlides, setHeroSlides] = useState(() => {
+    try {
+      const cached = localStorage.getItem('iincept_home_hero_slides_v2');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const active = parsed.filter(s => s.isActive !== false);
+          if (active.length > 0) return active;
+        }
+      }
+    } catch (e) { }
+    return [];
+  });
+
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
+
+  // Compute active effective hero slides array with graceful fallback
+  const effectiveHeroSlides = (heroSlides && heroSlides.length > 0)
+    ? heroSlides
+    : [{
+        _id: 'default-fallback-hero-slide',
+        title: heroData.homeHeroTitle || 'The latest.\nThe best. Authorised.',
+        subtitle: heroData.homeHeroSubtitle || 'Genuine Apple products from India’s trusted mono-brand premium resellers. Exclusive offers, EMI & expert support.',
+        buttonText: heroData.homeHeroPrimaryBtnText || 'Shop Now',
+        buttonLink: heroData.homeHeroPrimaryBtnLink || '#shop-by-category',
+        secondaryButtonText: heroData.homeHeroSecondaryBtnText || 'Find Nearest Store',
+        secondaryButtonLink: heroData.homeHeroSecondaryBtnLink || '#b2b-section',
+        badge: heroData.homeHeroBadge || 'Apple Authorised Resellers across India',
+        image: heroData.homeHeroImage || DEFAULT_HERO_IMAGE,
+        bgStyle: 'slide-dark',
+        isActive: true
+      }];
+
+  // Clamp currentSlideIndex if array shrinks
+  useEffect(() => {
+    if (currentSlideIndex >= effectiveHeroSlides.length && effectiveHeroSlides.length > 0) {
+      setCurrentSlideIndex(Math.max(0, effectiveHeroSlides.length - 1));
+    }
+  }, [effectiveHeroSlides.length, currentSlideIndex]);
+
+  // Autoplay slider timer (5000ms configurable) with infinite looping and unmount cleanup
+  useEffect(() => {
+    if (isHeroPaused || effectiveHeroSlides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % effectiveHeroSlides.length);
+    }, HERO_SLIDER_AUTOPLAY_INTERVAL);
+    return () => clearInterval(timer);
+  }, [isHeroPaused, effectiveHeroSlides.length, currentSlideIndex]);
 
   // Deal of the Week State (with LocalStorage Cache)
   const [dealBanners, setDealBanners] = useState(() => {
@@ -229,30 +452,31 @@ export default function Home() {
     return [];
   });
 
-  // Testimonials State
-  const [testimonials, setTestimonials] = useState([
-    {
-      stars: 5,
-      text: '“Purchased MacBook Air M4 from the authorised store. Staff was extremely knowledgeable and helped with EMI options. Delivery was next day. Highly recommended.”',
-      author: '— IT Head, Fintech firm',
-      location: 'Bengaluru',
-      sub: 'Bengaluru'
-    },
-    {
-      stars: 5,
-      text: '“Best experience buying iPhone 17 Pro. Got bank offer + trade-in value explained clearly. Genuine product with full warranty. Will buy again.”',
-      author: '— Procurement Lead, D2C brand',
-      location: 'Mumbai',
-      sub: 'Mumbai'
-    },
-    {
-      stars: 5,
-      text: '“Corporate order for 25 iPads was handled smoothly. Dedicated manager, proper invoicing and on-time delivery. Excellent B2B support.”',
-      author: '— Ops Manager, Consulting firm',
-      location: 'Delhi NCR',
-      sub: 'Delhi NCR'
-    }
-  ]);
+  // Testimonials State & Autoplay Slider
+  const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
+  const [isTestimonialsPaused, setIsTestimonialsPaused] = useState(false);
+
+  // Autoplay Testimonials Slider (every 3800ms) with smooth wrap-around and pause-on-hover/touch
+  useEffect(() => {
+    if (isTestimonialsPaused) return;
+
+    const timer = setInterval(() => {
+      if (testimonialSliderRef.current) {
+        const slider = testimonialSliderRef.current;
+        const maxScroll = slider.scrollWidth - slider.clientWidth;
+        if (maxScroll <= 10) return;
+
+        const step = 370;
+        if (slider.scrollLeft >= maxScroll - 15) {
+          slider.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          slider.scrollBy({ left: step, behavior: 'smooth' });
+        }
+      }
+    }, 3800);
+
+    return () => clearInterval(timer);
+  }, [isTestimonialsPaused]);
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -316,6 +540,32 @@ export default function Home() {
           }
           return prev;
         });
+
+        if (response.data.heroSlides && Array.isArray(response.data.heroSlides)) {
+          const activeSlides = response.data.heroSlides
+            .filter(s => s.isActive !== false)
+            .map(s => ({
+              ...s,
+              title: (s.title || (s.titleBold ? `${s.titleBold || ''} ${s.titleNormal || ''}`.trim() : '') || 'The latest. The best. Authorised.'),
+              subtitle: s.subtitle || response.data.homeHeroSubtitle || 'Genuine Apple products from India’s trusted mono-brand premium resellers.',
+              buttonText: s.buttonText || response.data.homeHeroPrimaryBtnText || 'Shop Now',
+              buttonLink: s.buttonLink || response.data.homeHeroPrimaryBtnLink || '#shop-by-category',
+              secondaryButtonText: s.secondaryButtonText || response.data.homeHeroSecondaryBtnText || 'Find Nearest Store',
+              secondaryButtonLink: s.secondaryButtonLink || response.data.homeHeroSecondaryBtnLink || '#b2b-section',
+              badge: s.badge || response.data.homeHeroBadge || 'Apple Authorised Resellers across India',
+              image: (s.image && typeof s.image === 'string' && s.image.trim()) ? s.image.trim() : (response.data.homeHeroImage || DEFAULT_HERO_IMAGE)
+            }));
+
+          setHeroSlides(prev => {
+            if (JSON.stringify(prev) !== JSON.stringify(activeSlides)) {
+              try {
+                localStorage.setItem('iincept_home_hero_slides_v2', JSON.stringify(activeSlides));
+              } catch (e) { }
+              return activeSlides;
+            }
+            return prev;
+          });
+        }
 
         if (response.data.homeDealBanners && Array.isArray(response.data.homeDealBanners) && response.data.homeDealBanners.length > 0) {
           const activeBanners = response.data.homeDealBanners
@@ -397,12 +647,15 @@ export default function Home() {
         if (response.data.testimonials && response.data.testimonials.length > 0) {
           const activeTestimonials = response.data.testimonials
             .filter(t => t.isActive !== false)
-            .map(t => {
-              const loc = t.location !== undefined ? t.location : (t.sub || t.company || '');
+            .map((t, idx) => {
+              const loc = t.location !== undefined && t.location !== '' ? t.location : (t.sub || t.city || '');
               return {
-                stars: t.stars || 5,
+                ...t,
+                stars: 5,
                 text: t.text || '',
                 author: t.author || 'Verified Customer',
+                name: t.name || '',
+                role: t.role || '',
                 location: String(loc || '').trim(),
                 sub: String(loc || '').trim(),
                 avatar: t.image || t.avatar || t.avatarUrl || null
@@ -580,6 +833,9 @@ export default function Home() {
     <div className="indiaistore-theme">
       <style>{`
         .indiaistore-theme {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
           --apple-black: #1d1d1f;
           --apple-gray: #86868b;
           --apple-light: #f5f5f7;
@@ -601,13 +857,13 @@ export default function Home() {
         .indiaistore-theme a { text-decoration: none; color: inherit; }
         .indiaistore-theme img { max-width: 100%; display: block; }
 
-        /* ========== HERO BANNER (Apple style full-width) ========== */
+        /* ========== HERO BANNER (Apple style wide banner) ========== */
         .indiaistore-theme .hero-banner {
           position: relative;
           width: 100%;
           height: auto;
           min-height: auto;
-          padding: 36px 16px 36px;
+          padding: 40px 16px 32px;
           background: linear-gradient(180deg, #000000 0%, #1a1a1a 100%);
           overflow: hidden;
           display: flex;
@@ -615,6 +871,12 @@ export default function Home() {
           justify-content: center;
           color: white;
           text-align: center;
+        }
+
+        @media (min-width: 768px) {
+          .indiaistore-theme .hero-banner {
+            padding: 48px 24px 36px;
+          }
         }
 
         .indiaistore-theme .hero-banner::before {
@@ -706,20 +968,10 @@ export default function Home() {
         }
 
         .indiaistore-theme .hero-image-wrap {
-          margin-top: 22px;
-          margin-bottom: 0px;
           width: 100%;
-          max-width: 710px;
-          min-height: 210px;
-          aspect-ratio: 16 / 6.5;
           margin-left: auto;
           margin-right: auto;
-          border-radius: 20px;
           overflow: hidden;
-          box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-          border: 1px solid rgba(255,255,255,0.12);
-          background: #0a0a0a;
-          contain: layout paint;
         }
 
         /* ========== CATEGORY STRIP (Apple Store style with side arrows) ========== */
@@ -969,6 +1221,11 @@ export default function Home() {
         }
 
         /* ========== NEW ARRIVALS SLIDER ========== */
+        .indiaistore-theme .new-arrivals-section {
+          padding-top: 18px;
+          padding-bottom: 36px;
+        }
+
         .indiaistore-theme .new-arrivals-header {
           display: flex;
           align-items: center;
@@ -1041,12 +1298,13 @@ export default function Home() {
           min-width: 320px;
           height: 480px;
           border-radius: 28px;
-          background: #f5f5f7;
+          background: #ffffff;
           overflow: visible;
           text-decoration: none;
           color: #1d1d1f;
           transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          border: 1px solid rgba(0, 0, 0, 0.04);
           flex: 0 0 380px;
           display: flex;
           flex-direction: column;
@@ -1083,7 +1341,7 @@ export default function Home() {
           width: 100%;
           height: 100%;
           z-index: 1;
-          background: #f5f5f7;
+          background: #ffffff;
           overflow: hidden;
           border-radius: inherit;
           display: flex;
@@ -1159,6 +1417,7 @@ export default function Home() {
         .indiaistore-theme .rf-ccard-dark {
           background: #000000 !important;
           color: #ffffff !important;
+          border-color: transparent !important;
         }
 
         .indiaistore-theme .rf-ccard-dark .rf-ccard-img-full-wrapper {
@@ -1323,7 +1582,15 @@ export default function Home() {
         .indiaistore-theme .categories {
           background: #ffffff;
           padding: 0px 22px 52px;
-          margin-top: -24px;
+          margin-top: 0px;
+        }
+
+        .indiaistore-theme .categories-divider {
+          width: 100%;
+          height: 1px;
+          background-color: #E5E7EB;
+          margin: 0 auto 32px;
+          border: none;
         }
 
         .indiaistore-theme .section-trending {
@@ -1601,7 +1868,7 @@ export default function Home() {
 
         /* ========== DEAL OF THE WEEK ========== */
         .indiaistore-theme .deal-banner {
-          margin: 0 22px 64px;
+          margin: 0 22px 40px;
           max-width: 1400px;
           margin-left: auto;
           margin-right: auto;
@@ -1690,8 +1957,8 @@ export default function Home() {
         /* ========== WHY BUY FROM AUTHORISED RESELLER ========== */
         .indiaistore-theme .wby-section {
           max-width: 1400px;
-          margin: -24px auto 0;
-          padding: 0px 22px 52px;
+          margin: 0 auto;
+          padding: 0px 22px 64px;
         }
 
         .indiaistore-theme .wby-title {
@@ -1843,7 +2110,11 @@ export default function Home() {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 48px;
-          align-items: center;
+          align-items: flex-start;
+        }
+
+        .indiaistore-theme .b2b-text {
+          padding-top: 16px;
         }
 
         .indiaistore-theme .b2b-text h2 {
@@ -1961,70 +2232,55 @@ export default function Home() {
         }
 
         .indiaistore-theme .testimonial-card {
-          flex: 0 0 360px;
-          min-width: 300px;
-          max-width: 380px;
+          flex: 0 0 350px;
+          width: 350px;
+          min-width: 320px;
+          max-width: 360px;
           background: #ffffff;
-          backdrop-filter: none;
-          -webkit-backdrop-filter: none;
-          border: 1px solid #e8e8ed;
-          border-radius: 24px;
-          padding: 28px 26px;
-          transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          border: 1px solid #e5e7eb;
+          border-radius: 20px;
+          padding: 24px 20px;
+          transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.3s ease;
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
           justify-content: flex-start;
           gap: 0;
           position: relative;
-          overflow: hidden;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
         }
 
+        .indiaistore-theme .testimonial-card.featured,
+        .indiaistore-theme .testimonial-card:first-child {
+          border: 1.5px solid #0071e3;
+          box-shadow: 0 8px 24px rgba(0, 113, 227, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
 
         .indiaistore-theme .testimonial-card:hover {
-          background: #f5f5f7;
+          transform: translateY(-4px);
+          border-color: #d1d5db;
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+        }
+
+        .indiaistore-theme .testimonial-card.featured:hover,
+        .indiaistore-theme .testimonial-card:first-child:hover {
+          transform: translateY(-4px);
           border-color: #0071e3;
-          transform: translateY(-6px);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,113,227,0.2);
-        }
-
-        .indiaistore-theme .testimonial-stars-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 16px;
-        }
-
-        .indiaistore-theme .testimonial-card-body {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          padding-top: 14px;
-          border-top: 1px solid #e8e8ed;
-        }
-
-        .indiaistore-theme .testimonial-text {
-          font-size: 15px;
-          line-height: 1.7;
-          color: #3d3d3d;
-          margin: 0;
-          word-break: break-word;
-          font-style: italic;
+          box-shadow: 0 14px 34px rgba(0, 113, 227, 0.18);
         }
 
         .indiaistore-theme .testimonial-card-header {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
           gap: 12px;
           width: 100%;
-          margin-bottom: 16px;
         }
 
         .indiaistore-theme .testimonial-author {
           display: flex;
           align-items: center;
-          gap: 14px;
+          gap: 12px;
           flex: 1;
           min-width: 0;
         }
@@ -2038,91 +2294,96 @@ export default function Home() {
           border-radius: 50%;
           object-fit: cover;
           flex-shrink: 0;
-        }
-
-        .indiaistore-theme .author-avatar {
-          background: linear-gradient(135deg, #0071e3 0%, #5e5ce6 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 16px;
-          color: #ffffff;
-          border: 2px solid rgba(255,255,255,0.2);
-          box-shadow: 0 4px 16px rgba(0,113,227,0.4);
+          border: 1.5px solid #f3f4f6;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
         }
 
         .indiaistore-theme .author-info {
           display: flex;
           flex-direction: column;
-          gap: 3px;
+          gap: 2px;
           min-width: 0;
+          flex: 1;
         }
 
-        .indiaistore-theme .author-info .author-name {
-          display: block;
-          font-size: 14px;
-          font-weight: 600;
-          color: #1d1d1f;
-          line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        .indiaistore-theme .author-name {
+          font-size: 14.5px;
+          font-weight: 700;
+          color: #111827;
+          line-height: 1.25;
+          word-break: break-word;
         }
 
-        .indiaistore-theme .author-info .author-location,
-        .indiaistore-theme .author-info .author-sub {
-          display: block;
+        .indiaistore-theme .author-role {
           font-size: 12px;
-          font-weight: 400;
-          color: #6e6e73;
-          line-height: 1.35;
+          font-weight: 500;
+          color: #6b7280;
+          line-height: 1.3;
+          word-break: break-word;
         }
 
-        .indiaistore-theme .slider-btn {
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          background: #f5f5f7;
-          border: 1px solid #e0e0e5;
-          color: #1d1d1f;
+        .indiaistore-theme .author-location {
           display: inline-flex;
           align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-size: 16px;
-          font-weight: bold;
-          line-height: 1;
-        }
-        .indiaistore-theme .slider-btn:hover {
-          background: #0071e3;
-          border-color: #0071e3;
-          color: white;
-          box-shadow: 0 4px 16px rgba(0,113,227,0.3);
+          gap: 4px;
+          font-size: 11.5px;
+          font-weight: 500;
+          color: #4b5563;
+          line-height: 1.3;
+          margin-top: 2px;
         }
 
-        .indiaistore-theme .stars {
-          color: #fbbf24;
-          font-size: 15px;
-          letter-spacing: 2px;
-          white-space: nowrap;
+        .indiaistore-theme .location-pin-icon {
+          color: #0071e3;
           flex-shrink: 0;
-          line-height: 1;
-          text-shadow: 0 0 8px rgba(251,191,36,0.5);
         }
-        .indiaistore-theme .stars-rating-label {
-          font-size: 12px;
-          font-weight: 600;
-          color: #6e6e73;
-          margin-top: 2px;
-          text-align: right;
-        }
+
         .indiaistore-theme .testimonial-stars-col {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
           flex-shrink: 0;
+          padding-top: 2px;
+        }
+
+        .indiaistore-theme .stars {
+          color: #f59e0b;
+          font-size: 14px;
+          letter-spacing: 1.5px;
+          white-space: nowrap;
+          flex-shrink: 0;
+          line-height: 1;
+        }
+
+        .indiaistore-theme .stars-rating-label {
+          font-size: 12px;
+          font-weight: 700;
+          color: #1f2937;
+          margin-top: 3px;
+          text-align: right;
+        }
+
+        .indiaistore-theme .testimonial-divider {
+          width: 100%;
+          height: 1px;
+          background: #e5e7eb;
+          margin: 16px 0 14px;
+          flex-shrink: 0;
+        }
+
+        .indiaistore-theme .testimonial-card-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .indiaistore-theme .testimonial-text {
+          font-size: 13.5px;
+          line-height: 1.65;
+          color: #374151;
+          margin: 0;
+          font-style: italic;
+          word-break: break-word;
         }
 
         .indiaistore-theme .slider-circle-btn {
@@ -2149,13 +2410,26 @@ export default function Home() {
           stroke: #ffffff;
         }
 
+        @media (max-width: 1200px) {
+          .indiaistore-theme .testimonial-card {
+            flex: 0 0 calc((100% - 40px) / 3);
+            min-width: 280px;
+          }
+        }
+        @media (max-width: 900px) {
+          .indiaistore-theme .testimonial-card {
+            flex: 0 0 calc((100% - 20px) / 2);
+            min-width: 270px;
+          }
+        }
+
         @media (max-width: 1100px) {
           .indiaistore-theme .category-grid { grid-template-columns: repeat(4, 1fr); }
           .indiaistore-theme .deal-banner {
             flex-direction: row !important;
             text-align: left !important;
             padding: 22px 18px !important;
-            margin: 0 16px 44px !important;
+            margin: 0 16px 36px !important;
             align-items: center !important;
             justify-content: space-between !important;
             gap: 10px !important;
@@ -2220,6 +2494,7 @@ export default function Home() {
             transform: translateY(8px) scale(1.32) !important;
           }
           .indiaistore-theme .b2b-inner { grid-template-columns: 1fr; }
+          .indiaistore-theme .b2b-text { padding-top: 0; }
         }
 
         @media (max-width: 900px) {
@@ -2232,12 +2507,14 @@ export default function Home() {
         }
 
         @media (max-width: 768px) {
-          .indiaistore-theme .hero-banner { height: auto; min-height: auto; padding: 32px 16px 16px; }
+          .indiaistore-theme .hero-banner { height: auto; min-height: auto; padding: 92px 16px 28px; }
           .indiaistore-theme .hero-banner h1 { font-size: 32px; }
           .indiaistore-theme .section { padding: 36px 16px; }
-          .indiaistore-theme .categories { padding: 0px 16px 36px; margin-top: -16px; }
+          .indiaistore-theme .new-arrivals-section { padding-top: 14px; padding-bottom: 24px; }
+          .indiaistore-theme .categories { padding: 0px 16px 36px; margin-top: 0px; }
+          .indiaistore-theme .categories-divider { margin-bottom: 24px; }
           .indiaistore-theme .section-trending { padding-top: 16px; }
-          .indiaistore-theme .wby-section { padding: 0px 16px 36px; margin-top: -16px; }
+          .indiaistore-theme .wby-section { padding: 0px 16px 40px; margin-top: 0px; }
           .indiaistore-theme .section-title,
           .indiaistore-theme .wby-title,
           .indiaistore-theme .new-arrivals-header .section-title,
@@ -2295,6 +2572,7 @@ export default function Home() {
           .indiaistore-theme .category-card-title { font-size: 18px; }
           .indiaistore-theme .category-icon { height: 210px; padding: 18px 14px; }
           .indiaistore-theme .testimonials-grid { grid-template-columns: 1fr; }
+          .indiaistore-theme .testimonial-card { flex: 0 0 310px; width: 310px; min-width: 290px; }
           .indiaistore-theme .form-row { grid-template-columns: 1fr; }
           .indiaistore-theme .category-strip-wrapper { padding: 8px 10px 12px; background: #ffffff; }
           .indiaistore-theme .category-strip { padding: 0; overflow-x: visible; overflow-y: visible; }
@@ -2353,8 +2631,7 @@ export default function Home() {
             flex: 0 0 280px;
             min-width: 260px;
             max-width: 300px;
-            padding: 16px 18px;
-            gap: 12px;
+            padding: 18px 16px;
           }
 
           .indiaistore-theme .rf-ccard-40 {
@@ -2380,76 +2657,186 @@ export default function Home() {
         }
       `}</style>
 
-      {/* 1. HERO BANNER (Full-width Apple Style) */}
-      <section className="hero-banner">
-        <div className="hero-content">
-          <div className="hero-eyebrow">
-            {heroData.homeHeroBadge || 'Apple Authorised Resellers across India'}
-          </div>
-          <h1>{heroData.homeHeroTitle || 'The latest.\nThe best. Authorised.'}</h1>
-          <p className="hero-sub">
-            {heroData.homeHeroSubtitle || 'Genuine Apple products from India’s trusted mono-brand premium resellers. Exclusive offers, EMI & expert support.'}
-          </p>
-          <div className="hero-ctas">
-            <a
-              href="#shop-by-category"
-              onClick={(e) => {
-                e.preventDefault();
-                const section = document.getElementById('shop-by-category');
-                if (section) {
-                  const navbarHeight = 90;
-                  const elementPosition = section.getBoundingClientRect().top + window.pageYOffset;
-                  const offsetPosition = elementPosition - navbarHeight;
-                  window.scrollTo({
-                    top: offsetPosition,
-                    behavior: 'smooth'
-                  });
-                } else {
-                  window.location.href = '/categories';
-                }
-              }}
-              className="btn btn-primary cursor-pointer"
-            >
-              {heroData.homeHeroPrimaryBtnText || 'Shop Now'}
-            </a>
-            {heroData.homeHeroSecondaryBtnLink?.startsWith('#') ? (
-              <a
-                href={heroData.homeHeroSecondaryBtnLink}
-                onClick={(e) => {
-                  e.preventDefault();
-                  const targetId = heroData.homeHeroSecondaryBtnLink.replace('#', '');
-                  const section = document.getElementById(targetId);
-                  if (section) {
-                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }
-                }}
-                className="btn btn-secondary"
+      {/* 1. HERO BANNER SLIDER (Full-width continuous background extending behind navbar to top edge) */}
+      <section 
+        className="hero-banner-slider-container relative w-full rounded-b-2xl sm:rounded-b-3xl md:rounded-b-[36px] lg:rounded-b-[40px] h-[520px] sm:h-[560px] md:h-[600px] lg:h-[640px] overflow-hidden select-none bg-gradient-to-b from-[#18191c] via-[#232528] to-[#2c2d32] text-white shadow-xl shadow-black/10"
+        onMouseEnter={() => setIsHeroPaused(true)}
+        onMouseLeave={() => setIsHeroPaused(false)}
+        onTouchStart={() => setIsHeroPaused(true)}
+        onTouchEnd={() => setIsHeroPaused(false)}
+      >
+        {/* Track Container */}
+        <div 
+          className="hero-slider-track flex w-full h-full transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+        >
+          {effectiveHeroSlides.map((slide, idx) => {
+            return (
+              <div 
+                key={slide._id || slide.id || idx}
+                className="hero-slide-item flex-none w-full h-full relative overflow-hidden flex items-center justify-center bg-gradient-to-b from-[#18191c] via-[#232528] to-[#2c2d32]"
               >
-                {heroData.homeHeroSecondaryBtnText || 'Find Nearest Store'}
-              </a>
-            ) : (
-              <Link to={heroData.homeHeroSecondaryBtnLink || '/stores'} className="btn btn-secondary">
-                {heroData.homeHeroSecondaryBtnText || 'Find Nearest Store'}
-              </Link>
-            )}
-          </div>
+                {/* Full-width Admin Banner Image */}
+                <img
+                  src={slide.image || DEFAULT_HERO_IMAGE}
+                  alt={slide.title || 'Apple Showcase Banner'}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="sync"
+                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  onError={(e) => {
+                    if (e.currentTarget.src !== DEFAULT_HERO_IMAGE) {
+                      e.currentTarget.src = DEFAULT_HERO_IMAGE;
+                    }
+                  }}
+                />
 
-          <div className="hero-image-wrap">
-            <img
-              src={heroData.homeHeroImage || DEFAULT_HERO_IMAGE}
-              alt="Apple Reseller Showcase"
-              loading="eager"
-              fetchPriority="high"
-              decoding="sync"
-              className="w-full h-full max-h-[220px] md:max-h-[260px] object-cover"
-              onError={(e) => {
-                if (e.currentTarget.src !== DEFAULT_HERO_IMAGE) {
-                  e.currentTarget.src = DEFAULT_HERO_IMAGE;
-                }
-              }}
-            />
-          </div>
+                {/* Subtle Gradient Overlay for Text Readability (rendered when slide has text) */}
+                {(slide.title || slide.subtitle || slide.titleBold || slide.badge) && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
+                )}
+
+                {/* Slide Text & Interactive CTA Buttons Overlay */}
+                <div className="relative z-20 w-full max-w-7xl mx-auto h-full px-6 sm:px-10 md:px-16 pt-24 sm:pt-28 md:pt-32 pb-8 flex items-center justify-start pointer-events-none">
+                  {/* Dedicated Left-Aligned Content Column */}
+                  <div className="w-full max-w-[400px] sm:max-w-[440px] md:max-w-[460px] lg:max-w-[480px] xl:max-w-[500px] flex flex-col items-start text-left pointer-events-auto shrink-0">
+                    {(slide.badge || heroData.homeHeroBadge) && (
+                      <div className="hero-eyebrow text-xs md:text-sm font-semibold text-[#2997ff] mb-2 tracking-wide uppercase">
+                        {slide.badge || heroData.homeHeroBadge}
+                      </div>
+                    )}
+                    
+                    {(slide.title || slide.titleBold || slide.titleNormal) && (
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-extrabold tracking-tight leading-[1.12] mb-3 text-white drop-shadow-md break-words">
+                        {slide.titleBold || slide.titleNormal ? (
+                          <>
+                            <span className="font-bold">{slide.titleBold} </span>
+                            <span className="font-normal opacity-90">{slide.titleNormal}</span>
+                          </>
+                        ) : (
+                          slide.title
+                        )}
+                      </h1>
+                    )}
+                    
+                    {slide.subtitle && (
+                      <p className="hero-sub text-xs sm:text-sm md:text-[15px] text-white/90 w-full mb-5 leading-relaxed drop-shadow break-words line-clamp-3 sm:line-clamp-none">
+                        {slide.subtitle}
+                      </p>
+                    )}
+
+                    <div className="hero-ctas flex items-center gap-3.5 flex-wrap mt-0">
+                      {slide.buttonText && (
+                        slide.buttonLink?.startsWith('/') ? (
+                          <Link
+                            to={slide.buttonLink}
+                            className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs md:text-sm font-medium transition-all transform hover:scale-[1.03] shadow-lg shadow-blue-500/25"
+                          >
+                            {slide.buttonText}
+                          </Link>
+                        ) : (
+                          <a
+                            href={slide.buttonLink || '#shop-by-category'}
+                            onClick={(e) => {
+                              const target = slide.buttonLink || '#shop-by-category';
+                              if (target.startsWith('#')) {
+                                e.preventDefault();
+                                const section = document.getElementById(target.replace('#', ''));
+                                if (section) {
+                                  const navbarHeight = 90;
+                                  const elementPosition = section.getBoundingClientRect().top + window.pageYOffset;
+                                  const offsetPosition = elementPosition - navbarHeight;
+                                  window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                                }
+                              }
+                            }}
+                            className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs md:text-sm font-medium transition-all transform hover:scale-[1.03] shadow-lg shadow-blue-500/25"
+                          >
+                            {slide.buttonText}
+                          </a>
+                        )
+                      )}
+
+                      {slide.secondaryButtonText && (
+                        slide.secondaryButtonLink?.startsWith('/') ? (
+                          <Link
+                            to={slide.secondaryButtonLink}
+                            className="px-6 py-2.5 rounded-full border border-white/40 hover:border-white text-white hover:bg-white/10 text-xs md:text-sm font-medium transition-all backdrop-blur-sm"
+                          >
+                            {slide.secondaryButtonText}
+                          </Link>
+                        ) : (
+                          <a
+                            href={slide.secondaryButtonLink || '#b2b-section'}
+                            onClick={(e) => {
+                              const target = slide.secondaryButtonLink || '#b2b-section';
+                              if (target && target.startsWith('#')) {
+                                e.preventDefault();
+                                const section = document.getElementById(target.replace('#', ''));
+                                if (section) {
+                                  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                              }
+                            }}
+                            className="px-6 py-2.5 rounded-full border border-white/40 hover:border-white text-white hover:bg-white/10 text-xs md:text-sm font-medium transition-all backdrop-blur-sm"
+                          >
+                            {slide.secondaryButtonText}
+                          </a>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
+
+        {/* Previous Arrow Button */}
+        {effectiveHeroSlides.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setCurrentSlideIndex(prev => (prev === 0 ? effectiveHeroSlides.length - 1 : prev - 1))}
+            className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 text-white backdrop-blur-md flex items-center justify-center transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+            aria-label="Previous Slide"
+            title="Previous Slide"
+          >
+            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 stroke-[2.5]" />
+          </button>
+        )}
+
+        {/* Next Arrow Button */}
+        {effectiveHeroSlides.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setCurrentSlideIndex(prev => (prev + 1) % effectiveHeroSlides.length)}
+            className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 text-white backdrop-blur-md flex items-center justify-center transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+            aria-label="Next Slide"
+            title="Next Slide"
+          >
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6 stroke-[2.5]" />
+          </button>
+        )}
+
+        {/* Pagination Dots */}
+        {effectiveHeroSlides.length > 1 && (
+          <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 backdrop-blur-md border border-white/10">
+            {effectiveHeroSlides.map((_, dotIdx) => (
+              <button
+                key={dotIdx}
+                type="button"
+                onClick={() => setCurrentSlideIndex(dotIdx)}
+                className={`transition-all duration-300 cursor-pointer rounded-full ${
+                  dotIdx === currentSlideIndex
+                    ? 'w-6 md:w-7 h-2 bg-white shadow-sm'
+                    : 'w-2 h-2 bg-white/40 hover:bg-white/80'
+                }`}
+                aria-label={`Go to slide ${dotIdx + 1}`}
+                title={`Slide ${dotIdx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 2. CATEGORY STRIP (Apple.com/store Style with side navigation arrows) */}
@@ -2513,7 +2900,7 @@ export default function Home() {
       </div>
 
       {/* 3. NEW ARRIVALS SLIDER */}
-      <section className="section">
+      <section className="section new-arrivals-section">
         <div className="section-header new-arrivals-header">
           <h2 className="section-title">THE LATEST FROM APPLE</h2>
           <div className="slider-nav-btns">
@@ -2564,20 +2951,31 @@ export default function Home() {
               const card6ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-mini-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80";
               const card7ImgJpg = "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-studio-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80";
 
+              const itemName = (item.name || '').toLowerCase();
               let displayImg = item.image;
               if (!displayImg || displayImg.includes('traceId')) {
-                if (idx === 0) displayImg = card1ImgJpg;
+                if (itemName.includes('duo')) displayImg = card1ImgJpg;
+                else if (itemName.includes('18 pro')) displayImg = card2ImgJpg;
+                else if (itemName.includes('series 12')) displayImg = card3ImgJpg;
+                else if (itemName.includes('ultra')) displayImg = card4ImgJpg;
+                else if (itemName.includes('airpods')) displayImg = card5ImgJpg;
+                else if (itemName.includes('mini')) displayImg = card6ImgJpg;
+                else if (itemName.includes('studio')) displayImg = card7ImgJpg;
+                else if (idx === 0) displayImg = card1ImgJpg;
                 else if (idx === 1) displayImg = card2ImgJpg;
-                else if (idx === 2) displayImg = card3ImgJpg;
-                else if (idx === 3 || item.name?.toLowerCase().includes('ultra')) displayImg = card4ImgJpg;
-                else if (idx === 4 || item.name?.toLowerCase().includes('airpods 5')) displayImg = card5ImgJpg;
-                else if (idx === 5 || item.name?.toLowerCase().includes('mini')) displayImg = card6ImgJpg;
-                else if (idx === 6 || item.name?.toLowerCase().includes('studio')) displayImg = card7ImgJpg;
                 else displayImg = card1ImgJpg;
               }
 
               const altText = item.altText || item.alt || item.name || "Apple Product";
-              const isDarkCard = item.isDark || (idx === 1 || idx === 2 || idx === 3 || item.name?.toLowerCase().includes('ultra') || item.name?.toLowerCase().includes('series 12') || item.name?.toLowerCase().includes('18 pro'));
+              const isAirPods = itemName.includes('airpod');
+              const isDarkCard = !isAirPods && !itemName.includes('duo') && !itemName.includes('mini') && !itemName.includes('studio') && (
+                item.isDark === true ||
+                (item.isDark !== false && (
+                  itemName.includes('ultra') ||
+                  itemName.includes('series 12') ||
+                  itemName.includes('18 pro')
+                ))
+              );
               const targetPath = resolveArrivalProductPath(item);
 
               return (
@@ -2643,6 +3041,7 @@ export default function Home() {
       {/* 4. SHOP BY CATEGORY */}
       <section className="categories">
         <div className="categories-inner">
+          <div className="categories-divider" />
           <div className="section-header" style={{ marginBottom: '18px' }}>
             <h2 className="section-title">SHOP BY CATEGORY</h2>
           </div>
@@ -2758,6 +3157,41 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 6. DEAL OF THE WEEK */}
+      {dealBanners && dealBanners.length > 0 && (() => {
+        const banner = dealBanners[0];
+        if (!banner) return null;
+        const productTarget = banner.productId ? `/product/${banner.productId}` : (banner.buttonLink || '/shop');
+        const formattedFinal = formatRupee(banner.finalPrice !== undefined && banner.finalPrice !== null ? banner.finalPrice : banner.dealPrice);
+        const formattedMrp = formatRupee(banner.originalMrp !== undefined && banner.originalMrp !== null ? banner.originalMrp : banner.dealOldPrice);
+        const displayImg = banner.productImage || banner.dealImage || '/mac_deal_fan.png';
+
+        return (
+          <div key={banner.id || banner._id || 'single-deal'} className="deal-banner">
+            <div className="deal-content">
+              <div className="deal-eyebrow">{banner.smallLabel || banner.dealEyebrow || 'DEAL OF THE WEEK'}</div>
+              <h2 className="deal-title">{banner.title || banner.dealTitle || 'MacBook Neo – Stock Clearance'}</h2>
+              <p className="deal-desc">
+                {banner.description || banner.dealDesc || 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.'}
+              </p>
+              <div className="deal-price">
+                {formattedFinal} {formattedMrp && <span>{formattedMrp}</span>}
+              </div>
+              <Link to={productTarget} className="btn btn-primary" style={{ marginTop: '18px' }}>
+                {banner.buttonText || banner.dealButtonText || 'Grab the Deal'}
+              </Link>
+            </div>
+            <div className="deal-visual">
+              <img
+                src={displayImg}
+                alt={banner.title || 'Deal Product'}
+                className="max-h-full max-w-full object-contain filter drop-shadow-lg"
+              />
+            </div>
+          </div>
+        );
+      })()}
+
       {/* 5.5 WHY BUY FROM AUTHORISED RESELLER */}
       <div className="wby-section">
         <h2 className="wby-title">WHY CHOOSE iiNCEPT?</h2>
@@ -2804,43 +3238,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-
-
-      {/* 6. DEAL OF THE WEEK */}
-      {dealBanners && dealBanners.length > 0 && (() => {
-        const banner = dealBanners[0];
-        if (!banner) return null;
-        const productTarget = banner.productId ? `/product/${banner.productId}` : (banner.buttonLink || '/shop');
-        const formattedFinal = formatRupee(banner.finalPrice !== undefined && banner.finalPrice !== null ? banner.finalPrice : banner.dealPrice);
-        const formattedMrp = formatRupee(banner.originalMrp !== undefined && banner.originalMrp !== null ? banner.originalMrp : banner.dealOldPrice);
-        const displayImg = banner.productImage || banner.dealImage || '/mac_deal_fan.png';
-
-        return (
-          <div key={banner.id || banner._id || 'single-deal'} className="deal-banner">
-            <div className="deal-content">
-              <div className="deal-eyebrow">{banner.smallLabel || banner.dealEyebrow || 'DEAL OF THE WEEK'}</div>
-              <h2 className="deal-title">{banner.title || banner.dealTitle || 'MacBook Neo – Stock Clearance'}</h2>
-              <p className="deal-desc">
-                {banner.description || banner.dealDesc || 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.'}
-              </p>
-              <div className="deal-price">
-                {formattedFinal} {formattedMrp && <span>{formattedMrp}</span>}
-              </div>
-              <Link to={productTarget} className="btn btn-primary" style={{ marginTop: '18px' }}>
-                {banner.buttonText || banner.dealButtonText || 'Grab the Deal'}
-              </Link>
-            </div>
-            <div className="deal-visual">
-              <img
-                src={displayImg}
-                alt={banner.title || 'Deal Product'}
-                className="max-h-full max-w-full object-contain filter drop-shadow-lg"
-              />
-            </div>
-          </div>
-        );
-      })()}
 
       {/* 7. B2B / CORPORATE ORDERS */}
       <section id="b2b-section" className="b2b">
@@ -2955,7 +3352,7 @@ export default function Home() {
       </section>
 
       {/* 8. TESTIMONIALS SLIDER */}
-      <section className="section testimonials-section">
+      <section className="section testimonials-section" id="testimonials-section">
         <div className="section-header">
           <h2 className="section-title">WHAT OUR CUSTOMERS SAY</h2>
           <p className="section-subtitle">Trusted by thousands of happy customers across India</p>
@@ -2984,44 +3381,74 @@ export default function Home() {
             </button>
           </div>
         </div>
-        <div className="testimonials-slider-wrap">
+        <div
+          className="testimonials-slider-wrap"
+          onMouseEnter={() => setIsTestimonialsPaused(true)}
+          onMouseLeave={() => setIsTestimonialsPaused(false)}
+          onTouchStart={() => setIsTestimonialsPaused(true)}
+          onTouchEnd={() => setIsTestimonialsPaused(false)}
+        >
           <div ref={testimonialSliderRef} className="testimonials-slider">
-            {testimonials.map((item, idx) => (
-              <div key={idx} className="testimonial-card">
-                {/* Top Row: Author LEFT + Stars RIGHT */}
-                <div className="testimonial-card-header">
-                  <div className="testimonial-author">
-                    {item.avatar || item.avatarUrl || item.image ? (
+            {(testimonials && testimonials.length > 0
+              ? (testimonials.length < 6 ? [...testimonials, ...testimonials] : testimonials)
+              : DEFAULT_TESTIMONIALS
+            ).map((rawItem, idx) => {
+              const item = formatTestimonialItem(rawItem, idx);
+              return (
+                <div key={`${item.id || item._id || 't'}-${idx}`} className={`testimonial-card ${idx === 0 ? 'featured' : ''}`}>
+                  {/* Top Row: Author details LEFT + Stars/Rating RIGHT */}
+                  <div className="testimonial-card-header">
+                    <div className="testimonial-author">
                       <img
-                        src={item.avatar || item.avatarUrl || item.image}
-                        alt={item.author}
+                        src={item.avatar}
+                        alt={item.name}
                         className="author-avatar-img"
+                        onError={(e) => {
+                          e.currentTarget.src = `/avatars/avatar${(idx % 6) + 1}.jpg`;
+                        }}
                       />
-                    ) : (
-                      <div className="author-avatar">
-                        {item.author ? item.author.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'AS'}
+                      <div className="author-info">
+                        <strong className="author-name">{item.name}</strong>
+                        <span className="author-role">{item.role}</span>
+                        <span className="author-location">
+                          <svg
+                            className="location-pin-icon"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#0071e3"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                            <circle cx="12" cy="10" r="3" />
+                          </svg>
+                          <span>{item.location}</span>
+                        </span>
                       </div>
-                    )}
-                    <div className="author-info">
-                      <strong className="author-name">{item.author}</strong>
-                      {(item.location || item.sub) ? (
-                        <span className="author-location">{item.location || item.sub}</span>
-                      ) : null}
+                    </div>
+
+                    <div className="testimonial-stars-col">
+                      <span className="stars" aria-label="5 out of 5 stars">
+                        {'★'.repeat(item.stars || 5)}
+                      </span>
+                      <span className="stars-rating-label">5.0</span>
                     </div>
                   </div>
-                  <div className="testimonial-stars-col">
-                    <span className="stars" aria-label={`${item.stars || 5} out of 5 stars`}>
-                      {'★'.repeat(item.stars || 5)}
-                    </span>
-                    <span className="stars-rating-label">{item.stars || 5}.0</span>
+
+                  {/* Thin Light-Grey Divider */}
+                  <div className="testimonial-divider" />
+
+                  {/* Review Text */}
+                  <div className="testimonial-card-body">
+                    <p className="testimonial-text">{item.text}</p>
                   </div>
                 </div>
-                {/* Review Text */}
-                <div className="testimonial-card-body">
-                  <p className="testimonial-text">{item.text}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
