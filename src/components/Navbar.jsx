@@ -61,7 +61,7 @@ export default function Navbar() {
       .iphone-dropdown-theme button.nav-dropdown-link {
         color: #1d1d1f !important;
         font-weight: 700 !important;
-        font-size: 17px !important;
+        font-size: 22px !important;
         letter-spacing: -0.01em !important;
       }
       .iphone-dropdown-theme a:hover, 
@@ -779,11 +779,11 @@ export default function Navbar() {
 
     return (
       <div className="md:col-span-6 text-left">
-        <span className="text-[12px] font-normal text-[#6E6E73] dark:text-zinc-400 block mb-3">
+        <span className="text-[15px] font-semibold text-[#6E6E73] dark:text-zinc-400 block mb-4">
           {config?.title || catTitle}
         </span>
 
-        <div className="flex flex-col gap-1 max-h-[380px] overflow-y-auto pr-2">
+        <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-2">
           {config ? (
             <>
               {config.mainLink && (
@@ -794,7 +794,7 @@ export default function Navbar() {
                     closeDropdown();
                     setHoveredProduct(null);
                   }}
-                  className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1"
+                  className="nav-dropdown-link text-[20px] sm:text-[22px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1.5"
                 >
                   {config.mainLink.label}
                 </Link>
@@ -809,7 +809,7 @@ export default function Navbar() {
                     closeDropdown();
                     setHoveredProduct(null);
                   }}
-                  className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1"
+                  className="nav-dropdown-link text-[20px] sm:text-[22px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1.5"
                 >
                   {item.label}
                 </Link>
@@ -825,7 +825,7 @@ export default function Navbar() {
                   closeDropdown();
                   setHoveredProduct(null);
                 }}
-                className="nav-dropdown-link text-[16px] sm:text-[17px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1"
+                className="nav-dropdown-link text-[20px] sm:text-[22px] font-bold text-[#1D1D1F] dark:text-white leading-snug tracking-tight hover:text-black transition-colors block py-1.5"
               >
                 {prod.title || prod.name}
               </Link>
@@ -1077,12 +1077,12 @@ export default function Navbar() {
     return (
       <div className="hidden md:flex md:col-span-6 pl-4 flex-col text-left shrink-0 justify-center items-center">
         {hoveredProduct ? (
-          <div className="w-full h-[340px] sm:h-[395px] rounded-3xl bg-white border border-zinc-200/80 p-4 shadow-xs overflow-hidden flex items-center justify-center transition-all duration-300 animate-in fade-in">
+          <div className="w-full h-[420px] sm:h-[480px] rounded-3xl bg-white border border-zinc-200/80 p-4 shadow-xs overflow-hidden flex items-center justify-center transition-all duration-300 animate-in fade-in">
             <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-white p-2">
               <img
                 src={hoveredProduct.image}
                 alt={hoveredProduct.name || 'Preview'}
-                className="max-w-[90%] max-h-[90%] object-contain object-center transition-all duration-300 hover:scale-105"
+                className="max-w-[95%] max-h-[95%] object-contain object-center transition-all duration-300 hover:scale-105"
                 style={{
                   imageRendering: 'high-quality',
                   WebkitBackfaceVisibility: 'hidden',
@@ -1098,7 +1098,7 @@ export default function Navbar() {
             </div>
           </div>
         ) : (
-          <div className="w-full h-[340px] sm:h-[395px] rounded-3xl bg-white border border-dashed border-zinc-200 flex items-center justify-center">
+          <div className="w-full h-[420px] sm:h-[480px] rounded-3xl bg-white border border-dashed border-zinc-200 flex items-center justify-center">
             <span className="text-zinc-400 text-xs uppercase font-bold tracking-wider">Hover to Preview</span>
           </div>
         )}
@@ -1177,12 +1177,10 @@ export default function Navbar() {
   return (
     <>
       {styleTag}
-      {!isHomePage && (
-        <div
-          className="w-full shrink-0 h-[76px] sm:h-[84px] lg:h-[92px] pointer-events-none select-none"
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className="w-full shrink-0 h-[76px] sm:h-[84px] lg:h-[92px] pointer-events-none select-none"
+        aria-hidden="true"
+      />
       <div className={`pill-nav-stage ${isNavVisible ? 'nav-visible' : 'nav-hidden'}`}>
         <nav className="pill-nav-container select-none relative z-40 text-black">
 

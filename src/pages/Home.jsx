@@ -216,6 +216,8 @@ export default function Home() {
   const trendingSliderRef = useRef(null);
   const categoryStripRef = useRef(null);
 
+  const whyChooseSliderRef = useRef(null);
+
   const scrollCategoryStrip = (direction) => {
     if (categoryStripRef.current) {
       const scrollAmount = direction === 'left' ? -260 : 260;
@@ -234,6 +236,13 @@ export default function Home() {
     if (trendingSliderRef.current) {
       const scrollAmount = direction === 'left' ? -380 : 380;
       trendingSliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const scrollWhyChoose = (direction) => {
+    if (whyChooseSliderRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      whyChooseSliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
@@ -306,11 +315,25 @@ export default function Home() {
   // Hero Banner Slider States
   const [heroSlides, setHeroSlides] = useState(() => {
     try {
-      const cached = localStorage.getItem('iincept_home_hero_slides_v2');
+      const cached = localStorage.getItem('iincept_home_hero_slides_v6');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const active = parsed.filter(s => s.isActive !== false);
+          const active = parsed.filter(s => s.isActive !== false).map((s, idx) => {
+            let slideTitle = (s.title || (s.titleBold ? `${s.titleBold || ''} ${s.titleNormal || ''}`.trim() : '') || '').trim();
+            return {
+              ...s,
+              hideText: s.hideText !== false,
+              imageFit: s.imageFit || 'cover',
+              title: slideTitle,
+              subtitle: s.subtitle || '',
+              buttonText: s.buttonText || '',
+              buttonLink: s.buttonLink || '',
+              secondaryButtonText: s.secondaryButtonText || '',
+              secondaryButtonLink: s.secondaryButtonLink || '',
+              badge: s.badge || ''
+            };
+          });
           if (active.length > 0) return active;
         }
       }
@@ -324,19 +347,38 @@ export default function Home() {
   // Compute active effective hero slides array with graceful fallback
   const effectiveHeroSlides = (heroSlides && heroSlides.length > 0)
     ? heroSlides
-    : [{
-        _id: 'default-fallback-hero-slide',
-        title: heroData.homeHeroTitle || 'The latest.\nThe best. Authorised.',
-        subtitle: heroData.homeHeroSubtitle || 'Genuine Apple products from India’s trusted mono-brand premium resellers. Exclusive offers, EMI & expert support.',
-        buttonText: heroData.homeHeroPrimaryBtnText || 'Shop Now',
-        buttonLink: heroData.homeHeroPrimaryBtnLink || '#shop-by-category',
-        secondaryButtonText: heroData.homeHeroSecondaryBtnText || 'Find Nearest Store',
-        secondaryButtonLink: heroData.homeHeroSecondaryBtnLink || '#b2b-section',
-        badge: heroData.homeHeroBadge || 'Apple Authorised Resellers across India',
-        image: heroData.homeHeroImage || DEFAULT_HERO_IMAGE,
-        bgStyle: 'slide-dark',
-        isActive: true
-      }];
+    : [
+        {
+          _id: 'default-fallback-slide-1',
+          title: 'iPhone Duo',
+          image: '/uploads/upload_1792058368844_855.jpeg',
+          mobileImage: '/uploads/upload_iphone_duo_mobile.png',
+          bgStyle: 'slide-dark',
+          hideText: true,
+          imageFit: 'cover',
+          isActive: true
+        },
+        {
+          _id: 'default-fallback-slide-2',
+          title: 'AirPods 5',
+          image: '/uploads/upload_1792058375185_444.jpg',
+          mobileImage: '/uploads/upload_airpods_5_mobile.png',
+          bgStyle: 'slide-dark',
+          hideText: true,
+          imageFit: 'cover',
+          isActive: true
+        },
+        {
+          _id: 'default-fallback-slide-3',
+          title: 'Apple Watch Series 12',
+          image: '/uploads/upload_1792058382295_674.jpeg',
+          mobileImage: '/uploads/upload_apple_watch_mobile.png',
+          bgStyle: 'slide-dark',
+          hideText: true,
+          imageFit: 'cover',
+          isActive: true
+        }
+      ];
 
   // Clamp currentSlideIndex if array shrinks
   useEffect(() => {
@@ -544,27 +586,36 @@ export default function Home() {
         if (response.data.heroSlides && Array.isArray(response.data.heroSlides)) {
           const activeSlides = response.data.heroSlides
             .filter(s => s.isActive !== false)
-            .map(s => ({
-              ...s,
-              title: (s.title || (s.titleBold ? `${s.titleBold || ''} ${s.titleNormal || ''}`.trim() : '') || 'The latest. The best. Authorised.'),
-              subtitle: s.subtitle || response.data.homeHeroSubtitle || 'Genuine Apple products from India’s trusted mono-brand premium resellers.',
-              buttonText: s.buttonText || response.data.homeHeroPrimaryBtnText || 'Shop Now',
-              buttonLink: s.buttonLink || response.data.homeHeroPrimaryBtnLink || '#shop-by-category',
-              secondaryButtonText: s.secondaryButtonText || response.data.homeHeroSecondaryBtnText || 'Find Nearest Store',
-              secondaryButtonLink: s.secondaryButtonLink || response.data.homeHeroSecondaryBtnLink || '#b2b-section',
-              badge: s.badge || response.data.homeHeroBadge || 'Apple Authorised Resellers across India',
-              image: (s.image && typeof s.image === 'string' && s.image.trim()) ? s.image.trim() : (response.data.homeHeroImage || DEFAULT_HERO_IMAGE)
-            }));
+            .map((s, idx) => {
+              let slideTitle = (s.title || (s.titleBold ? `${s.titleBold || ''} ${s.titleNormal || ''}`.trim() : '') || '').trim();
+              const resolvedImage = (s.image && typeof s.image === 'string' && s.image.trim()) 
+                ? s.image.trim() 
+                : (idx === 0 && response.data.homeHeroImage && typeof response.data.homeHeroImage === 'string' && response.data.homeHeroImage.trim() 
+                    ? response.data.homeHeroImage.trim() 
+                    : DEFAULT_HERO_IMAGE);
 
-          setHeroSlides(prev => {
-            if (JSON.stringify(prev) !== JSON.stringify(activeSlides)) {
-              try {
-                localStorage.setItem('iincept_home_hero_slides_v2', JSON.stringify(activeSlides));
-              } catch (e) { }
-              return activeSlides;
-            }
-            return prev;
-          });
+              return {
+                ...s,
+                hideText: s.hideText !== false,
+                imageFit: s.imageFit || 'cover',
+                title: slideTitle,
+                subtitle: s.subtitle || '',
+                buttonText: s.buttonText || '',
+                buttonLink: s.buttonLink || '',
+                secondaryButtonText: s.secondaryButtonText || '',
+                secondaryButtonLink: s.secondaryButtonLink || '',
+                badge: s.badge || '',
+                image: resolvedImage,
+                mobileImage: (s.mobileImage && typeof s.mobileImage === 'string' && s.mobileImage.trim()) 
+                  ? s.mobileImage.trim() 
+                  : (idx === 0 ? '/uploads/upload_iphone_duo_mobile.png' : idx === 1 ? '/uploads/upload_airpods_5_mobile.png' : idx === 2 ? '/uploads/upload_apple_watch_mobile.png' : resolvedImage)
+              };
+            });
+
+          setHeroSlides(activeSlides);
+          try {
+            localStorage.setItem('iincept_home_hero_slides_v6', JSON.stringify(activeSlides));
+          } catch (e) { }
         }
 
         if (response.data.homeDealBanners && Array.isArray(response.data.homeDealBanners) && response.data.homeDealBanners.length > 0) {
@@ -1413,19 +1464,19 @@ export default function Home() {
           color: #6e6e73;
         }
 
-        /* Dark Theme Card Variant (e.g., Box 2) */
+        /* Dark Theme Card Variant (e.g., Box 2) — now white */
         .indiaistore-theme .rf-ccard-dark {
-          background: #000000 !important;
-          color: #ffffff !important;
-          border-color: transparent !important;
+          background: #ffffff !important;
+          color: #1d1d1f !important;
+          border-color: rgba(0,0,0,0.08) !important;
         }
 
         .indiaistore-theme .rf-ccard-dark .rf-ccard-img-full-wrapper {
-          background: #000000 !important;
+          background: #ffffff !important;
         }
 
         .indiaistore-theme .rf-ccard-dark .rf-ccard-content-info {
-          background: linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0) 100%) !important;
+          background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 55%, rgba(255,255,255,0) 100%) !important;
         }
 
         .indiaistore-theme .rf-ccard-dark .rf-ccard-content-header-eyebrow {
@@ -1433,15 +1484,15 @@ export default function Home() {
         }
 
         .indiaistore-theme .rf-ccard-dark .rf-ccard-content-headerlink {
-          color: #ffffff !important;
+          color: #1d1d1f !important;
         }
 
         .indiaistore-theme .rf-ccard-dark .rf-ccard-content-desccontent {
-          color: #f5f5f7 !important;
+          color: #3f3f46 !important;
         }
 
         .indiaistore-theme .rf-ccard-dark .rf-ccard-content-descprice {
-          color: #a1a1a6 !important;
+          color: #6e6e73 !important;
         }
 
         .indiaistore-theme .product-card {
@@ -1961,12 +2012,43 @@ export default function Home() {
           padding: 0px 22px 64px;
         }
 
+        .indiaistore-theme .wby-header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          position: relative;
+          margin-bottom: 28px;
+        }
+
+        .indiaistore-theme .wby-header .section-title,
+        .indiaistore-theme .wby-header .wby-title {
+          text-align: center;
+          margin: 0 auto;
+        }
+
+        .indiaistore-theme .wby-header .slider-nav-btns {
+          position: absolute;
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .indiaistore-theme .wby-slider-wrap {
+          position: relative;
+          width: 100%;
+          overflow: hidden;
+        }
+
         .indiaistore-theme .wby-title {
           text-align: center;
           font-size: 36px;
           font-weight: 700;
           letter-spacing: -0.02em;
-          margin: 0 0 20px;
+          margin: 0;
           color: var(--apple-black);
         }
 
@@ -1987,12 +2069,6 @@ export default function Home() {
 
         @media (max-width: 1100px) {
           .indiaistore-theme .wby-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-        @media (max-width: 720px) {
-          .indiaistore-theme .wby-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 480px) {
-          .indiaistore-theme .wby-grid { grid-template-columns: 1fr; }
         }
 
         .indiaistore-theme .wby-card {
@@ -2252,8 +2328,8 @@ export default function Home() {
 
         .indiaistore-theme .testimonial-card.featured,
         .indiaistore-theme .testimonial-card:first-child {
-          border: 1.5px solid #0071e3;
-          box-shadow: 0 8px 24px rgba(0, 113, 227, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
         }
 
         .indiaistore-theme .testimonial-card:hover {
@@ -2265,8 +2341,8 @@ export default function Home() {
         .indiaistore-theme .testimonial-card.featured:hover,
         .indiaistore-theme .testimonial-card:first-child:hover {
           transform: translateY(-4px);
-          border-color: #0071e3;
-          box-shadow: 0 14px 34px rgba(0, 113, 227, 0.18);
+          border-color: #d1d5db;
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
         }
 
         .indiaistore-theme .testimonial-card-header {
@@ -2514,7 +2590,14 @@ export default function Home() {
           .indiaistore-theme .categories { padding: 0px 16px 36px; margin-top: 0px; }
           .indiaistore-theme .categories-divider { margin-bottom: 24px; }
           .indiaistore-theme .section-trending { padding-top: 16px; }
-          .indiaistore-theme .wby-section { padding: 0px 16px 40px; margin-top: 0px; }
+          .indiaistore-theme .wby-section { 
+            padding: 40px 16px 40px !important; 
+            margin-top: 28px !important; 
+          }
+          .indiaistore-theme .wby-header {
+            margin-top: 12px !important;
+            margin-bottom: 24px !important;
+          }
           .indiaistore-theme .section-title,
           .indiaistore-theme .wby-title,
           .indiaistore-theme .new-arrivals-header .section-title,
@@ -2527,6 +2610,7 @@ export default function Home() {
             margin: 0 auto !important;
           }
           .indiaistore-theme .wby-title {
+            margin-top: 14px !important;
             margin-bottom: 24px !important;
           }
 
@@ -2613,6 +2697,27 @@ export default function Home() {
           .indiaistore-theme .product-card { flex: 0 0 240px; min-width: 220px; padding: 14px; }
           .indiaistore-theme .trending-card { flex: 0 0 280px; min-width: 260px; }
           .indiaistore-theme .trending-img { height: 220px; }
+          .indiaistore-theme .wby-header .slider-nav-btns { display: none !important; }
+          .indiaistore-theme .wby-grid {
+            display: flex !important;
+            gap: 16px !important;
+            overflow-x: auto !important;
+            scroll-behavior: smooth !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 8px 4px 20px !important;
+            scrollbar-width: none !important;
+            scroll-snap-type: x mandatory !important;
+          }
+          .indiaistore-theme .wby-grid::-webkit-scrollbar { display: none !important; }
+          .indiaistore-theme .wby-card {
+            flex: 0 0 280px !important;
+            min-width: 260px !important;
+            max-width: 300px !important;
+            scroll-snap-align: start !important;
+            box-sizing: border-box !important;
+            padding: 26px 20px 24px !important;
+            border-radius: 20px !important;
+          }
         }
 
         @media (max-width: 480px) {
@@ -2625,6 +2730,13 @@ export default function Home() {
             font-size: 20px !important;
             font-weight: 700 !important;
             text-transform: uppercase !important;
+          }
+
+          .indiaistore-theme .wby-card {
+            flex: 0 0 260px !important;
+            min-width: 240px !important;
+            max-width: 280px !important;
+            padding: 22px 16px 20px !important;
           }
 
           .indiaistore-theme .testimonial-card {
@@ -2657,187 +2769,244 @@ export default function Home() {
         }
       `}</style>
 
-      {/* 1. HERO BANNER SLIDER (Full-width continuous background extending behind navbar to top edge) */}
-      <section 
-        className="hero-banner-slider-container relative w-full rounded-b-2xl sm:rounded-b-3xl md:rounded-b-[36px] lg:rounded-b-[40px] h-[520px] sm:h-[560px] md:h-[600px] lg:h-[640px] overflow-hidden select-none bg-gradient-to-b from-[#18191c] via-[#232528] to-[#2c2d32] text-white shadow-xl shadow-black/10"
-        onMouseEnter={() => setIsHeroPaused(true)}
-        onMouseLeave={() => setIsHeroPaused(false)}
-        onTouchStart={() => setIsHeroPaused(true)}
-        onTouchEnd={() => setIsHeroPaused(false)}
-      >
-        {/* Track Container */}
-        <div 
-          className="hero-slider-track flex w-full h-full transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
-          style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+
+
+      {/* 1. APPLE-INSPIRED PRODUCTION HERO BANNER CAROUSEL */}
+      {effectiveHeroSlides && effectiveHeroSlides.length > 0 && (
+        <section 
+          className="hero-carousel-section relative w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 pt-2 pb-6 select-none"
+          onMouseEnter={() => setIsHeroPaused(true)}
+          onMouseLeave={() => setIsHeroPaused(false)}
+          onTouchStart={() => setIsHeroPaused(true)}
+          onTouchEnd={() => setIsHeroPaused(false)}
+          aria-label="Apple Featured Promotions Hero Carousel"
         >
-          {effectiveHeroSlides.map((slide, idx) => {
-            return (
-              <div 
-                key={slide._id || slide.id || idx}
-                className="hero-slide-item flex-none w-full h-full relative overflow-hidden flex items-center justify-center bg-gradient-to-b from-[#18191c] via-[#232528] to-[#2c2d32]"
-              >
-                {/* Full-width Admin Banner Image */}
-                <img
-                  src={slide.image || DEFAULT_HERO_IMAGE}
-                  alt={slide.title || 'Apple Showcase Banner'}
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="sync"
-                  className="absolute inset-0 w-full h-full object-cover object-center"
-                  onError={(e) => {
-                    if (e.currentTarget.src !== DEFAULT_HERO_IMAGE) {
-                      e.currentTarget.src = DEFAULT_HERO_IMAGE;
-                    }
-                  }}
-                />
+          <div className="relative w-full rounded-2xl sm:rounded-3xl lg:rounded-[36px] overflow-hidden bg-[#f5f5f7] shadow-sm border border-black/[0.04] h-[480px] sm:h-[500px] lg:h-[520px]">
+            {/* Slider Track */}
+            <div 
+              className="flex w-full h-full transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+            >
+              {effectiveHeroSlides.map((slide, idx) => {
+                const displayTitle = slide.title || (slide.titleBold ? `${slide.titleBold} ${slide.titleNormal || ''}`.trim() : 'Apple devices for your business.');
+                const displayBadge = slide.badge || 'APPLE AUTHORISED RESELLERS ACROSS INDIA';
+                const displaySubtitle = slide.subtitle || 'Equip your business teams with Apple Silicon. Volume pricing, GST invoicing, and dedicated account support.';
+                const primaryBtnText = slide.buttonText || 'Explore Lineup →';
+                const primaryBtnLink = slide.buttonLink || '#shop-by-category';
+                const secondaryBtnText = slide.secondaryButtonText || 'Find Nearest Store';
+                const secondaryBtnLink = slide.secondaryButtonLink || '#store-locator';
 
-                {/* Subtle Gradient Overlay for Text Readability (rendered when slide has text) */}
-                {(slide.title || slide.subtitle || slide.titleBold || slide.badge) && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
-                )}
+                // Image fit & focal position
+                const fitClass = slide.imageFit === 'cover' ? 'object-cover' : 'object-contain';
+                const focalClass = slide.focalPosition === 'center' ? 'object-center' : slide.focalPosition === 'left' ? 'object-left' : 'object-right';
+                const isBlueTheme = slide.bgStyle === 'slide-dark-blue';
+                const slideBgClass = isBlueTheme ? 'bg-[#92b3cf]' : 'bg-[#f5f5f7]';
 
-                {/* Slide Text & Interactive CTA Buttons Overlay */}
-                <div className="relative z-20 w-full max-w-7xl mx-auto h-full px-6 sm:px-10 md:px-16 pt-24 sm:pt-28 md:pt-32 pb-8 flex items-center justify-start pointer-events-none">
-                  {/* Dedicated Left-Aligned Content Column */}
-                  <div className="w-full max-w-[400px] sm:max-w-[440px] md:max-w-[460px] lg:max-w-[480px] xl:max-w-[500px] flex flex-col items-start text-left pointer-events-auto shrink-0">
-                    {(slide.badge || heroData.homeHeroBadge) && (
-                      <div className="hero-eyebrow text-xs md:text-sm font-semibold text-[#2997ff] mb-2 tracking-wide uppercase">
-                        {slide.badge || heroData.homeHeroBadge}
+                const bannerImg = slide.image || DEFAULT_HERO_IMAGE;
+                const mobileImg = slide.mobileImage || bannerImg;
+
+                return (
+                  <div 
+                    key={slide._id || slide.id || idx}
+                    className={`flex-none w-full h-full relative overflow-hidden ${slideBgClass}`}
+                  >
+                    {slide.hideText !== false || !slide.showTextOverlay ? (
+                      /* IMAGE-ONLY BANNER (Pure Visual Banner Mode - Image added from Admin Panel appears cleanly) */
+                      <div className="absolute inset-0 w-full h-full overflow-hidden">
+                        <picture key={`pic-hide-${slide._id || idx}-${bannerImg}-${mobileImg}-v2`} className="w-full h-full block">
+                          {mobileImg && <source media="(max-width: 768px)" srcSet={`${mobileImg}?v=2`} />}
+                          <img
+                            key={`img-hide-${slide._id || idx}-${bannerImg}`}
+                            src={`${bannerImg}?v=2`}
+                            alt={displayTitle || 'Hero Banner'}
+                            loading={idx === 0 ? "eager" : "lazy"}
+                            decoding="async"
+                            className="w-full h-full object-cover object-center block select-none pointer-events-none"
+                          />
+                        </picture>
+                        {primaryBtnLink && primaryBtnLink !== '#' && (
+                          <Link
+                            to={primaryBtnLink.startsWith('/') ? primaryBtnLink : '#shop-by-category'}
+                            className="absolute inset-0 z-10 block"
+                            aria-label={displayTitle}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      /* STANDARD HERO BANNER: Left Text Content + Right Product Image */
+                      <div className="w-full h-full flex flex-col lg:flex-row items-center justify-between relative z-10 max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-6 lg:py-0">
+                        {/* Left Text Block (Floating Dark Card as in Apple Reference or Clean Minimal) */}
+                        {slide.overlayStyle === 'card' || slide.bgStyle === 'slide-dark' ? (
+                          <div className="w-full lg:max-w-[500px] flex flex-col items-center lg:items-start text-center lg:text-left z-20 shrink-0 bg-[#474d53]/95 text-white p-6 sm:p-8 lg:p-9 rounded-[26px] sm:rounded-[30px] shadow-2xl backdrop-blur-md border border-white/10 my-auto">
+                            {displayBadge && (
+                              <div className="text-[11px] sm:text-xs font-bold tracking-wider text-[#2997ff] uppercase mb-2 sm:mb-3">
+                                {displayBadge}
+                              </div>
+                            )}
+
+                            <h1 className="text-xl sm:text-2xl lg:text-[32px] font-extrabold text-white tracking-tight leading-[1.2] mb-3 break-words">
+                              {displayTitle}
+                            </h1>
+
+                            {displaySubtitle && (
+                              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-[440px] mb-5 sm:mb-6 line-clamp-3">
+                                {displaySubtitle}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap">
+                              <Link
+                                to={primaryBtnLink.startsWith('/') ? primaryBtnLink : '#shop-by-category'}
+                                onClick={(e) => {
+                                  if (primaryBtnLink.startsWith('#')) {
+                                    e.preventDefault();
+                                    const sec = document.getElementById(primaryBtnLink.replace('#', ''));
+                                    if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                  }
+                                }}
+                                className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                              >
+                                {primaryBtnText}
+                              </Link>
+
+                              {secondaryBtnText && (
+                                <Link
+                                  to={secondaryBtnLink.startsWith('/') ? secondaryBtnLink : '#store-locator'}
+                                  onClick={(e) => {
+                                    if (secondaryBtnLink.startsWith('#')) {
+                                      e.preventDefault();
+                                      const sec = document.getElementById(secondaryBtnLink.replace('#', ''));
+                                      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                  }}
+                                  className="px-6 py-2.5 rounded-full bg-[#2c3033]/90 hover:bg-[#2c3033] text-white border border-white/20 text-xs sm:text-sm font-medium shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-sm"
+                                >
+                                  {secondaryBtnText}
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full lg:max-w-[540px] flex flex-col items-center lg:items-start text-center lg:text-left z-20 shrink-0 my-auto">
+                            {displayBadge && (
+                              <div className="text-[11px] sm:text-xs font-semibold tracking-wider text-[#0071e3] uppercase mb-2">
+                                {displayBadge}
+                              </div>
+                            )}
+
+                            <h1 className="text-2xl sm:text-3xl lg:text-[40px] font-bold text-[#1d1d1f] tracking-tight leading-[1.12] mb-3 break-words">
+                              {displayTitle}
+                            </h1>
+
+                            {displaySubtitle && (
+                              <p className="text-xs sm:text-sm lg:text-base text-[#424245] leading-relaxed max-w-[480px] mb-5 sm:mb-6 line-clamp-3">
+                                {displaySubtitle}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap">
+                              <Link
+                                to={primaryBtnLink.startsWith('/') ? primaryBtnLink : '#shop-by-category'}
+                                onClick={(e) => {
+                                  if (primaryBtnLink.startsWith('#')) {
+                                    e.preventDefault();
+                                    const sec = document.getElementById(primaryBtnLink.replace('#', ''));
+                                    if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                  }
+                                }}
+                                className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                              >
+                                {primaryBtnText}
+                              </Link>
+
+                              {secondaryBtnText && (
+                                <Link
+                                  to={secondaryBtnLink.startsWith('/') ? secondaryBtnLink : '#store-locator'}
+                                  onClick={(e) => {
+                                    if (secondaryBtnLink.startsWith('#')) {
+                                      e.preventDefault();
+                                      const sec = document.getElementById(secondaryBtnLink.replace('#', ''));
+                                      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                  }}
+                                  className="px-6 py-2.5 rounded-full bg-white/80 hover:bg-white text-[#1d1d1f] border border-black/15 text-xs sm:text-sm font-medium shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-sm"
+                                >
+                                  {secondaryBtnText}
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Right Product Image */}
+                        <div className="w-full lg:flex-1 h-[220px] sm:h-[280px] lg:h-full flex items-center justify-center lg:justify-end overflow-hidden pt-4 lg:pt-0">
+                          <picture key={`pic-norm-${slide._id || idx}-${bannerImg}`} className="w-full h-full flex items-center justify-center lg:justify-end">
+                            {slide.mobileImage && <source media="(max-width: 640px)" srcSet={mobileImg} />}
+                            <img
+                              key={`img-norm-${slide._id || idx}-${bannerImg}`}
+                              src={bannerImg}
+                              alt={displayTitle}
+                              loading={idx === 0 ? "eager" : "lazy"}
+                              decoding="async"
+                              className={`max-h-full max-w-full ${fitClass} ${focalClass} drop-shadow-md transition-transform duration-700`}
+                            />
+                          </picture>
+                        </div>
                       </div>
                     )}
-                    
-                    {(slide.title || slide.titleBold || slide.titleNormal) && (
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-extrabold tracking-tight leading-[1.12] mb-3 text-white drop-shadow-md break-words">
-                        {slide.titleBold || slide.titleNormal ? (
-                          <>
-                            <span className="font-bold">{slide.titleBold} </span>
-                            <span className="font-normal opacity-90">{slide.titleNormal}</span>
-                          </>
-                        ) : (
-                          slide.title
-                        )}
-                      </h1>
-                    )}
-                    
-                    {slide.subtitle && (
-                      <p className="hero-sub text-xs sm:text-sm md:text-[15px] text-white/90 w-full mb-5 leading-relaxed drop-shadow break-words line-clamp-3 sm:line-clamp-none">
-                        {slide.subtitle}
-                      </p>
-                    )}
-
-                    <div className="hero-ctas flex items-center gap-3.5 flex-wrap mt-0">
-                      {slide.buttonText && (
-                        slide.buttonLink?.startsWith('/') ? (
-                          <Link
-                            to={slide.buttonLink}
-                            className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs md:text-sm font-medium transition-all transform hover:scale-[1.03] shadow-lg shadow-blue-500/25"
-                          >
-                            {slide.buttonText}
-                          </Link>
-                        ) : (
-                          <a
-                            href={slide.buttonLink || '#shop-by-category'}
-                            onClick={(e) => {
-                              const target = slide.buttonLink || '#shop-by-category';
-                              if (target.startsWith('#')) {
-                                e.preventDefault();
-                                const section = document.getElementById(target.replace('#', ''));
-                                if (section) {
-                                  const navbarHeight = 90;
-                                  const elementPosition = section.getBoundingClientRect().top + window.pageYOffset;
-                                  const offsetPosition = elementPosition - navbarHeight;
-                                  window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                                }
-                              }
-                            }}
-                            className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs md:text-sm font-medium transition-all transform hover:scale-[1.03] shadow-lg shadow-blue-500/25"
-                          >
-                            {slide.buttonText}
-                          </a>
-                        )
-                      )}
-
-                      {slide.secondaryButtonText && (
-                        slide.secondaryButtonLink?.startsWith('/') ? (
-                          <Link
-                            to={slide.secondaryButtonLink}
-                            className="px-6 py-2.5 rounded-full border border-white/40 hover:border-white text-white hover:bg-white/10 text-xs md:text-sm font-medium transition-all backdrop-blur-sm"
-                          >
-                            {slide.secondaryButtonText}
-                          </Link>
-                        ) : (
-                          <a
-                            href={slide.secondaryButtonLink || '#b2b-section'}
-                            onClick={(e) => {
-                              const target = slide.secondaryButtonLink || '#b2b-section';
-                              if (target && target.startsWith('#')) {
-                                e.preventDefault();
-                                const section = document.getElementById(target.replace('#', ''));
-                                if (section) {
-                                  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                              }
-                            }}
-                            className="px-6 py-2.5 rounded-full border border-white/40 hover:border-white text-white hover:bg-white/10 text-xs md:text-sm font-medium transition-all backdrop-blur-sm"
-                          >
-                            {slide.secondaryButtonText}
-                          </a>
-                        )
-                      )}
-                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
 
-        {/* Previous Arrow Button */}
-        {effectiveHeroSlides.length > 1 && (
-          <button
-            type="button"
-            onClick={() => setCurrentSlideIndex(prev => (prev === 0 ? effectiveHeroSlides.length - 1 : prev - 1))}
-            className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 text-white backdrop-blur-md flex items-center justify-center transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
-            aria-label="Previous Slide"
-            title="Previous Slide"
-          >
-            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 stroke-[2.5]" />
-          </button>
-        )}
-
-        {/* Next Arrow Button */}
-        {effectiveHeroSlides.length > 1 && (
-          <button
-            type="button"
-            onClick={() => setCurrentSlideIndex(prev => (prev + 1) % effectiveHeroSlides.length)}
-            className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 text-white backdrop-blur-md flex items-center justify-center transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
-            aria-label="Next Slide"
-            title="Next Slide"
-          >
-            <ChevronRight className="w-5 h-5 md:w-6 md:h-6 stroke-[2.5]" />
-          </button>
-        )}
-
-        {/* Pagination Dots */}
-        {effectiveHeroSlides.length > 1 && (
-          <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 backdrop-blur-md border border-white/10">
-            {effectiveHeroSlides.map((_, dotIdx) => (
+            {/* Circular Previous Arrow Button (Dark Translucent from Reference) */}
+            {effectiveHeroSlides.length > 1 && (
               <button
-                key={dotIdx}
                 type="button"
-                onClick={() => setCurrentSlideIndex(dotIdx)}
-                className={`transition-all duration-300 cursor-pointer rounded-full ${
-                  dotIdx === currentSlideIndex
-                    ? 'w-6 md:w-7 h-2 bg-white shadow-sm'
-                    : 'w-2 h-2 bg-white/40 hover:bg-white/80'
-                }`}
-                aria-label={`Go to slide ${dotIdx + 1}`}
-                title={`Slide ${dotIdx + 1}`}
-              />
-            ))}
+                onClick={() => setCurrentSlideIndex(prev => (prev === 0 ? effectiveHeroSlides.length - 1 : prev - 1))}
+                className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-[#3f454b]/75 hover:bg-[#3f454b]/95 text-white border border-white/10 backdrop-blur-md flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                aria-label="Previous Slide"
+                title="Previous Slide"
+              >
+                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+              </button>
+            )}
+
+            {/* Circular Next Arrow Button (Dark Translucent from Reference) */}
+            {effectiveHeroSlides.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setCurrentSlideIndex(prev => (prev + 1) % effectiveHeroSlides.length)}
+                className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-[#3f454b]/75 hover:bg-[#3f454b]/95 text-white border border-white/10 backdrop-blur-md flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                aria-label="Next Slide"
+                title="Next Slide"
+              >
+                <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+              </button>
+            )}
+
+            {/* Pagination Dots (Apple Pill Bar from Reference) */}
+            {effectiveHeroSlides.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#3f454b]/75 backdrop-blur-md border border-white/10 shadow-sm">
+                {effectiveHeroSlides.map((_, dotIdx) => (
+                  <button
+                    key={dotIdx}
+                    type="button"
+                    onClick={() => setCurrentSlideIndex(dotIdx)}
+                    className={`transition-all duration-300 cursor-pointer rounded-full ${
+                      dotIdx === currentSlideIndex
+                        ? 'w-6 h-1.5 bg-white shadow-xs'
+                        : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/80'
+                    }`}
+                    aria-label={`Go to slide ${dotIdx + 1}`}
+                    title={`Slide ${dotIdx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* 2. CATEGORY STRIP (Apple.com/store Style with side navigation arrows) */}
       <div id="shop-by-category" className="category-strip-wrapper">
@@ -3194,48 +3363,100 @@ export default function Home() {
 
       {/* 5.5 WHY BUY FROM AUTHORISED RESELLER */}
       <div className="wby-section">
-        <h2 className="wby-title">WHY CHOOSE iiNCEPT?</h2>
+        <div className="section-header wby-header">
+          <h2 className="section-title wby-title">WHY CHOOSE iiNCEPT?</h2>
+          <div className="slider-nav-btns">
+            <button
+              type="button"
+              className="slider-circle-btn"
+              onClick={() => scrollWhyChoose('left')}
+              title="Previous"
+              aria-label="Previous Why Choose"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="slider-circle-btn"
+              onClick={() => scrollWhyChoose('right')}
+              title="Next"
+              aria-label="Next Why Choose"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
 
-        <div className="wby-grid">
-          <div className="wby-card">
-            <div className="wby-icon">
-              <img src="/why_buy/icon_shield_check.png" alt="100% Original Products" className="wby-img-icon" />
+        <div className="wby-slider-wrap">
+          <button
+            type="button"
+            className="slider-side-arrow slider-side-arrow-left"
+            onClick={() => scrollWhyChoose('left')}
+            title="Previous Why Choose"
+            aria-label="Previous Why Choose"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
+          <div ref={whyChooseSliderRef} className="wby-grid">
+            <div className="wby-card">
+              <div className="wby-icon">
+                <img src="/why_buy/icon_shield_check.png" alt="100% Original Products" className="wby-img-icon" />
+              </div>
+              <h3 className="wby-card-title">100% Original Products</h3>
+              <p className="wby-card-desc">Only genuine Apple products sourced through official channels with full authenticity.</p>
             </div>
-            <h3 className="wby-card-title">100% Original Products</h3>
-            <p className="wby-card-desc">Only genuine Apple products sourced through official channels with full authenticity.</p>
+
+            <div className="wby-card">
+              <div className="wby-icon">
+                <img src="/why_buy/icon_warranty_ribbon.png" alt="1 Year Apple Warranty" className="wby-img-icon" />
+              </div>
+              <h3 className="wby-card-title">1 Year Apple Warranty</h3>
+              <p className="wby-card-desc">Complete manufacturer warranty support across all Apple Authorised service centres.</p>
+            </div>
+
+            <div className="wby-card">
+              <div className="wby-icon">
+                <img src="/why_buy/icon_shield_star.png" alt="Trusted Apple Seller" className="wby-img-icon" />
+              </div>
+              <h3 className="wby-card-title">Trusted Apple Seller</h3>
+              <p className="wby-card-desc">Official mono-brand authorised resellers trusted by thousands of customers across India.</p>
+            </div>
+
+            <div className="wby-card">
+              <div className="wby-icon">
+                <img src="/why_buy/icon_headset.png" alt="Expert Guidance & Support" className="wby-img-icon" />
+              </div>
+              <h3 className="wby-card-title">Expert Guidance &amp; Support</h3>
+              <p className="wby-card-desc">Trained Apple specialists for product advice, setup and after-sales support.</p>
+            </div>
+
+            <div className="wby-card">
+              <div className="wby-icon">
+                <img src="/why_buy/icon_shield_service.png" alt="Service You Can Trust" className="wby-img-icon" />
+              </div>
+              <h3 className="wby-card-title">Service You Can Trust</h3>
+              <p className="wby-card-desc">Comprehensive support and transparent service for complete peace of mind.</p>
+            </div>
           </div>
 
-          <div className="wby-card">
-            <div className="wby-icon">
-              <img src="/why_buy/icon_warranty_ribbon.png" alt="1 Year Apple Warranty" className="wby-img-icon" />
-            </div>
-            <h3 className="wby-card-title">1 Year Apple Warranty</h3>
-            <p className="wby-card-desc">Complete manufacturer warranty support across all Apple Authorised service centres.</p>
-          </div>
-
-          <div className="wby-card">
-            <div className="wby-icon">
-              <img src="/why_buy/icon_shield_star.png" alt="Trusted Apple Seller" className="wby-img-icon" />
-            </div>
-            <h3 className="wby-card-title">Trusted Apple Seller</h3>
-            <p className="wby-card-desc">Official mono-brand authorised resellers trusted by thousands of customers across India.</p>
-          </div>
-
-          <div className="wby-card">
-            <div className="wby-icon">
-              <img src="/why_buy/icon_headset.png" alt="Expert Guidance & Support" className="wby-img-icon" />
-            </div>
-            <h3 className="wby-card-title">Expert Guidance &amp; Support</h3>
-            <p className="wby-card-desc">Trained Apple specialists for product advice, setup and after-sales support.</p>
-          </div>
-
-          <div className="wby-card">
-            <div className="wby-icon">
-              <img src="/why_buy/icon_shield_service.png" alt="Service You Can Trust" className="wby-img-icon" />
-            </div>
-            <h3 className="wby-card-title">Service You Can Trust</h3>
-            <p className="wby-card-desc">Comprehensive support and transparent service for complete peace of mind.</p>
-          </div>
+          <button
+            type="button"
+            className="slider-side-arrow slider-side-arrow-right"
+            onClick={() => scrollWhyChoose('right')}
+            title="Next Why Choose"
+            aria-label="Next Why Choose"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </div>
 
