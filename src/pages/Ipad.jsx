@@ -785,12 +785,12 @@ export default function Ipad() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] py-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
 
       {/* Title & Category Sub-Nav Header */}
-      <div className="w-full bg-[#fcfcfc] pt-2 pb-4 select-none font-sans mb-6">
+      <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-4">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-2">
             iPad
           </h1>
 
