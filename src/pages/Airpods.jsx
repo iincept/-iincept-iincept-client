@@ -11,6 +11,7 @@ import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import CleanProductImage from '../components/CleanProductImage';
 import { resolveColorValue } from '../utils/colorResolver';
+import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 
 // Default AirPods AppleCare rows fallback
 const DEFAULT_AIRPODS_APPLECARE_ROWS = [

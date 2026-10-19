@@ -946,6 +946,7 @@ export default function AppleCare() {
   const currentCategoryKey = (selectedCategory || 'iPhone').toLowerCase();
 
   let activeRows = [];
+  let activeCategoryTable = null;
   const isTvHomeCategory =
     currentCategoryKey === 'tv' ||
     currentCategoryKey === 'homepod' ||
@@ -955,6 +956,9 @@ export default function AppleCare() {
     currentCategoryKey.includes('home');
 
   if (isTvHomeCategory) {
+    activeCategoryTable = pricingTables.find(t => t.categoryKey === 'tv-home' || t.categoryKey === 'tv' || t.categoryKey === 'homepod')
+      || DEFAULT_PRICING_TABLES.find(t => t.categoryKey === 'tv-home')
+      || DEFAULT_PRICING_TABLES[0];
     const tvTables = pricingTables.filter(t => t.categoryKey === 'tv' || t.categoryKey === 'tv-home' || t.categoryKey === 'homepod');
     tvTables.forEach(t => {
       if (t.rows && t.rows.length > 0) {
@@ -974,13 +978,10 @@ export default function AppleCare() {
       }
     });
     if (activeRows.length === 0) {
-      const activeCategoryTable = pricingTables.find(t => t.categoryKey === 'tv-home' || t.categoryKey === 'tv' || t.categoryKey === 'homepod')
-        || DEFAULT_PRICING_TABLES.find(t => t.categoryKey === 'tv-home')
-        || DEFAULT_PRICING_TABLES[0];
       activeRows = (activeCategoryTable?.rows || []).filter(r => r.isActive !== false);
     }
   } else {
-    const activeCategoryTable = pricingTables.find(t => t.categoryKey === currentCategoryKey)
+    activeCategoryTable = pricingTables.find(t => t.categoryKey === currentCategoryKey)
       || DEFAULT_PRICING_TABLES.find(t => t.categoryKey === currentCategoryKey)
       || DEFAULT_PRICING_TABLES[0];
     activeRows = (activeCategoryTable?.rows || []).filter(r => r.isActive !== false);
