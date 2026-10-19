@@ -9,6 +9,7 @@ import { matchesProductSearch } from '../utils/searchUtils';
 import { getProductCardPricing } from '../utils/pricingUtils';
 import CleanProductImage from '../components/CleanProductImage';
 import { subscribeToLiveSync } from '../services/liveSyncService';
+import { resolveColorValue } from '../utils/colorResolver';
 
 // Products are loaded dynamically from e-commerce database API
 
@@ -172,47 +173,6 @@ export default function Accessories() {
     }
   }, [searchParams]);
 
-  const resolveColorValue = (cVal) => {
-    if (!cVal) return '#cbd5e1';
-    const cValStr = cVal.toString().trim();
-    if (cValStr.startsWith('#') || cValStr.startsWith('rgb') || cValStr.startsWith('hsl')) {
-      return cValStr;
-    }
-    const COLOR_MAP = {
-      "space black": "#1c1c1c",
-      "space gray": "#555555",
-      "starlight": "#f5f5f4",
-      "silver": "#cbd5e1",
-      "desert titanium": "#e6c2b9",
-      "dark blue": "#2a4b7c",
-      "deep blue": "#1d3557",
-      "titanium": "#cbd5e1",
-      "white": "#ffffff",
-      "gold": "#e5c158",
-      "pink": "#ec4899",
-      "black": "#111111",
-      "orange": "#ff9f68",
-      "orenge": "#ff9f68",
-      "cosmic orange": "#d9a07a",
-      "blue": "#0071E3",
-      "red": "#e0115f",
-      "midnight": "#1e293b",
-      "light blue": "#bfdbfe",
-      "sky blue": "#bae6fd",
-      "lavender": "#e9d5ff",
-      "green": "#bbf7d0",
-      "dark gray": "#3f3f46",
-      "natural titanium": "#a39e99",
-      "natural": "#a39e99",
-      "black titanium": "#232426",
-      "white titanium": "#f2f1ed",
-      "deep purple": "#3b224c",
-      "purple": "#a855f7",
-      "yellow": "#eab308"
-    };
-    const lowerVal = cValStr.toLowerCase().replace(/\s+/g, ' ').trim();
-    return COLOR_MAP[lowerVal] || '#cbd5e1';
-  };
 
   const handleColorChange = (productId, colorVal) => {
     setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
@@ -482,8 +442,9 @@ export default function Accessories() {
         variants: p.variants || [],
         colors: Array.isArray(p.colors) ? p.colors.map(c => {
           const name = typeof c === 'string' ? c : (c.name || '');
-          const val = typeof c === 'string' ? c : (c.value || c.name || '');
-          return { name, value: resolveColorValue(val) };
+          const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
+          const resolved = resolveColorValue(val);
+          return { name, value: resolved, colorHex: resolved };
         }) : [],
         rating: p.rating || 5.0,
         isSoldOut: p.stock <= 0
@@ -605,7 +566,7 @@ export default function Accessories() {
                               <button
                                 key={color.name}
                                 onClick={() => handleColorChange(prod.id, color.name)}
-                                style={{ backgroundColor: color.value }}
+                                style={{ backgroundColor: resolveColorValue(color.colorHex || color.value || color.name) }}
                                 className={`w-4 h-4 rounded-full cursor-pointer transition-all ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
                                   }`}
                                 title={color.name}

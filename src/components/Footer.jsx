@@ -496,7 +496,7 @@ export default function Footer() {
           </div>
 
           {/* Dynamic Section Columns (SHOP, BUSINESS, COMPANY, POLICIES...) */}
-          {footerData.columns.map((col, idx) => {
+          {(footerData?.columns || []).map((col, idx) => {
             const isOpen = isSectionOpen(idx);
             return (
               <div key={idx} className="indiaistore-footer-col">
@@ -506,7 +506,7 @@ export default function Footer() {
                   className="indiaistore-footer-col-header"
                   aria-expanded={isOpen}
                 >
-                  <span className="indiaistore-footer-col-title">{col.title}</span>
+                  <span className="indiaistore-footer-col-title">{col?.title || ''}</span>
                   <span className={`indiaistore-footer-chevron ${isOpen ? 'open' : ''}`}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="6 9 12 15 18 9"></polyline>
@@ -516,9 +516,9 @@ export default function Footer() {
 
                 <div className={`indiaistore-footer-content ${isOpen ? 'open' : ''}`}>
                   <ul className="indiaistore-footer-link-list">
-                    {col.links.map((link, lIdx) => (
+                    {(col?.links || []).map((link, lIdx) => (
                       <li key={lIdx} className="indiaistore-footer-link-item">
-                        {link.url?.startsWith('http') ? (
+                        {link?.url?.startsWith('http') ? (
                           <a
                             href={link.url}
                             target="_blank"
@@ -528,8 +528,8 @@ export default function Footer() {
                             {link.label}
                           </a>
                         ) : (
-                          <Link to={link.url || '/shop'} className="indiaistore-footer-link">
-                            {link.label}
+                          <Link to={link?.url || '/shop'} className="indiaistore-footer-link">
+                            {link?.label || 'Link'}
                           </Link>
                         )}
                       </li>
@@ -545,9 +545,9 @@ export default function Footer() {
         {/* Bottom Legal & Copyright Section */}
         <div className="indiaistore-footer-bottom">
           <ul className="indiaistore-footer-bottom-links">
-            {(footerData.bottomLinks || []).map((bLink, bIdx) => (
+            {(footerData?.bottomLinks || []).map((bLink, bIdx) => (
               <li key={bIdx}>
-                {bLink.url?.startsWith('http') ? (
+                {bLink?.url?.startsWith('http') ? (
                   <a
                     href={bLink.url}
                     target="_blank"
@@ -557,8 +557,8 @@ export default function Footer() {
                     {bLink.label}
                   </a>
                 ) : (
-                  <Link to={bLink.url} className="indiaistore-footer-bottom-link">
-                    {bLink.label}
+                  <Link to={bLink?.url || '#'} className="indiaistore-footer-bottom-link">
+                    {bLink?.label || 'Policy'}
                   </Link>
                 )}
               </li>
@@ -566,7 +566,7 @@ export default function Footer() {
           </ul>
 
           <div className="indiaistore-footer-copyright">
-            {footerData.copyrightText}
+            {footerData?.copyrightText || ''}
           </div>
         </div>
 

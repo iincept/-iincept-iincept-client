@@ -7,6 +7,7 @@ import { addToCart } from '../redux/cartSlice';
 import Loader from '../components/Loader';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
+import { resolveColorHex, resolveColorValue, isValidHex, normalizeHex } from '../utils/colorResolver';
 
 // In-memory cache for processed canvas images to prevent main thread re-processing
 const canvasProcessedCache = new Map();
@@ -682,59 +683,6 @@ export default function ProductDetails() {
     return () => { isMounted = false; };
   }, [activeImage, product]);
 
-  const resolveColorValue = (cVal) => {
-    if (!cVal) return '#cbd5e1';
-    const cValStr = cVal.toString().trim();
-    if (cValStr.startsWith('#') || cValStr.startsWith('rgb') || cValStr.startsWith('hsl')) {
-      return cValStr;
-    }
-    const PDP_COLOR_MAP = {
-      "night sky": "#353e4a",
-      "star white": "#fafafa",
-      "burgundy": "#4a1525",
-      "glacier": "#e4effb",
-      "space black": "#1c1c1c",
-      "space gray": "#555555",
-      "starlight": "#f5f5f4",
-      "silver": "#cbd5e1",
-      "desert titanium": "#e6c2b9",
-      "dark blue": "#2a4b7c",
-      "deep blue": "#1d3557",
-      "titanium": "#cbd5e1",
-      "white": "#ffffff",
-      "gold": "#e5c158",
-      "pink": "#f4a2b2",
-      "black": "#111111",
-      "orange": "#f4aa7a",
-      "orenge": "#f4aa7a",
-      "cosmic orange": "#d9a07a",
-      "blue": "#6ea3d9",
-      "red": "#e0115f",
-      "midnight": "#1e293b",
-      "light blue": "#bfdbfe",
-      "sky blue": "#bae6fd",
-      "lavender": "#c5b8e8",
-      "green": "#78c59b",
-      "dark gray": "#3f3f46",
-      "natural titanium": "#a39e99",
-      "natural": "#a39e99",
-      "black titanium": "#232426",
-      "white titanium": "#f2f1ed",
-      "deep purple": "#3b224c",
-      "purple": "#a98ed4",
-      "yellow": "#f0d17b",
-      // iMac M4 specific
-      "imac blue": "#6ea3d9",
-      "imac green": "#78c59b",
-      "imac pink": "#f4a2b2",
-      "imac purple": "#a98ed4",
-      "imac yellow": "#f0d17b",
-      "imac orange": "#f4aa7a",
-      "imac silver": "#e0e0e2"
-    };
-    const lowerVal = cValStr.toLowerCase().replace(/\s+/g, ' ').trim();
-    return PDP_COLOR_MAP[lowerVal] || '#cbd5e1';
-  };
 
   const getColorStr = (c) => (typeof c === 'object' ? (c?.name || c?.value || '') : (c || '')).toString().trim();
 
@@ -797,8 +745,8 @@ export default function ProductDetails() {
   if (rawColors.length === 0 && product?.variants && product.variants.length > 0) {
     const uniqueColors = [];
     product.variants.forEach(v => {
-      if (v.color && !uniqueColors.includes(v.color)) {
-        uniqueColors.push(v.color);
+      if (v.color && !uniqueColors.some(u => (typeof u === 'object' ? u.name : u).toLowerCase() === v.color.toLowerCase())) {
+        uniqueColors.push({ name: v.color, value: v.colorHex, colorHex: v.colorHex });
       }
     });
     rawColors = uniqueColors;
@@ -810,12 +758,15 @@ export default function ProductDetails() {
 
   const colors = rawColors.map(c => {
     const cName = typeof c === 'object' ? c.name : c;
-    const cVal = typeof c === 'object' ? resolveColorValue(c.value || c.name) : resolveColorValue(c);
+    const cVal = typeof c === 'object'
+      ? resolveColorValue(c.colorHex || c.value || c.name)
+      : resolveColorValue(c);
     const variantImgs = getColorImages(cName);
     const cImg = typeof c === 'object' ? (c.image || c.images?.[0]) : (variantImgs?.[0] || '');
     return {
       name: cName || 'Default Color',
-      value: cVal || '#cbd5e1',
+      value: cVal,
+      colorHex: cVal,
       image: cImg,
       images: typeof c === 'object' ? (c.images || (c.image ? [c.image] : [])) : variantImgs
     };
@@ -1863,15 +1814,7 @@ export default function ProductDetails() {
                   const isCloudWhite = cNameLower.includes('cloud white') || cNameLower.includes('silver') || (cNameLower.includes('white') && !cNameLower.includes('titanium'));
 
                   if (!bgVal || !bgVal.startsWith('#')) {
-                    if (cNameLower.includes('space black')) bgVal = '#1F2022';
-                    else if (cNameLower.includes('cloud white') || cNameLower.includes('white') || cNameLower.includes('silver')) bgVal = '#E5E6E8';
-                    else if (cNameLower.includes('blush') || cNameLower.includes('pink')) bgVal = '#E8D4D4';
-                    else if (cNameLower.includes('citrus') || cNameLower.includes('yellow')) bgVal = '#E1E49C';
-                    else if (cNameLower.includes('indigo') || cNameLower.includes('blue')) bgVal = '#5E6B82';
-                    else if (cNameLower.includes('starlight')) bgVal = '#F2E7D5';
-                    else if (cNameLower.includes('midnight')) bgVal = '#2E3641';
-                    else if (cNameLower.includes('space grey') || cNameLower.includes('space gray')) bgVal = '#7D7E80';
-                    else bgVal = cObj.name || '#1D1D1F';
+                    bgVal = resolveColorValue(cObj);
                   }
 
                   // Detect if this is an iMac product for two-tone Apple swatch chips

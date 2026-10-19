@@ -10,8 +10,8 @@ import { getProductCardPricing } from '../utils/pricingUtils';
 import { prefetchProduct } from '../utils/prefetchUtils';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
-import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
+import { resolveColorValue } from '../utils/colorResolver';
 
 // Default Watch AppleCare rows fallback
 const DEFAULT_WATCH_APPLECARE_ROWS = [
@@ -677,35 +677,6 @@ export default function Watch() {
     }));
   };
 
-  const resolveColorValue = (cVal) => {
-    if (!cVal) return '#cbd5e1';
-    const cValStr = cVal.toString().trim();
-    if (cValStr.startsWith('#') || cValStr.startsWith('rgb') || cValStr.startsWith('hsl')) {
-      return cValStr;
-    }
-    const COLOR_MAP = {
-      "space black": "#1c1c1c",
-      "space gray": "#555555",
-      "starlight": "#f5f5f4",
-      "silver": "#cbd5e1",
-      "desert titanium": "#e6c2b9",
-      "dark blue": "#2a4b7c",
-      "deep blue": "#1d3557",
-      "titanium": "#cbd5e1",
-      "white": "#ffffff",
-      "gold": "#e5c158",
-      "pink": "#ec4899",
-      "black": "#111111",
-      "orange": "#ff9f68",
-      "blue": "#0071E3",
-      "red": "#e0115f",
-      "midnight": "#1e293b",
-      "purple": "#a855f7",
-      "yellow": "#eab308"
-    };
-    const lowerVal = cValStr.toLowerCase().replace(/\s+/g, ' ').trim();
-    return COLOR_MAP[lowerVal] || '#cbd5e1';
-  };
 
   const extractFirstValidImage = (p) => {
     if (!p) return null;
@@ -775,8 +746,9 @@ export default function Watch() {
       variants: p.variants || [],
       colors: Array.isArray(p.colors) ? p.colors.map(c => {
         const name = typeof c === 'string' ? c : (c.name || '');
-        const val = typeof c === 'string' ? c : (c.value || c.name || '');
-        return { name, value: resolveColorValue(val) };
+        const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
+        const resolved = resolveColorValue(val);
+        return { name, value: resolved, colorHex: resolved };
       }) : [],
       rating: p.rating || 5.0,
       isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false
@@ -1291,7 +1263,7 @@ export default function Watch() {
                               <button
                                 key={color.name}
                                 onClick={() => handleColorChange(prod.id, color.name)}
-                                style={{ backgroundColor: color.value }}
+                                style={{ backgroundColor: resolveColorValue(color.colorHex || color.value || color.name) }}
                                 className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
                                   isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
                                 }`}

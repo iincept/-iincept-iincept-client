@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Trash2, Plus, Minus, ShoppingBag, Tag, ArrowRight } from 'lucide-react';
 import { updateQuantity, removeFromCart } from '../redux/cartSlice';
 import axiosClient from '../services/axiosClient';
+import { resolveColorValue } from '../utils/colorResolver';
 
 export default function Cart() {
   const dispatch = useDispatch();
@@ -123,11 +124,11 @@ export default function Cart() {
                     {item.color && (
                       <div className="flex items-center gap-1">
                         <span>Color:</span>
-                        <div className="h-3 w-3 rounded-full border border-zinc-300" style={{ backgroundColor: item.color }} />
+                        <div className="h-3 w-3 rounded-full border border-zinc-300" style={{ backgroundColor: resolveColorValue(item.colorHex || item.color) }} />
                       </div>
                     )}
                   </div>
-                  <span className="text-xs text-zinc-750 font-bold block sm:mt-1">₹{item.price.toLocaleString('en-IN')}</span>
+                  <span className="text-xs text-zinc-750 font-bold block sm:mt-1">₹{(Number(item.price) || 0).toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
@@ -142,7 +143,7 @@ export default function Cart() {
                   >
                     <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </button>
-                  <span className="text-xs font-bold w-4 sm:w-5 text-center text-zinc-800">{item.quantity}</span>
+                  <span className="text-xs font-bold w-4 sm:w-5 text-center text-zinc-800">{item.quantity || 1}</span>
                   <button 
                     onClick={() => handleQtyChange(item.id, item.quantity, 'inc')}
                     className="p-1 rounded-lg hover:bg-zinc-200 text-zinc-500 hover:text-zinc-800 cursor-pointer"
@@ -153,7 +154,7 @@ export default function Cart() {
 
                 {/* Subtotal */}
                 <span className="font-bold text-xs sm:text-sm w-14 sm:w-20 text-right text-zinc-800">
-                  ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                  ₹{((Number(item.price) || 0) * (Number(item.quantity) || 1)).toLocaleString('en-IN')}
                 </span>
 
                 {/* Remove */}
@@ -177,24 +178,24 @@ export default function Cart() {
           <div className="space-y-3 text-xs">
             <div className="flex justify-between text-zinc-500">
               <span>Subtotal</span>
-              <span className="font-bold text-zinc-800">₹{subtotal.toLocaleString('en-IN')}</span>
+              <span className="font-bold text-zinc-800">₹{(Number(subtotal) || 0).toLocaleString('en-IN')}</span>
             </div>
             <div className="flex justify-between text-zinc-500">
               <span>Shipping Fee</span>
               <span className="font-bold text-zinc-800">
-                {shipping === 0 ? 'Free' : `₹${shipping.toLocaleString('en-IN')}`}
+                {shipping === 0 ? 'Free' : `₹${(Number(shipping) || 0).toLocaleString('en-IN')}`}
               </span>
             </div>
             {appliedDiscount > 0 && (
               <div className="flex justify-between text-emerald-600 font-bold">
                 <span>Discount Coupon</span>
-                <span>-₹{appliedDiscount.toLocaleString('en-IN')}</span>
+                <span>-₹{(Number(appliedDiscount) || 0).toLocaleString('en-IN')}</span>
               </div>
             )}
             <hr className="border-zinc-150" />
             <div className="flex justify-between text-sm font-extrabold text-zinc-900">
               <span>Grand Total</span>
-              <span>₹{Math.max(0, total).toLocaleString('en-IN')}</span>
+              <span>₹{Math.max(0, Number(total) || 0).toLocaleString('en-IN')}</span>
             </div>
           </div>
 

@@ -9,8 +9,8 @@ import { matchesProductSearch, normalizeTargetPath } from '../utils/searchUtils'
 import { getProductCardPricing } from '../utils/pricingUtils';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
-import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
+import { resolveColorValue } from '../utils/colorResolver';
 
 // Default iPad AppleCare rows fallback
 const DEFAULT_IPAD_APPLECARE_ROWS = [
@@ -632,35 +632,6 @@ export default function Ipad() {
     }));
   };
 
-  const resolveColorValue = (cVal) => {
-    if (!cVal) return '#cbd5e1';
-    const cValStr = cVal.toString().trim();
-    if (cValStr.startsWith('#') || cValStr.startsWith('rgb') || cValStr.startsWith('hsl')) {
-      return cValStr;
-    }
-    const COLOR_MAP = {
-      "space black": "#1c1c1c",
-      "space gray": "#555555",
-      "starlight": "#f5f5f4",
-      "silver": "#cbd5e1",
-      "desert titanium": "#e6c2b9",
-      "dark blue": "#2a4b7c",
-      "deep blue": "#1d3557",
-      "titanium": "#cbd5e1",
-      "white": "#ffffff",
-      "gold": "#e5c158",
-      "pink": "#ec4899",
-      "black": "#111111",
-      "orange": "#ff9f68",
-      "blue": "#0071E3",
-      "red": "#e0115f",
-      "midnight": "#1e293b",
-      "purple": "#a855f7",
-      "yellow": "#eab308"
-    };
-    const lowerVal = cValStr.toLowerCase().replace(/\s+/g, ' ').trim();
-    return COLOR_MAP[lowerVal] || '#cbd5e1';
-  };
 
   const extractFirstValidImage = (p) => {
     if (!p) return null;
@@ -746,7 +717,8 @@ export default function Ipad() {
         return {
           name: normName,
           rawName: rawName,
-          value: resolveColorValue(val),
+          value: resolveColorValue(c?.colorHex || c?.value || val),
+          colorHex: c?.colorHex || resolveColorValue(val),
           image: variantImage
         };
       }) : [],
@@ -1295,7 +1267,7 @@ export default function Ipad() {
                         <div className="flex items-center gap-3 shrink-0 py-1">
                           {prod.colors.map((color) => {
                             const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
-                            const resolvedColor = resolveColorValue(color.value || color.name);
+                            const resolvedColor = resolveColorValue(color.colorHex || color.value || color.name);
                             return (
                               <button
                                 key={color.name}

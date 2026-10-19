@@ -4,44 +4,7 @@ import { RefreshCw, Sparkles, ShieldAlert, CheckCircle2, ShoppingCart, ChevronDo
 import { getProducts } from '../services/productApi';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../redux/cartSlice';
-
-const resolveColorValue = (cVal) => {
-  if (!cVal) return '#cbd5e1';
-  const cValStr = cVal.toString().trim();
-  if (cValStr.startsWith('#') || cValStr.startsWith('rgb') || cValStr.startsWith('hsl')) {
-    return cValStr;
-  }
-  const PDP_COLOR_MAP = {
-    "space black": "#1c1c1c",
-    "space gray": "#555555",
-    "starlight": "#f5f5f4",
-    "silver": "#cbd5e1",
-    "desert titanium": "#e6c2b9",
-    "dark blue": "#2a4b7c",
-    "deep blue": "#1d3557",
-    "titanium": "#cbd5e1",
-    "white": "#ffffff",
-    "gold": "#e5c158",
-    "pink": "#ec4899",
-    "black": "#111111",
-    "orange": "#ff9f68",
-    "midnight": "#1e293b",
-    "light blue": "#bfdbfe",
-    "sky blue": "#bae6fd",
-    "lavender": "#e9d5ff",
-    "green": "#bbf7d0",
-    "dark gray": "#3f3f46",
-    "natural titanium": "#a39e99",
-    "natural": "#a39e99",
-    "black titanium": "#232426",
-    "white titanium": "#f2f1ed",
-    "deep purple": "#3b224c",
-    "purple": "#a855f7",
-    "yellow": "#eab308"
-  };
-  const lowerVal = cValStr.toLowerCase().replace(/\s+/g, ' ').trim();
-  return PDP_COLOR_MAP[lowerVal] || '#cbd5e1';
-};
+import { resolveColorValue } from '../utils/colorResolver';
 
 const MOCK_MAC_PRODUCTS = [
   {
@@ -707,7 +670,7 @@ export default function Compare() {
                                     isSelected ? 'scale-110 border-zinc-900 ring-2 ring-offset-2 ring-[#0071e3] z-10' : 'border-zinc-300 hover:scale-105'
                                   }`}
                                   style={{
-                                    backgroundColor: resolveColorValue(colName),
+                                    backgroundColor: resolveColorValue(col),
                                     backgroundImage: swatchBgImage,
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center'

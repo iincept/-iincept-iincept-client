@@ -44,21 +44,24 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  // Calculate total price
-  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const totalItemsCount = cartItems.reduce((a, b) => a + b.quantity, 0);
+  // Calculate total price safely
+  const subtotal = (cartItems || []).reduce((acc, item) => acc + (Number(item?.price) || 0) * (Number(item?.quantity) || 1), 0);
+  const totalItemsCount = (cartItems || []).reduce((a, b) => a + (Number(b?.quantity) || 1), 0);
 
   // Recommendations: products that are NOT already in the cart (limit to 2 for compact fit)
-  const recommendations = products
-    .filter(p => !cartItems.some(item => item.id === (p._id || p.id)))
+  const recommendations = (products || [])
+    .filter(p => p && !(cartItems || []).some(item => item && item.id === (p._id || p.id)))
     .slice(0, 2)
-    .map(p => ({
-      id: p._id || p.id,
-      name: p.title || p.name,
-      price: p.price,
-      priceStr: `₹${p.price.toLocaleString('en-IN')}`,
-      image: (p.images && p.images[0]) || p.image || '/iphone_nav/iphone_17.png'
-    }));
+    .map(p => {
+      const numPrice = Number(p.price) || 0;
+      return {
+        id: p._id || p.id,
+        name: p.title || p.name || 'Apple Gear',
+        price: numPrice,
+        priceStr: `₹${numPrice.toLocaleString('en-IN')}`,
+        image: (p.images && p.images[0]) || p.image || '/iphone_nav/iphone_17.png'
+      };
+    });
 
   const fallbackRecs = [
     { id: 'apmaxusbc', name: 'AirPods Max (USB-C)', price: 59900, priceStr: '₹59,900.00', image: '/airpods_pro_3.jpg' },
@@ -174,8 +177,8 @@ export default function CartDrawer() {
               <div className="space-y-2">
                 <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest px-1">Items in your order</h3>
                 <div className="divide-y divide-zinc-100 border border-zinc-200/80 rounded-2xl bg-white overflow-hidden shadow-2xs">
-                  {cartItems.map((item) => {
-                    const itemTotalPrice = item.price * item.quantity;
+                  {(cartItems || []).map((item) => {
+                    const itemTotalPrice = (Number(item?.price) || 0) * (Number(item?.quantity) || 1);
                     return (
                       <div 
                         key={item.id}

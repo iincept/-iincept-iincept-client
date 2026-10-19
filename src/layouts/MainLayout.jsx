@@ -8,6 +8,7 @@ import Navbar from '../components/Navbar';
 import CartDrawer from '../components/CartDrawer';
 import AIChatWidget from '../components/AIChatWidget';
 import Footer from '../components/Footer';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function MainLayout() {
   const location = useLocation();
@@ -46,7 +47,9 @@ export default function MainLayout() {
       {/* Main Outlet for nested routes */}
       <main className="flex-grow w-full min-w-0 pt-0 pb-8 shrink-0">
         <div key={location.key || (location.pathname + location.search)} className="page-smooth-enter w-full h-full min-w-0">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
 

@@ -9,8 +9,8 @@ import { matchesProductSearch, normalizeTargetPath } from '../utils/searchUtils'
 import { getProductCardPricing } from '../utils/pricingUtils';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
-import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
+import { resolveColorValue } from '../utils/colorResolver';
 
 // Default TV & Home AppleCare rows fallback
 const DEFAULT_TVHOME_APPLECARE_ROWS = [
@@ -501,35 +501,6 @@ export default function TvHome() {
     }));
   };
 
-  const resolveColorValue = (cVal) => {
-    if (!cVal) return '#cbd5e1';
-    const cValStr = cVal.toString().trim();
-    if (cValStr.startsWith('#') || cValStr.startsWith('rgb') || cValStr.startsWith('hsl')) {
-      return cValStr;
-    }
-    const COLOR_MAP = {
-      "space black": "#1c1c1c",
-      "space gray": "#555555",
-      "starlight": "#f5f5f4",
-      "silver": "#cbd5e1",
-      "desert titanium": "#e6c2b9",
-      "dark blue": "#2a4b7c",
-      "deep blue": "#1d3557",
-      "titanium": "#cbd5e1",
-      "white": "#ffffff",
-      "gold": "#e5c158",
-      "pink": "#ec4899",
-      "black": "#111111",
-      "orange": "#ff9f68",
-      "blue": "#0071E3",
-      "red": "#e0115f",
-      "midnight": "#1e293b",
-      "purple": "#a855f7",
-      "yellow": "#eab308"
-    };
-    const lowerVal = cValStr.toLowerCase().replace(/\s+/g, ' ').trim();
-    return COLOR_MAP[lowerVal] || '#cbd5e1';
-  };
 
   const dbTvHome = products.filter(p => {
     const catName = p.category?.name || p.category?.toString() || '';
@@ -544,8 +515,8 @@ export default function TvHome() {
     return {
       id: p._id || p.id,
       name: p.title || p.name,
-      price: p.price,
-      priceStr: `₹${p.price.toLocaleString()}`,
+      price: Number(p.price) || 0,
+      priceStr: `₹${(Number(p.price) || 0).toLocaleString('en-IN')}`,
       discountPercent: p.discountPercent,
       discountPrice: p.discountPrice,
       displayImage: primaryImg,
@@ -555,8 +526,9 @@ export default function TvHome() {
       variants: p.variants || [],
       colors: Array.isArray(p.colors) ? p.colors.map(c => {
         const name = typeof c === 'string' ? c : (c.name || '');
-        const val = typeof c === 'string' ? c : (c.value || c.name || '');
-        return { name, value: resolveColorValue(val) };
+        const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
+        const resolved = resolveColorValue(val);
+        return { name, value: resolved, colorHex: resolved };
       }) : [],
       rating: p.rating || 5.0,
       isSoldOut: p.stock <= 0
@@ -993,7 +965,7 @@ export default function TvHome() {
                               <button
                                 key={cName || cIdx}
                                 onClick={() => handleColorChange(pId, cName)}
-                                style={{ backgroundColor: resolveColorValue(typeof color === 'object' ? (color.value || color.name) : color) }}
+                                style={{ backgroundColor: resolveColorValue(color.colorHex || color.value || color.name || color) }}
                                 className={`w-4 h-4 rounded-full cursor-pointer transition-all ${
                                   isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-sm z-10' : 'border border-zinc-300 hover:scale-105'
                                 }`}

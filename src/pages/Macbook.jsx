@@ -11,6 +11,7 @@ import axiosClient from '../services/axiosClient';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
 import { subscribeToLiveSync } from '../services/liveSyncService';
+import { resolveColorValue } from '../utils/colorResolver';
 
 const MAC_SUB_NAV_ITEMS = [
   { name: 'MacBook Neo', query: 'MacBook Neo', image: '/mac_nav/macbook_neo.png', scale: 'scale-100' },
@@ -512,56 +513,6 @@ export default function Macbook() {
     }));
   };
 
-  // Resolve color values to hex code
-  const resolveColorValue = (cVal) => {
-    if (!cVal) return '#cbd5e1';
-    const cValStr = cVal.toString().trim();
-    if (cValStr.startsWith('#') || cValStr.startsWith('rgb') || cValStr.startsWith('hsl')) {
-      return cValStr;
-    }
-    const COLOR_MAP = {
-      "space black": "#1c1c1c",
-      "space gray": "#555555",
-      "starlight": "#f5f5f4",
-      "silver": "#cbd5e1",
-      "desert titanium": "#e6c2b9",
-      "dark blue": "#2a4b7c",
-      "deep blue": "#1d3557",
-      "titanium": "#cbd5e1",
-      "white": "#ffffff",
-      "gold": "#e5c158",
-      "pink": "#f4a2b2",
-      "black": "#111111",
-      "orange": "#f4aa7a",
-      "orenge": "#f4aa7a",
-      "cosmic orange": "#d9a07a",
-      "blue": "#6ea3d9",
-      "red": "#e0115f",
-      "midnight": "#1e293b",
-      "light blue": "#bfdbfe",
-      "sky blue": "#bae6fd",
-      "lavender": "#c5b8e8",
-      "green": "#78c59b",
-      "dark gray": "#3f3f46",
-      "natural titanium": "#a39e99",
-      "natural": "#a39e99",
-      "black titanium": "#232426",
-      "white titanium": "#f2f1ed",
-      "deep purple": "#3b224c",
-      "purple": "#a98ed4",
-      "yellow": "#f0d17b",
-      // iMac M4 specific color names
-      "imac blue": "#6ea3d9",
-      "imac green": "#78c59b",
-      "imac pink": "#f4a2b2",
-      "imac purple": "#a98ed4",
-      "imac yellow": "#f0d17b",
-      "imac orange": "#f4aa7a",
-      "imac silver": "#e0e0e2"
-    };
-    const lowerVal = cValStr.toLowerCase().replace(/\s+/g, ' ').trim();
-    return COLOR_MAP[lowerVal] || '#cbd5e1';
-  };
 
   const extractFirstValidImage = (p) => {
     if (!p) return null;
@@ -684,7 +635,8 @@ export default function Macbook() {
         return { 
           name: normName, 
           rawName: rawName,
-          value: resolveColorValue(val),
+          value: resolveColorValue(c?.colorHex || c?.value || val),
+          colorHex: c?.colorHex || resolveColorValue(val),
           image: variantImage 
         };
       }) : [],
@@ -1175,7 +1127,7 @@ export default function Macbook() {
                       const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
                       const isImac = prod.name && prod.name.toLowerCase().includes('imac');
                       // Use resolveColorValue to get actual hex from name or value
-                      const resolvedColor = resolveColorValue(color.value || color.name);
+                      const resolvedColor = resolveColorValue(color.colorHex || color.value || color.name);
                       const swatchStyle = isImac
                         ? { background: `linear-gradient(135deg, ${resolvedColor} 50%, ${resolvedColor}88 50%)`, border: 'none' }
                         : { backgroundColor: resolvedColor };
