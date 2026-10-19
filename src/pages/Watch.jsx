@@ -805,7 +805,7 @@ export default function Watch() {
                     isActive ? 'font-bold' : ''
                   }`}
                 >
-                  <div className="h-20 sm:h-22 w-24 sm:w-26 flex items-center justify-center p-1 overflow-visible">
+                  <div className={`h-20 sm:h-22 ${isAppleCareItem ? 'w-28 sm:w-32' : 'w-24 sm:w-26'} flex items-center justify-center p-1 overflow-visible`}>
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
@@ -817,7 +817,9 @@ export default function Watch() {
                           e.currentTarget.src = '/watch_nav/watch_series_10.png';
                         }
                       }}
-                      className="max-h-full max-w-full object-contain transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
+                      className={`max-h-full max-w-full object-contain transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1 ${
+                        isAppleCareItem ? 'scale-[1.32] sm:scale-[1.4]' : ''
+                      }`}
                       style={{ mixBlendMode: 'multiply', filter: 'contrast(1.06) brightness(1.02)' }}
                     />
                   </div>

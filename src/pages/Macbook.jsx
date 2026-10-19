@@ -736,7 +736,7 @@ export default function Macbook() {
                     isActive ? 'font-bold' : ''
                   }`}
                 >
-                  <div className="h-20 sm:h-22 w-24 sm:w-26 flex items-center justify-center p-1 overflow-visible">
+                  <div className={`h-20 sm:h-22 ${isAppleCareItem ? 'w-28 sm:w-32' : 'w-24 sm:w-26'} flex items-center justify-center p-1 overflow-visible`}>
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
@@ -748,7 +748,9 @@ export default function Macbook() {
                           e.currentTarget.src = '/mac_nav/macbook_air.png';
                         }
                       }}
-                      className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1"
+                      className={`max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1 ${
+                        isAppleCareItem ? 'scale-[1.32] sm:scale-[1.4]' : ''
+                      }`}
                     />
                   </div>
                   <span className={`text-xs tracking-tight transition-colors duration-200 ${isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'}`}>
