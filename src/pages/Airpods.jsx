@@ -731,7 +731,7 @@ export default function Airpods() {
                     isActive ? 'font-bold' : ''
                   }`}
                 >
-                  <div className="h-16 w-20 flex items-center justify-center p-1 overflow-visible">
+                  <div className="h-20 sm:h-22 w-24 sm:w-26 flex items-center justify-center p-1 overflow-visible">
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
@@ -747,7 +747,7 @@ export default function Airpods() {
                       style={{ mixBlendMode: 'multiply', filter: 'contrast(1.06) brightness(1.02)' }}
                     />
                   </div>
-                  <span className={`text-[11px] tracking-tight transition-colors duration-200 flex flex-col items-center gap-0.5 ${isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'}`}>
+                  <span className={`text-xs tracking-tight transition-colors duration-200 flex flex-col items-center gap-0.5 ${isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'}`}>
                     <span>{item.name}</span>
                     {(item.isNew || item.name.toLowerCase() === 'airpods') && (
                       <span className="text-[10px] font-normal text-[#f56300] leading-none mt-0.5">New</span>
