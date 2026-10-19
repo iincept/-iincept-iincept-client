@@ -479,16 +479,16 @@ export default function Accessories() {
   }, [filteredProducts.length]);
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] py-4 select-none relative font-sans">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 select-none relative font-sans">
 
       {/* Accessories Title Header matching Mac, iPad, Watch, iPhone, AirPods */}
-      <div className="w-full bg-[#fcfcfc] pt-2 pb-6 select-none font-sans mb-8 px-4 sm:px-8 md:px-12 lg:px-16">
+      <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3 px-4 sm:px-8 md:px-12 lg:px-16">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left">Accessories</h1>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-2">Accessories</h1>
         </div>
       </div>
 
-      <div className="px-4 sm:px-8 md:px-12 lg:px-16 py-8">
+      <div className="px-4 sm:px-8 md:px-12 lg:px-16 py-3">
 
 
         {/* Category Products Grid List */}
