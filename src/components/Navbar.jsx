@@ -34,8 +34,8 @@ export default function Navbar() {
   const isIphonePage = true;
 
   const getNavBtnClass = (isOpen) => {
-    return `transition-colors duration-150 font-[600] text-[13px] tracking-normal cursor-pointer bg-transparent border-0 focus:outline-none whitespace-nowrap font-sans ${isOpen
-      ? 'text-black font-[600]'
+    return `transition-colors duration-150 font-[600] text-[16px] xl:text-[17px] tracking-normal cursor-pointer bg-transparent border-0 focus:outline-none whitespace-nowrap font-sans px-1.5 py-1 ${isOpen
+      ? 'text-black font-[650]'
       : 'text-[#1d1d1f] hover:text-black'
       }`;
   };
@@ -410,7 +410,18 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(productPreviews['Shop All Accessories']);
+
+    const accItem = dynamicNavItems?.find(item => (item.name || '').toLowerCase().includes('accessori'));
+    const firstSub = accItem?.dropdownItems?.find(d => d.isActive !== false);
+    if (firstSub && (firstSub.image || firstSub.price || firstSub.label)) {
+      setHoveredProduct({
+        name: firstSub.label,
+        price: firstSub.price || '',
+        image: firstSub.image || '/accessories_category_uploaded.png'
+      });
+    } else {
+      setHoveredProduct(productPreviews['Explore All Accessories'] || productPreviews['Shop All Accessories']);
+    }
   };
 
   const handleAccessoriesMouseLeave = () => {
@@ -734,6 +745,14 @@ export default function Navbar() {
           else if (combinedStr.includes('max')) img = '/airpods_pro_uploaded.jpg';
           else if (combinedStr.includes('4')) img = '/airpods_category_uploaded.png';
           else img = '/airpods_category_uploaded.png';
+        } else if (catKey === 'accessories' || combinedStr.includes('accessori')) {
+          if (combinedStr.includes('mac')) img = '/accessories_category_uploaded.png';
+          else if (combinedStr.includes('ipad')) img = '/ipad_nav/dropdown_ipad_accessories.jpg';
+          else if (combinedStr.includes('iphone')) img = '/iphone_nav/dropdown_iphone_accessories.png';
+          else if (combinedStr.includes('watch')) img = '/watch_category_uploaded.png';
+          else if (combinedStr.includes('airpod')) img = '/airpods_category_uploaded.png';
+          else if (combinedStr.includes('tv') || combinedStr.includes('home')) img = '/tvhome_category_uploaded.png';
+          else img = '/accessories_category_uploaded.png';
         }
       }
 
@@ -1064,13 +1083,21 @@ export default function Navbar() {
     'HomePod mini': { name: 'HomePod mini', price: 'Room filling sound. From ₹9,900', image: '/tv_home_homepods.jpg' },
 
     // Accessories in Shop Accessories
+    'Explore All Accessories': { name: 'Accessories', price: 'Cables, cases & chargers', image: '/accessories_category_uploaded.png' },
     'Shop All Accessories': { name: 'Accessories', price: 'Cables, cases & chargers', image: '/accessories_category_uploaded.png' },
     'Mac': { name: 'Mac Accessories', price: 'Mice, keyboards & stands', image: '/accessories_category_uploaded.png' },
-    'iPad': { name: 'iPad Accessories', price: 'Cases, Pencils & Keyboards', image: '/ipad_nav/apple_pencil.png' },
+    'Mac Accessories': { name: 'Mac Accessories', price: 'Mice, keyboards & stands', image: '/accessories_category_uploaded.png' },
+    'iPad': { name: 'iPad Accessories', price: 'Cases, Pencils & Keyboards', image: '/ipad_nav/dropdown_ipad_accessories.jpg' },
+    'iPad Accessories': { name: 'iPad Accessories', price: 'Cases, Pencils & Keyboards', image: '/ipad_nav/dropdown_ipad_accessories.jpg' },
     'iPhone': { name: 'iPhone Accessories', price: 'Cases, MagSafe & chargers', image: '/iphone_nav/dropdown_iphone_accessories.png' },
+    'iPhone Accessories': { name: 'iPhone Accessories', price: 'Cases, MagSafe & chargers', image: '/iphone_nav/dropdown_iphone_accessories.png' },
     'Apple Watch': { name: 'Watch Bands', price: 'Premium bands & loops', image: '/watch_category_uploaded.png' },
+    'Apple Watch Accessories': { name: 'Watch Bands', price: 'Premium bands & loops', image: '/watch_category_uploaded.png' },
+    'Watch Accessories': { name: 'Watch Bands', price: 'Premium bands & loops', image: '/watch_category_uploaded.png' },
     'AirPods': { name: 'AirPods Accessories', price: 'Protective cases', image: '/airpods_category_uploaded.png' },
-    'TV & Home': { name: 'Home Accessories', price: 'Mounts & smart plugs', image: '/tvhome_category_uploaded.png' }
+    'AirPods Accessories': { name: 'AirPods Accessories', price: 'Protective cases', image: '/airpods_category_uploaded.png' },
+    'TV & Home': { name: 'Home Accessories', price: 'Mounts & smart plugs', image: '/tvhome_category_uploaded.png' },
+    'TV & Home Accessories': { name: 'Home Accessories', price: 'Mounts & smart plugs', image: '/tvhome_category_uploaded.png' }
   };
 
   const renderProductPreview = () => {
@@ -1092,7 +1119,7 @@ export default function Navbar() {
                 }}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = '/macbook_category_v3.jpg';
+                  e.currentTarget.src = isAccessoriesDropdownOpen ? '/accessories_category_uploaded.png' : '/macbook_category_v3.jpg';
                 }}
               />
             </div>
@@ -1315,7 +1342,7 @@ export default function Navbar() {
             </Link>
 
             {/* Center: Navigation Menu (Spacious Apple-Style Layout) */}
-            <div className="hidden lg:flex items-center justify-center gap-[32px] xl:gap-[40px] font-[600] text-[13px] relative flex-1 mx-2 whitespace-nowrap">
+            <div className="hidden lg:flex items-center justify-center gap-[28px] xl:gap-[40px] 2xl:gap-[48px] font-[600] text-[16px] xl:text-[17px] relative flex-1 mx-2 whitespace-nowrap">
               {activeMenuItems.map((item, idx) => {
                 const labelLower = (item.label || '').toLowerCase();
 
@@ -1423,9 +1450,9 @@ export default function Navbar() {
                       onMouseLeave={handleAccessoriesMouseLeave}
                       onClick={() => {
                         closeAllDropdowns();
-                        navigate('/accessories');
+                        navigate(item.path || '/accessories');
                       }}
-                      className={getNavBtnClass(isAccessoriesDropdownOpen || location.pathname === '/accessories')}
+                      className={getNavBtnClass(isAccessoriesDropdownOpen || location.pathname === (item.path || '/accessories'))}
                     >
                       {item.label}
                     </button>
