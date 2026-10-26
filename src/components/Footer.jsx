@@ -106,9 +106,9 @@ export default function Footer() {
         }
 
         .indiaistore-footer {
-          background: #000000;
+          background: #292929;
           color: #ffffff;
-          border-top: 1px solid #262629;
+          border-top: 1px solid #38383a;
           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Helvetica Neue", sans-serif;
           width: 100%;
           margin-top: auto;
@@ -238,7 +238,7 @@ export default function Footer() {
         .indiaistore-footer-bottom {
           margin-top: 40px;
           padding-top: 22px;
-          border-top: 1px solid #262629;
+          border-top: 1px solid #38383a;
           display: flex;
           flex-direction: row;
           justify-content: space-between;
@@ -291,7 +291,7 @@ export default function Footer() {
         @media (max-width: 768px) {
           .indiaistore-footer {
             padding: 32px 0 96px !important;
-            background: #000000 !important;
+            background: #292929 !important;
           }
 
           .indiaistore-footer-inner {
@@ -306,7 +306,7 @@ export default function Footer() {
             text-align: center !important;
             margin-bottom: 22px !important;
             padding-bottom: 22px !important;
-            border-bottom: 1px solid #262629 !important;
+            border-bottom: 1px solid #38383a !important;
           }
 
           .indiaistore-footer-brand-col a {
@@ -353,7 +353,7 @@ export default function Footer() {
           }
 
           .indiaistore-footer-col {
-            border-bottom: 1px solid #262629 !important;
+            border-bottom: 1px solid #38383a !important;
             width: 100% !important;
           }
 
@@ -439,7 +439,7 @@ export default function Footer() {
           .indiaistore-footer-bottom {
             margin-top: 24px !important;
             padding-top: 18px !important;
-            border-top: 1px solid #262629 !important;
+            border-top: 1px solid #38383a !important;
             flex-direction: column !important;
             align-items: flex-start !important;
             gap: 14px !important;

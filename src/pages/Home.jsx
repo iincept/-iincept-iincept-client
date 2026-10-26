@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchProducts } from '../redux/productSlice';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
@@ -315,7 +314,7 @@ export default function Home() {
   // Hero Banner Slider States
   const [heroSlides, setHeroSlides] = useState(() => {
     try {
-      const cached = localStorage.getItem('iincept_home_hero_slides_v6');
+      const cached = localStorage.getItem('iincept_home_hero_slides_v7');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -331,7 +330,9 @@ export default function Home() {
               buttonLink: s.buttonLink || '',
               secondaryButtonText: s.secondaryButtonText || '',
               secondaryButtonLink: s.secondaryButtonLink || '',
-              badge: s.badge || ''
+              badge: s.badge || '',
+              isMobileActive: s.isMobileActive !== false,
+              mobileImage: (s.mobileImage && typeof s.mobileImage === 'string') ? s.mobileImage.trim() : ''
             };
           });
           if (active.length > 0) return active;
@@ -606,15 +607,14 @@ export default function Home() {
                 secondaryButtonLink: s.secondaryButtonLink || '',
                 badge: s.badge || '',
                 image: resolvedImage,
-                mobileImage: (s.mobileImage && typeof s.mobileImage === 'string' && s.mobileImage.trim()) 
-                  ? s.mobileImage.trim() 
-                  : (idx === 0 ? '/uploads/upload_iphone_duo_mobile.png' : idx === 1 ? '/uploads/upload_airpods_5_mobile.png' : idx === 2 ? '/uploads/upload_apple_watch_mobile.png' : resolvedImage)
+                isMobileActive: s.isMobileActive !== false,
+                mobileImage: (s.mobileImage && typeof s.mobileImage === 'string') ? s.mobileImage.trim() : ''
               };
             });
 
           setHeroSlides(activeSlides);
           try {
-            localStorage.setItem('iincept_home_hero_slides_v6', JSON.stringify(activeSlides));
+            localStorage.setItem('iincept_home_hero_slides_v7', JSON.stringify(activeSlides));
           } catch (e) { }
         }
 
@@ -2590,13 +2590,16 @@ export default function Home() {
           .indiaistore-theme .categories { padding: 0px 16px 36px; margin-top: 0px; }
           .indiaistore-theme .categories-divider { margin-bottom: 24px; }
           .indiaistore-theme .section-trending { padding-top: 16px; }
+          .indiaistore-theme .deal-banner {
+            margin: 0 16px 18px !important;
+          }
           .indiaistore-theme .wby-section { 
-            padding: 40px 16px 40px !important; 
-            margin-top: 28px !important; 
+            padding: 18px 16px 36px !important; 
+            margin-top: 0px !important; 
           }
           .indiaistore-theme .wby-header {
-            margin-top: 12px !important;
-            margin-bottom: 24px !important;
+            margin-top: 8px !important;
+            margin-bottom: 20px !important;
           }
           .indiaistore-theme .section-title,
           .indiaistore-theme .wby-title,
@@ -2610,8 +2613,8 @@ export default function Home() {
             margin: 0 auto !important;
           }
           .indiaistore-theme .wby-title {
-            margin-top: 14px !important;
-            margin-bottom: 24px !important;
+            margin-top: 8px !important;
+            margin-bottom: 20px !important;
           }
 
           .indiaistore-theme .new-arrivals-header .slider-nav-btns,
@@ -2722,6 +2725,17 @@ export default function Home() {
 
         @media (max-width: 480px) {
           .indiaistore-theme .section { padding: 28px 14px; }
+          .indiaistore-theme .deal-banner {
+            margin: 0 12px 16px !important;
+          }
+          .indiaistore-theme .wby-section {
+            padding: 14px 12px 28px !important;
+            margin-top: 0px !important;
+          }
+          .indiaistore-theme .wby-header {
+            margin-top: 6px !important;
+            margin-bottom: 16px !important;
+          }
           .indiaistore-theme .section-title,
           .indiaistore-theme .wby-title,
           .indiaistore-theme .new-arrivals-header .section-title,
@@ -2730,6 +2744,10 @@ export default function Home() {
             font-size: 20px !important;
             font-weight: 700 !important;
             text-transform: uppercase !important;
+          }
+          .indiaistore-theme .wby-title {
+            margin-top: 6px !important;
+            margin-bottom: 16px !important;
           }
 
           .indiaistore-theme .wby-card {
@@ -2774,14 +2792,14 @@ export default function Home() {
       {/* 1. APPLE-INSPIRED PRODUCTION HERO BANNER CAROUSEL */}
       {effectiveHeroSlides && effectiveHeroSlides.length > 0 && (
         <section 
-          className="hero-carousel-section relative w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 pt-2 pb-6 select-none"
+          className="hero-carousel-section relative w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 pt-0 pb-6 select-none"
           onMouseEnter={() => setIsHeroPaused(true)}
           onMouseLeave={() => setIsHeroPaused(false)}
           onTouchStart={() => setIsHeroPaused(true)}
           onTouchEnd={() => setIsHeroPaused(false)}
           aria-label="Apple Featured Promotions Hero Carousel"
         >
-          <div className="relative w-full rounded-2xl sm:rounded-3xl lg:rounded-[36px] overflow-hidden bg-[#f5f5f7] shadow-sm border border-black/[0.04] h-[480px] sm:h-[500px] lg:h-[520px]">
+          <div className="relative w-full rounded-2xl sm:rounded-3xl lg:rounded-[36px] overflow-hidden bg-white shadow-sm border border-black/[0.04] aspect-square sm:aspect-auto sm:h-[500px] lg:h-[520px]">
             {/* Slider Track */}
             <div 
               className="flex w-full h-full transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -2797,13 +2815,22 @@ export default function Home() {
                 const secondaryBtnLink = slide.secondaryButtonLink || '#store-locator';
 
                 // Image fit & focal position
-                const fitClass = slide.imageFit === 'cover' ? 'object-cover' : 'object-contain';
-                const focalClass = slide.focalPosition === 'center' ? 'object-center' : slide.focalPosition === 'left' ? 'object-left' : 'object-right';
+                const fitClass = slide.imageFit === 'contain' ? 'object-contain' : 'object-cover';
+                const focalClass = slide.focalPosition === 'left' ? 'object-left' : slide.focalPosition === 'right' ? 'object-right' : 'object-center';
                 const isBlueTheme = slide.bgStyle === 'slide-dark-blue';
-                const slideBgClass = isBlueTheme ? 'bg-[#92b3cf]' : 'bg-[#f5f5f7]';
+                const isDarkTheme = slide.bgStyle === 'slide-dark';
+                const slideBgClass = isBlueTheme ? 'bg-[#92b3cf]' : isDarkTheme ? 'bg-[#1d1d1f]' : 'bg-white';
 
-                const bannerImg = slide.image || DEFAULT_HERO_IMAGE;
-                const mobileImg = slide.mobileImage || bannerImg;
+                const hasMobileImg = Boolean(
+                  slide.mobileImage && 
+                  typeof slide.mobileImage === 'string' && 
+                  slide.mobileImage.trim() && 
+                  slide.isMobileActive !== false
+                );
+                const bannerImg = (slide.image && typeof slide.image === 'string' && slide.image.trim()) 
+                  ? slide.image.trim() 
+                  : DEFAULT_HERO_IMAGE;
+                const mobileImg = hasMobileImg ? slide.mobileImage.trim() : bannerImg;
 
                 return (
                   <div 
@@ -2813,15 +2840,15 @@ export default function Home() {
                     {slide.hideText !== false || !slide.showTextOverlay ? (
                       /* IMAGE-ONLY BANNER (Pure Visual Banner Mode - Image added from Admin Panel appears cleanly) */
                       <div className="absolute inset-0 w-full h-full overflow-hidden">
-                        <picture key={`pic-hide-${slide._id || idx}-${bannerImg}-${mobileImg}-v2`} className="w-full h-full block">
-                          {mobileImg && <source media="(max-width: 768px)" srcSet={`${mobileImg}?v=2`} />}
+                        <picture key={`pic-hide-${slide._id || idx}-${bannerImg}-${hasMobileImg ? mobileImg : 'fallback'}`} className="w-full h-full block">
+                          {hasMobileImg && <source media="(max-width: 768px)" srcSet={mobileImg} />}
                           <img
                             key={`img-hide-${slide._id || idx}-${bannerImg}`}
-                            src={`${bannerImg}?v=2`}
+                            src={bannerImg}
                             alt={displayTitle || 'Hero Banner'}
                             loading={idx === 0 ? "eager" : "lazy"}
                             decoding="async"
-                            className="w-full h-full object-cover object-center block select-none pointer-events-none"
+                            className="w-full h-full object-contain sm:object-cover object-center block select-none pointer-events-none"
                           />
                         </picture>
                         {primaryBtnLink && primaryBtnLink !== '#' && (
@@ -2940,8 +2967,8 @@ export default function Home() {
 
                         {/* Right Product Image */}
                         <div className="w-full lg:flex-1 h-[220px] sm:h-[280px] lg:h-full flex items-center justify-center lg:justify-end overflow-hidden pt-4 lg:pt-0">
-                          <picture key={`pic-norm-${slide._id || idx}-${bannerImg}`} className="w-full h-full flex items-center justify-center lg:justify-end">
-                            {slide.mobileImage && <source media="(max-width: 640px)" srcSet={mobileImg} />}
+                          <picture key={`pic-norm-${slide._id || idx}-${bannerImg}-${hasMobileImg ? mobileImg : 'fallback'}`} className="w-full h-full flex items-center justify-center lg:justify-end">
+                            {hasMobileImg && <source media="(max-width: 768px)" srcSet={mobileImg} />}
                             <img
                               key={`img-norm-${slide._id || idx}-${bannerImg}`}
                               src={bannerImg}
@@ -2958,32 +2985,6 @@ export default function Home() {
                 );
               })}
             </div>
-
-            {/* Circular Previous Arrow Button (Dark Translucent from Reference) */}
-            {effectiveHeroSlides.length > 1 && (
-              <button
-                type="button"
-                onClick={() => setCurrentSlideIndex(prev => (prev === 0 ? effectiveHeroSlides.length - 1 : prev - 1))}
-                className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-[#3f454b]/75 hover:bg-[#3f454b]/95 text-white border border-white/10 backdrop-blur-md flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                aria-label="Previous Slide"
-                title="Previous Slide"
-              >
-                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-              </button>
-            )}
-
-            {/* Circular Next Arrow Button (Dark Translucent from Reference) */}
-            {effectiveHeroSlides.length > 1 && (
-              <button
-                type="button"
-                onClick={() => setCurrentSlideIndex(prev => (prev + 1) % effectiveHeroSlides.length)}
-                className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-[#3f454b]/75 hover:bg-[#3f454b]/95 text-white border border-white/10 backdrop-blur-md flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                aria-label="Next Slide"
-                title="Next Slide"
-              >
-                <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-              </button>
-            )}
 
             {/* Pagination Dots (Apple Pill Bar from Reference) */}
             {effectiveHeroSlides.length > 1 && (

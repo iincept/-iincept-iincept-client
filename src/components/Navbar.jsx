@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -1205,7 +1206,7 @@ export default function Navbar() {
     <>
       {styleTag}
       <div
-        className="w-full shrink-0 h-[76px] sm:h-[84px] lg:h-[92px] pointer-events-none select-none"
+        className={`w-full shrink-0 ${isHomePage ? 'h-[60px] sm:h-[66px] lg:h-[74px]' : 'h-[76px] sm:h-[84px] lg:h-[92px]'} pointer-events-none select-none`}
         aria-hidden="true"
       />
       <div className={`pill-nav-stage ${isNavVisible ? 'nav-visible' : 'nav-hidden'}`}>
@@ -1581,75 +1582,6 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Full-Screen Mobile Navigation Overlay (Covers entire viewport like Image 2) */}
-          {isMobileMenuOpen && (
-            <div className="fixed inset-0 w-screen h-screen min-h-screen z-[9999] lg:hidden bg-white text-zinc-900 flex flex-col animate-in fade-in duration-200 select-none overflow-hidden">
-              {/* Header inside Menu Overlay */}
-              <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-zinc-100 shrink-0">
-                <Link
-                  to="/"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center shrink-0 group py-1"
-                >
-                  <img
-                    src="/iincept_navbar_logo.png"
-                    alt="iiNCEPT"
-                    className="h-8 sm:h-9 w-auto object-contain"
-                    style={{ mixBlendMode: 'multiply' }}
-                  />
-                </Link>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 rounded-full hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 transition-colors focus:outline-none cursor-pointer"
-                  aria-label="Close menu"
-                >
-                  <X className="h-7 w-7 stroke-[2]" />
-                </button>
-              </div>
-
-              {/* Main Navigation Links */}
-              <div className="flex-1 px-8 sm:px-12 py-6 overflow-y-auto overscroll-contain">
-                <nav className="flex flex-col space-y-1 text-left max-w-xl">
-                  {activeMenuItems.map((item, idx) => {
-                    if (item.label === 'Bulk Pricing') {
-                      return (
-                        <a
-                          key={idx}
-                          href="/?scroll=procurement"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setIsMobileMenuOpen(false);
-                            if (location.pathname === '/') {
-                              const section = document.getElementById('procurement-section');
-                              if (section) {
-                                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                              }
-                            } else {
-                              navigate('/?scroll=procurement');
-                            }
-                          }}
-                          className="text-[20px] sm:text-[22px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-3 border-b border-zinc-100/80"
-                        >
-                          {item.label}
-                        </a>
-                      );
-                    }
-                    return (
-                      <Link
-                        key={idx}
-                        to={item.path}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-[20px] sm:text-[22px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-3 border-b border-zinc-100/80"
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
-            </div>
-          )}
-
           {/* Mega Dropdown for Mac */}
           {isMacDropdownOpen && (
             <>
@@ -1947,6 +1879,97 @@ export default function Navbar() {
           )}
         </nav>
       </div>
+
+      {/* Mobile Navigation Drawer (Mounted directly to document.body to break out of all parent stacking contexts & transforms) */}
+      {typeof document !== 'undefined' && createPortal(
+        <div
+          className={`fixed inset-0 z-[99999] lg:hidden overflow-hidden ${
+            isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+          aria-hidden={!isMobileMenuOpen}
+        >
+          {/* Dimmed Backdrop */}
+          <div
+            className={`fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out ${
+              isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* White Drawer Panel Sliding in from Right */}
+          <div
+            className={`fixed top-0 right-0 bottom-0 w-[85vw] max-w-[360px] sm:max-w-[400px] h-full h-screen h-[100dvh] bg-white text-zinc-900 flex flex-col z-10 shadow-2xl border-l border-zinc-200 transition-transform duration-300 ease-in-out select-none overflow-hidden ${
+              isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          >
+            {/* Header inside Menu Drawer */}
+            <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-zinc-100 shrink-0 bg-white">
+              <Link
+                to="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center shrink-0 group py-1"
+              >
+                <img
+                  src="/iincept_navbar_logo.png"
+                  alt="iiNCEPT"
+                  className="h-8 sm:h-9 w-auto object-contain"
+                  style={{ mixBlendMode: 'multiply' }}
+                />
+              </Link>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 rounded-full hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 transition-colors focus:outline-none cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X className="h-7 w-7 stroke-[2]" />
+              </button>
+            </div>
+
+            {/* Main Navigation Links */}
+            <div className="flex-1 px-6 sm:px-8 py-6 overflow-y-auto overscroll-contain">
+              <nav className="flex flex-col space-y-1 text-left w-full">
+                {activeMenuItems.map((item, idx) => {
+                  if (item.label === 'Bulk Pricing') {
+                    return (
+                      <a
+                        key={idx}
+                        href="/?scroll=procurement"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setIsMobileMenuOpen(false);
+                          if (location.pathname === '/') {
+                            const section = document.getElementById('procurement-section');
+                            if (section) {
+                              section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          } else {
+                            navigate('/?scroll=procurement');
+                          }
+                        }}
+                        className="text-[20px] sm:text-[22px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-3 border-b border-zinc-100/80"
+                      >
+                        {item.label}
+                      </a>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={idx}
+                      to={item.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-[20px] sm:text-[22px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-3 border-b border-zinc-100/80"
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }
