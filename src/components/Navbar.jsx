@@ -172,6 +172,7 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openMobileAccordion, setOpenMobileAccordion] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isGiftOpen, setIsGiftOpen] = useState(false);
   const [isMacDropdownOpen, setIsMacDropdownOpen] = useState(false);
@@ -196,6 +197,7 @@ export default function Navbar() {
     } else {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
+      setOpenMobileAccordion(null);
     }
 
     const handleKeyDown = (e) => {
@@ -247,50 +249,12 @@ export default function Navbar() {
     if (supportTimeoutRef.current) clearTimeout(supportTimeoutRef.current);
   };
 
-  // Smart Auto-Hide on Scroll Down & Reveal on Scroll Up
+  // Floating Navbar stays STILL (permanently fixed and visible on scroll down and scroll up)
   const [isNavVisible, setIsNavVisible] = useState(true);
-  const lastScrollYRef = useRef(0);
-
-  useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-          const prevScrollY = lastScrollYRef.current;
-          const diff = currentScrollY - prevScrollY;
-
-          // Always visible at the very top of the page
-          if (currentScrollY <= 40) {
-            setIsNavVisible(true);
-          } else if (diff > 8) {
-            // Scrolling down by more than 8px -> smoothly hide navbar
-            if (!isSearchOpen && !isMobileMenuOpen) {
-              setIsNavVisible(false);
-              clearAllTimeouts();
-              closeAllDropdowns();
-            }
-          } else if (diff < -8) {
-            // Scrolling up by more than 8px -> smoothly reveal navbar
-            setIsNavVisible(true);
-          }
-
-          lastScrollYRef.current = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isSearchOpen, isMobileMenuOpen]);
 
   // Ensure navbar is immediately visible on route navigation
   useEffect(() => {
     setIsNavVisible(true);
-    lastScrollYRef.current = 0;
   }, [location.pathname]);
 
   const handleMacMouseEnter = () => {
@@ -640,9 +604,56 @@ export default function Navbar() {
     }
   };
 
+  const getCategoryKey = (label) => {
+    const l = (label || '').toLowerCase();
+    if (l.includes('mac')) return 'mac';
+    if (l.includes('ipad')) return 'ipad';
+    if (l.includes('iphone')) return 'iphone';
+    if (l.includes('watch')) return 'watch';
+    if (l.includes('airpod')) return 'airpods';
+    if (l.includes('tv') || l.includes('home')) return 'tv-home';
+    if (l.includes('accessori')) return 'accessories';
+    return null;
+  };
+
+  const getMobileDropdownConfig = (label) => {
+    const key = getCategoryKey(label);
+    if (!key) return null;
+
+    if (dynamicNavItems && Array.isArray(dynamicNavItems) && dynamicNavItems.length > 0) {
+      const matchedNavItem = dynamicNavItems.find(item => {
+        const nLower = (item.name || '').toLowerCase();
+        if (key === 'mac') return nLower.includes('mac');
+        if (key === 'ipad') return nLower.includes('ipad');
+        if (key === 'iphone') return nLower.includes('iphone');
+        if (key === 'watch') return nLower.includes('watch');
+        if (key === 'airpods') return nLower.includes('airpod');
+        if (key === 'tv-home') return nLower.includes('tv') || nLower.includes('home');
+        if (key === 'accessories') return nLower.includes('accessori');
+        return false;
+      });
+
+      if (matchedNavItem && matchedNavItem.dropdownItems && matchedNavItem.dropdownItems.length > 0) {
+        const activeItems = matchedNavItem.dropdownItems.filter(d => d.isActive !== false);
+        if (activeItems.length > 0) {
+          const mainPath = matchedNavItem.link || getCategoryPath(matchedNavItem.name, matchedNavItem.link);
+          return {
+            mainLink: { label: `Explore All ${matchedNavItem.name}`, path: mainPath },
+            items: activeItems.map(d => ({
+              label: d.label,
+              path: d.path ? normalizeTargetPath(d.path) : (d.query ? `${mainPath}?search=${encodeURIComponent(d.query)}` : mainPath)
+            }))
+          };
+        }
+      }
+    }
+
+    return CATEGORY_MODEL_MAP[key] || null;
+  };
+
   const renderProductCategoryList = (catKey, catTitle, catPath, closeDropdown) => {
     // Find matching item in dynamicNavItems
-    const matchedNavItem = dynamicNavItems.find(item => {
+    const matchedNavItem = (dynamicNavItems || []).find(item => {
       const nLower = (item.name || '').toLowerCase();
       const kLower = (catKey || '').toLowerCase();
       if (kLower === 'mac') return nLower.includes('mac');
@@ -1897,10 +1908,10 @@ export default function Navbar() {
             aria-hidden="true"
           />
 
-          {/* White Drawer Panel Sliding in from Right */}
+          {/* White Drawer Panel Sliding in from Left */}
           <div
-            className={`fixed top-0 right-0 bottom-0 w-[85vw] max-w-[360px] sm:max-w-[400px] h-full h-screen h-[100dvh] bg-white text-zinc-900 flex flex-col z-10 shadow-2xl border-l border-zinc-200 transition-transform duration-300 ease-in-out select-none overflow-hidden ${
-              isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            className={`fixed top-0 left-0 bottom-0 w-[85vw] max-w-[360px] sm:max-w-[400px] h-full h-screen h-[100dvh] bg-white text-zinc-900 flex flex-col z-10 shadow-2xl border-r border-zinc-200 transition-transform duration-300 ease-in-out select-none overflow-hidden ${
+              isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
             {/* Header inside Menu Drawer */}
@@ -1928,7 +1939,7 @@ export default function Navbar() {
 
             {/* Main Navigation Links */}
             <div className="flex-1 px-6 sm:px-8 py-6 overflow-y-auto overscroll-contain">
-              <nav className="flex flex-col space-y-1 text-left w-full">
+              <nav className="flex flex-col text-left w-full divide-y divide-zinc-100/80">
                 {activeMenuItems.map((item, idx) => {
                   if (item.label === 'Bulk Pricing') {
                     return (
@@ -1947,18 +1958,69 @@ export default function Navbar() {
                             navigate('/?scroll=procurement');
                           }
                         }}
-                        className="text-[20px] sm:text-[22px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-3 border-b border-zinc-100/80"
+                        className="text-[19px] sm:text-[21px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-3.5"
                       >
                         {item.label}
                       </a>
                     );
                   }
+
+                  const catKey = getCategoryKey(item.label);
+                  const dropdownConfig = getMobileDropdownConfig(item.label);
+                  const hasDropdown = !!(catKey && dropdownConfig && dropdownConfig.items && dropdownConfig.items.length > 0);
+                  const isExpanded = openMobileAccordion === (catKey || item.label);
+
+                  if (hasDropdown) {
+                    return (
+                      <div key={idx} className="w-full">
+                        <button
+                          type="button"
+                          onClick={() => setOpenMobileAccordion(isExpanded ? null : (catKey || item.label))}
+                          className="w-full flex items-center justify-between py-3.5 text-left text-[19px] sm:text-[21px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors bg-transparent border-0 cursor-pointer select-none"
+                          aria-expanded={isExpanded}
+                        >
+                          <span>{item.label}</span>
+                          <ChevronDown
+                            className={`h-5 w-5 text-zinc-400 transition-transform duration-200 shrink-0 ${
+                              isExpanded ? 'rotate-180 text-black' : ''
+                            }`}
+                          />
+                        </button>
+
+                        {/* Accordion Submenu Items */}
+                        {isExpanded && (
+                          <div className="pb-3 pl-3.5 space-y-0.5 animate-in slide-in-from-top-1 duration-200 border-l-2 border-zinc-200 ml-1.5 mb-2">
+                            {dropdownConfig.mainLink && (
+                              <Link
+                                to={dropdownConfig.mainLink.path}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="text-[15px] sm:text-[16px] font-semibold text-blue-600 hover:text-blue-700 transition-colors block py-2 border-b border-zinc-100/60"
+                              >
+                                {dropdownConfig.mainLink.label} &rarr;
+                              </Link>
+                            )}
+                            {dropdownConfig.items.map((sub, sIdx) => (
+                              <Link
+                                key={sIdx}
+                                to={sub.path}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="text-[15px] sm:text-[16px] font-medium text-zinc-700 hover:text-black transition-colors block py-2 border-b border-zinc-100/40 last:border-b-0"
+                              >
+                                {sub.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
                   return (
                     <Link
                       key={idx}
                       to={item.path}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-[20px] sm:text-[22px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-3 border-b border-zinc-100/80"
+                      className="text-[19px] sm:text-[21px] font-bold tracking-tight text-zinc-900 hover:text-zinc-500 transition-colors block py-3.5"
                     >
                       {item.label}
                     </Link>

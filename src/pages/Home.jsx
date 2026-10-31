@@ -400,7 +400,7 @@ export default function Home() {
   // Deal of the Week State (with LocalStorage Cache)
   const [dealBanners, setDealBanners] = useState(() => {
     try {
-      const cached = localStorage.getItem('iincept_home_deal_banners_v2');
+      const cached = localStorage.getItem('iincept_home_deal_banners_v6');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -411,6 +411,17 @@ export default function Home() {
     } catch (e) { }
     return DEFAULT_DEAL_BANNERS;
   });
+
+  const [currentDealIndex, setCurrentDealIndex] = useState(0);
+
+  // Auto-slide Deal of the Week banners when multiple are active
+  useEffect(() => {
+    if (!dealBanners || dealBanners.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentDealIndex(prev => (prev + 1) % dealBanners.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [dealBanners?.length]);
 
   // Category Strip Default Images Lookup
   const DEFAULT_CATEGORY_IMAGES = {
@@ -627,7 +638,7 @@ export default function Home() {
             setDealBanners(prev => {
               if (JSON.stringify(prev) !== JSON.stringify(activeBanners)) {
                 try {
-                  localStorage.setItem('iincept_home_deal_banners_v2', JSON.stringify(response.data.homeDealBanners));
+                  localStorage.setItem('iincept_home_deal_banners_v6', JSON.stringify(response.data.homeDealBanners));
                 } catch (e) { }
                 return activeBanners;
               }
@@ -1917,22 +1928,79 @@ export default function Home() {
           text-align: center;
         }
 
-        /* ========== DEAL OF THE WEEK ========== */
-        .indiaistore-theme .deal-banner {
-          margin: 0 22px 40px;
+        /* ========== DEAL OF THE WEEK (RESPONSIVE BANNER SYSTEM) ========== */
+        .indiaistore-theme .deal-banner-container {
+          position: relative;
           max-width: 1400px;
-          margin-left: auto;
-          margin-right: auto;
-          background: linear-gradient(135deg, #161617 0%, #2a2a2c 100%);
+          margin: 0 auto 40px;
+          padding: 0 22px;
+          box-sizing: border-box;
+        }
+
+        .indiaistore-theme .deal-banner-frame {
+          width: 100%;
           border-radius: 28px;
-          padding: 56px 64px;
+          overflow: hidden;
+          position: relative;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #161617;
+          box-sizing: border-box;
+        }
+
+        /* Full graphical banner (Apple promotional creatives) */
+        .indiaistore-theme .deal-banner-frame.deal-frame-full,
+        .indiaistore-theme .deal-banner-frame:has(.deal-full-img) {
+          height: auto !important;
+          min-height: unset !important;
+          max-height: none !important;
+          border-radius: 24px;
+          background: #161617;
+          line-height: 0;
+        }
+
+        .indiaistore-theme .deal-frame-full a,
+        .indiaistore-theme .deal-banner-frame:has(.deal-full-img) a {
+          display: block;
+          width: 100%;
+          height: auto;
+          line-height: 0;
+          text-decoration: none;
+        }
+
+        .indiaistore-theme .deal-full-img {
+          width: 100%;
+          height: auto;
+          max-height: 420px;
+          object-fit: contain;
+          object-position: center;
+          display: block;
+          border-radius: 24px;
+          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .indiaistore-theme .deal-banner-frame:hover .deal-full-img {
+          transform: scale(1.015);
+        }
+
+        /* Split deal banner layout */
+        .indiaistore-theme .deal-banner-frame.deal-frame-split {
+          height: 380px;
+          min-height: 380px;
+          max-height: 380px;
+        }
+
+        .indiaistore-theme .deal-banner {
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, #161617 0%, #2a2a2c 100%);
+          padding: 40px 56px;
           color: white;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 48px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+          gap: 40px;
+          box-sizing: border-box;
         }
 
         .indiaistore-theme .deal-content { flex: 1; max-width: 580px; }
@@ -1943,45 +2011,45 @@ export default function Home() {
           color: #f5a623;
           letter-spacing: 1.5px;
           text-transform: uppercase;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
         }
 
         .indiaistore-theme .deal-title {
-          font-size: 38px;
+          font-size: 34px;
           font-weight: 700;
           letter-spacing: -0.8px;
-          margin-bottom: 14px;
+          margin-bottom: 12px;
           line-height: 1.15;
           color: #ffffff;
         }
 
         .indiaistore-theme .deal-desc {
-          font-size: 17px;
+          font-size: 15px;
           opacity: 0.88;
-          margin-bottom: 28px;
-          line-height: 1.55;
+          margin-bottom: 22px;
+          line-height: 1.45;
           color: #d2d2d7;
         }
 
         .indiaistore-theme .deal-price {
-          font-size: 34px;
+          font-size: 32px;
           font-weight: 700;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
           color: #ffffff;
         }
 
         .indiaistore-theme .deal-price span {
-          font-size: 18px;
+          font-size: 16px;
           opacity: 0.6;
           text-decoration: line-through;
-          margin-left: 12px;
+          margin-left: 10px;
           font-weight: 400;
         }
 
         .indiaistore-theme .deal-visual {
           flex-shrink: 0;
-          width: 520px;
-          height: 340px;
+          width: 480px;
+          height: 310px;
           background: transparent;
           border-radius: 20px;
           display: flex;
@@ -1996,13 +2064,13 @@ export default function Home() {
           height: 100%;
           object-fit: contain;
           object-position: bottom center;
-          transform: translateY(24px) scale(1.18);
+          transform: translateY(16px) scale(1.16);
           filter: drop-shadow(0 14px 32px rgba(0, 0, 0, 0.5));
           transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .indiaistore-theme .deal-banner:hover .deal-visual img {
-          transform: translateY(24px) scale(1.22);
+        .indiaistore-theme .deal-banner-frame:hover .deal-visual img {
+          transform: translateY(16px) scale(1.20);
         }
 
         /* ========== WHY BUY FROM AUTHORISED RESELLER ========== */
@@ -2501,14 +2569,37 @@ export default function Home() {
 
         @media (max-width: 1100px) {
           .indiaistore-theme .category-grid { grid-template-columns: repeat(4, 1fr); }
+          .indiaistore-theme .deal-banner-container {
+            margin: 0 auto 30px;
+            padding: 0 20px;
+          }
+          .indiaistore-theme .deal-banner-frame.deal-frame-split {
+            height: 280px !important;
+            min-height: 280px !important;
+            max-height: 280px !important;
+            border-radius: 22px !important;
+          }
+          .indiaistore-theme .deal-banner-frame.deal-frame-full,
+          .indiaistore-theme .deal-banner-frame:has(.deal-full-img) {
+            height: auto !important;
+            min-height: unset !important;
+            max-height: none !important;
+            border-radius: 22px !important;
+          }
+          .indiaistore-theme .deal-full-img {
+            border-radius: 22px !important;
+            height: auto !important;
+            max-height: 280px !important;
+            object-fit: contain !important;
+          }
           .indiaistore-theme .deal-banner {
             flex-direction: row !important;
             text-align: left !important;
-            padding: 22px 18px !important;
-            margin: 0 16px 36px !important;
+            padding: 22px 24px !important;
+            margin: 0 !important;
             align-items: center !important;
             justify-content: space-between !important;
-            gap: 10px !important;
+            gap: 16px !important;
             overflow: hidden !important;
             position: relative !important;
             border-radius: 24px !important;
@@ -2590,8 +2681,48 @@ export default function Home() {
           .indiaistore-theme .categories { padding: 0px 16px 36px; margin-top: 0px; }
           .indiaistore-theme .categories-divider { margin-bottom: 24px; }
           .indiaistore-theme .section-trending { padding-top: 16px; }
+          .indiaistore-theme .deal-banner-container {
+            margin: 0 auto 24px !important;
+            padding: 0 16px !important;
+          }
+          .indiaistore-theme .deal-banner-frame.deal-frame-full,
+          .indiaistore-theme .deal-banner-frame:has(.deal-full-img) {
+            height: auto !important;
+            min-height: unset !important;
+            max-height: none !important;
+            border-radius: 16px !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: #161617 !important;
+            overflow: hidden !important;
+          }
+          .indiaistore-theme .deal-frame-full a,
+          .indiaistore-theme .deal-banner-frame:has(.deal-full-img) a {
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            line-height: 0 !important;
+          }
+          .indiaistore-theme .deal-full-img {
+            width: 100% !important;
+            height: auto !important;
+            max-height: none !important;
+            object-fit: contain !important;
+            object-position: center !important;
+            display: block !important;
+            border-radius: 16px !important;
+            transform: none !important;
+          }
+          .indiaistore-theme .deal-banner-frame.deal-frame-split {
+            height: 160px !important;
+            min-height: 160px !important;
+            max-height: 160px !important;
+            border-radius: 16px !important;
+          }
           .indiaistore-theme .deal-banner {
-            margin: 0 16px 18px !important;
+            margin: 0 !important;
+            padding: 14px 18px !important;
+            gap: 10px !important;
           }
           .indiaistore-theme .wby-section { 
             padding: 18px 16px 36px !important; 
@@ -2725,6 +2856,24 @@ export default function Home() {
 
         @media (max-width: 480px) {
           .indiaistore-theme .section { padding: 28px 14px; }
+          .indiaistore-theme .deal-banner-container {
+            margin: 0 auto 20px !important;
+            padding: 0 12px !important;
+          }
+          .indiaistore-theme .deal-banner-frame.deal-frame-full,
+          .indiaistore-theme .deal-banner-frame:has(.deal-full-img) {
+            border-radius: 14px !important;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16) !important;
+          }
+          .indiaistore-theme .deal-full-img {
+            border-radius: 14px !important;
+          }
+          .indiaistore-theme .deal-banner-frame.deal-frame-split {
+            height: 145px !important;
+            min-height: 145px !important;
+            max-height: 145px !important;
+            border-radius: 14px !important;
+          }
           .indiaistore-theme .deal-banner {
             margin: 0 12px 16px !important;
           }
@@ -3327,36 +3476,61 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. DEAL OF THE WEEK */}
+      {/* 6. DEAL OF THE WEEK CAROUSEL */}
       {dealBanners && dealBanners.length > 0 && (() => {
-        const banner = dealBanners[0];
+        const safeIndex = currentDealIndex < dealBanners.length ? currentDealIndex : 0;
+        const banner = dealBanners[safeIndex] || dealBanners[0];
         if (!banner) return null;
         const productTarget = banner.productId ? `/product/${banner.productId}` : (banner.buttonLink || '/shop');
         const formattedFinal = formatRupee(banner.finalPrice !== undefined && banner.finalPrice !== null ? banner.finalPrice : banner.dealPrice);
         const formattedMrp = formatRupee(banner.originalMrp !== undefined && banner.originalMrp !== null ? banner.originalMrp : banner.dealOldPrice);
         const displayImg = banner.productImage || banner.dealImage || '/mac_deal_fan.png';
 
+        // Check if banner is a full graphic promotional banner (uploaded wide banner image or isFullBanner enabled)
+        const isFullBanner = Boolean(banner.isFullBanner) || 
+          banner.isFullBanner === 'true' || 
+          (Boolean(banner.dealImage) && banner.dealImage.includes('upload_1793435484509_863')) ||
+          (!banner.dealTitle?.trim() && !banner.title?.trim());
+
         return (
-          <div key={banner.id || banner._id || 'single-deal'} className="deal-banner">
-            <div className="deal-content">
-              <div className="deal-eyebrow">{banner.smallLabel || banner.dealEyebrow || 'DEAL OF THE WEEK'}</div>
-              <h2 className="deal-title">{banner.title || banner.dealTitle || 'MacBook Neo – Stock Clearance'}</h2>
-              <p className="deal-desc">
-                {banner.description || banner.dealDesc || 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.'}
-              </p>
-              <div className="deal-price">
-                {formattedFinal} {formattedMrp && <span>{formattedMrp}</span>}
-              </div>
-              <Link to={productTarget} className="btn btn-primary" style={{ marginTop: '18px' }}>
-                {banner.buttonText || banner.dealButtonText || 'Grab the Deal'}
-              </Link>
-            </div>
-            <div className="deal-visual">
-              <img
-                src={displayImg}
-                alt={banner.title || 'Deal Product'}
-                className="max-h-full max-w-full object-contain filter drop-shadow-lg"
-              />
+          <div className="deal-banner-container">
+            <div
+              key={banner.id || banner._id || `deal-${safeIndex}`}
+              className={`deal-banner-frame ${isFullBanner ? 'deal-frame-full' : 'deal-frame-split'}`}
+            >
+              {isFullBanner ? (
+                <Link to={productTarget} style={{ display: 'block', width: '100%', textDecoration: 'none' }}>
+                  <img
+                    src={displayImg}
+                    alt={banner.internalName || 'Deal Banner'}
+                    className="deal-full-img"
+                    loading="lazy"
+                  />
+                </Link>
+              ) : (
+                <div className="deal-banner">
+                  <div className="deal-content">
+                    <div className="deal-eyebrow">{banner.smallLabel || banner.dealEyebrow || 'DEAL OF THE WEEK'}</div>
+                    <h2 className="deal-title">{banner.title || banner.dealTitle || banner.internalName || 'Special Deal Banner'}</h2>
+                    <p className="deal-desc">
+                      {banner.description || banner.dealDesc || 'Limited time offer on genuine Apple devices. Order today to claim free shipping.'}
+                    </p>
+                    <div className="deal-price">
+                      {formattedFinal} {formattedMrp && <span>{formattedMrp}</span>}
+                    </div>
+                    <Link to={productTarget} className="btn btn-primary" style={{ marginTop: '14px' }}>
+                      {banner.buttonText || banner.dealButtonText || 'Grab the Deal'}
+                    </Link>
+                  </div>
+                  <div className="deal-visual">
+                    <img
+                      src={displayImg}
+                      alt={banner.title || banner.dealTitle || 'Deal Product'}
+                      className="max-h-full max-w-full object-contain filter drop-shadow-lg"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
