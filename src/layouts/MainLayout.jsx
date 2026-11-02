@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigationType, ScrollRestoration } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCart } from '../redux/cartSlice';
 import { fetchWishlist } from '../redux/wishlistSlice';
@@ -12,6 +12,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function MainLayout() {
   const location = useLocation();
+  const navigationType = useNavigationType();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
@@ -22,16 +23,22 @@ export default function MainLayout() {
     }
   }, [dispatch, isAuthenticated]);
 
+  // Only scroll to top on new forward link clicks (PUSH), never on POP / back navigation
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: 'instant' // Instant scroll without delay to keep transition fast and crisp
-    });
-  }, [location.pathname, location.search]);
+    if (navigationType === 'PUSH') {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'instant'
+      });
+    }
+  }, [location.pathname, navigationType]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900 font-sans antialiased overflow-x-hidden w-full relative">
+      {/* Native React Router Scroll Restoration: restores exact previous scroll position on back/forward */}
+      <ScrollRestoration />
+
       {/* Top Banner Promotion / Support Utilities */}
       <Header />
 
@@ -46,7 +53,7 @@ export default function MainLayout() {
 
       {/* Main Outlet for nested routes */}
       <main className="flex-grow w-full min-w-0 pt-0 pb-8 shrink-0">
-        <div key={location.key || (location.pathname + location.search)} className="page-smooth-enter w-full h-full min-w-0">
+        <div className="w-full h-full min-w-0">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

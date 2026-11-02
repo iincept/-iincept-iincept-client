@@ -400,7 +400,7 @@ export default function Home() {
   // Deal of the Week State (with LocalStorage Cache)
   const [dealBanners, setDealBanners] = useState(() => {
     try {
-      const cached = localStorage.getItem('iincept_home_deal_banners_v6');
+      const cached = localStorage.getItem('iincept_home_deal_banners_v12');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -532,6 +532,28 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [isTestimonialsPaused]);
 
+  // Preserve horizontal scroll position of new arrivals slider across navigations
+  useEffect(() => {
+    const slider = newArrivalsSliderRef.current;
+    if (!slider) return;
+
+    try {
+      const saved = sessionStorage.getItem('iincept_arrivals_scroll_x');
+      if (saved !== null) {
+        slider.scrollLeft = parseInt(saved, 10) || 0;
+      }
+    } catch (e) { }
+
+    const onScroll = () => {
+      try {
+        sessionStorage.setItem('iincept_arrivals_scroll_x', String(slider.scrollLeft));
+      } catch (e) { }
+    };
+
+    slider.addEventListener('scroll', onScroll, { passive: true });
+    return () => slider.removeEventListener('scroll', onScroll);
+  }, [homeNewArrivals]);
+
   useEffect(() => {
     dispatch(fetchProducts());
     fetchSiteSettings();
@@ -623,10 +645,15 @@ export default function Home() {
               };
             });
 
-          setHeroSlides(activeSlides);
-          try {
-            localStorage.setItem('iincept_home_hero_slides_v7', JSON.stringify(activeSlides));
-          } catch (e) { }
+          setHeroSlides(prev => {
+            if (JSON.stringify(prev) !== JSON.stringify(activeSlides)) {
+              try {
+                localStorage.setItem('iincept_home_hero_slides_v7', JSON.stringify(activeSlides));
+              } catch (e) { }
+              return activeSlides;
+            }
+            return prev;
+          });
         }
 
         if (response.data.homeDealBanners && Array.isArray(response.data.homeDealBanners) && response.data.homeDealBanners.length > 0) {
@@ -638,7 +665,7 @@ export default function Home() {
             setDealBanners(prev => {
               if (JSON.stringify(prev) !== JSON.stringify(activeBanners)) {
                 try {
-                  localStorage.setItem('iincept_home_deal_banners_v6', JSON.stringify(response.data.homeDealBanners));
+                  localStorage.setItem('iincept_home_deal_banners_v12', JSON.stringify(response.data.homeDealBanners));
                 } catch (e) { }
                 return activeBanners;
               }
@@ -682,10 +709,15 @@ export default function Home() {
         if (response.data.homeNewArrivals && Array.isArray(response.data.homeNewArrivals)) {
           const activeArrivals = response.data.homeNewArrivals.filter(i => i.isActive !== false);
           if (activeArrivals.length > 0) {
-            setHomeNewArrivals(activeArrivals);
-            try {
-              localStorage.setItem('iincept_home_new_arrivals_v2', JSON.stringify(activeArrivals));
-            } catch (e) { }
+            setHomeNewArrivals(prev => {
+              if (JSON.stringify(prev) !== JSON.stringify(activeArrivals)) {
+                try {
+                  localStorage.setItem('iincept_home_new_arrivals_v2', JSON.stringify(activeArrivals));
+                } catch (e) { }
+                return activeArrivals;
+              }
+              return prev;
+            });
           }
         }
 
@@ -724,7 +756,12 @@ export default function Home() {
               };
             });
           if (activeTestimonials.length > 0) {
-            setTestimonials(activeTestimonials);
+            setTestimonials(prev => {
+              if (JSON.stringify(prev) !== JSON.stringify(activeTestimonials)) {
+                return activeTestimonials;
+              }
+              return prev;
+            });
           }
         }
       }
@@ -822,13 +859,13 @@ export default function Home() {
 
   // Products from Database / Admin Settings for New Arrivals & Trending
   const defaultNewArrivals = [
-    { id: '1', name: 'iPhone Duo', tagline: 'Hello, hello.', price: 'From ₹299900.00', image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-duo-202609_GEO_IN?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXTmRieWJxSUI5TWh3VExiQnFCdzRFUVIzWjZtanZvZXBzWDFVU2JjN3Z3cXN2Mmx4a3VvSnUzaFUvSVlVRUJkbEd4TmxtT1p0QkhPako5RlJBUjZ0OU9Hc0wyUy9Qc3BoTzNXSHJVRHo5eGk&traceId=1', imageWebp: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-duo-202609_GEO_IN?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXTmRieWJxSUI5TWh3VExiQnFCdzRFUVIzWjZtanZvZXBzWDFVU2JjN3Z3cXBxK0ZBNmxGbmUyUFZlUkRMaDBrbFIrM1V0MXQ3L01IeDRJOXlOYjZtNC9JTVpqRTIzSGM4czgvT0dWYlpqZnY&traceId=1', path: '/iphone' },
-    { id: '2', name: 'iPhone 18 Pro', tagline: 'The ultimate performance and camera of any iPhone, with exceptional battery life.', price: 'From ₹164900.00', image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXSWQybG1sZ1oxVnEyWjA5KzltU01ZTFNab1lJcUZwSFVRK1htYlNmZUtPTFN5aWNYUFpIbkFhdm03T3BzSjdVSTVTUzBFNlNoQ3JiRWpkVzhGb1Q5YkVkMVhIT21KNHhMTmc3TkpqWGZITDg&traceId=1', imageWebp: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=UzBXQnlhUWdraTNvNU1Kb3pEQlpXSWQybG1sZ1oxVnEyWjA5KzltU01ZTFNab1lJcUZwSFVRK1htYlNmZUtPTFJ2R3NEUGt3Q2tTUTNWU09neHFkdWRUL1Azd1lsYk5RbEsxZXhvbThSV3VXS3B5dFRDdHdOWGF6ZzVmZHdiRWc&traceId=1', path: '/iphone', isDark: true },
-    { id: '3', name: 'Apple Watch Series 12', tagline: 'The most accurate heart rate sensing in a wearable.', price: 'From ₹56900.00', image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-series-12-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=QWhYaUFuRS9hTUliZ3N5RWVCV09vaG9ZUW1EeWY5MUtXMHdLVXUrS2thUHJ5SDBWM0EzY1NDZnVpYTkvandVRHFmS3YvQ0doSFZENndQR0J4TTRqbndQU2JvQ0JiRmZoU0hNWVplaGs5aHNPYUtSMVh2bmhjSFBDSFo4T3FRS0E&traceId=1', imageWebp: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-series-12-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=QWhYaUFuRS9hTUliZ3N5RWVCV09vaG9ZUW1EeWY5MUtXMHdLVXUrS2thUHJ5SDBWM0EzY1NDZnVpYTkvandVRGdpcjhyQnJrZTk3NDVpVGh0RDBPL1dlb1hSRFZ1bHlsVUx3SFRzY0JhYVpmcTUrTlhNMWhLS2RHRXhjZnVURVQ&traceId=1', path: '/watch', isDark: true },
-    { id: '4', name: 'Apple Watch Ultra 4', tagline: 'The ultimate sports and adventure watch.', price: 'From ₹89900.00', image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-ultra-4-202609_GEO_IN?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=QWhYaUFuRS9hTUliZ3N5RWVCV09vdmMxTi9MK0F4TUMvaEkrKzQrSzRpbmJRMGtnQk93bkNnOFNhZmw1MVVDSWVEb1lRcjg2U0o3bTMvMkR2S2VvTnZXdlJRYjdSZWJHVUh4aFVDb0hhVVdPc2ZIZ0tBZThMV3hSNUJIL00xdlQ&traceId=1', imageWebp: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-watch-ultra-4-202609_GEO_IN?wid=800&hei=1000&fmt=webp&qlt=90&.v=QWhYaUFuRS9hTUliZ3N5RWVCV09vdmMxTi9MK0F4TUMvaEkrKzQrSzRpbmJRMGtnQk93bkNnOFNhZmw1MVVDSWVKTWtXODFGZ1ZIUk9hUHM3RHc0QTYyL0ZSTzZrMWlpUU5CQlpuNHNUZzhtZXFyaVZWaHlPbUpXd09SVC9rbDc&traceId=1', altText: 'Apple Watch Ultra 4, titanium case, natural colour, right side exterior, raised side button, microphone, Digital Crown dial, Ocean Band, translucent grey colour', path: '/watch', isDark: true },
-    { id: '5', name: 'AirPods 5', tagline: 'Discover the magic of Active Noise Cancellation.', price: 'From ₹14900.00', image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-airpods-5-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=WlczMnlkejNQakk5eW14MEJjQmdLL1htQlViQlcvWm01TkRFbWQ1bFdVbjkvamYzRzRvcFlnajNacmhEOC9BeGJLRkx3RDVvZWFBZ2pOaXMvUXhHQ2FFWGwxTDd3djQwdSt4b3ZkbTdjbXVKTExiOEFsRmxtQ2Nua0tRSC83MkI&traceId=1', imageWebp: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-airpods-5-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=WlczMnlkejNQakk5eW14MEJjQmdLL1htQlViQlcvWm01TkRFbWQ1bFdVbjkvamYzRzRvcFlnajNacmhEOC9BeEZXZzlzM2cwVmJseGdsS3RYT09za2g5YnJpZi9mWTcyN0pxRVpBcDU2UnArYWpGdS9XeFgvbS9ITnNYOEhYaG4&traceId=1', altText: 'AirPods 5: wireless earbuds, white color, oval-shaped, ear tip with interior acoustic speaker mesh, short stem with silver charging connector, left and right letter indicators', path: '/airpods', isDark: false },
-    { id: '6', name: 'Mac mini', tagline: 'Now with M6 and M5 Pro.', price: 'From ₹99900.00', image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-mini-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyejZjVlVyTm9aMTIzM2ZlTDJiaTlnRDZXYXJlRUd1cTBYTnRnbTNlazIvM01BZktNRDRIeDREMEYwa1NOSWNvMENpK0pSNjVsZ2N0cUJVQnVDU1lqdHQrYWpGdS9XeFgvbS9ITnNYOEhYaG4&traceId=1', imageWebp: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-mini-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyejZjVlVyTm9aMTIzM2ZlTDJiaTlnRDZXYXJlRUd1cTBYTnRnbTNlazIvMzl4VGJTa0Z6K25XajlIZ3dxUWxxaFVyemZ6RkRPaG5jU2paRVdtZHhabXc&traceId=1', altText: 'Mac mini, front exterior, two Thunderbolt ports, status indicator light and 3.5‑millimetre headphone jack, tapered black base at bottom, flat top, rounded sides, straight edges, silver colour enclosure', path: '/macbook', isDark: false },
-    { id: '7', name: 'Mac Studio', tagline: 'Now with M5 Max and M5 Ultra.', price: 'From ₹279900.00', image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-studio-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyeU9aVHlIUTN0TDFoV3YrODdyNm1Ucm45S05qekNUdVUwMVFyK1pKaERUd3ZGdXpoZGFjcnJiZGtXTlNNRSszQWpLV0ZtaSt4V1ZKUFd0a1JsdUUwbENacXFoWC9uNWRBVmx4VTBHaHVxM3Y&traceId=1', imageWebp: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-mac-studio-202609?wid=800&hei=1000&fmt=webp&qlt=90&.v=MjhMcWJ2MGZwbXEwdnBkcUN6ZnhyeU9aVHlIUTN0TDFoV3YrODdyNm1Ucm45S05qekNUdVUwMVFyK1pKaERUd3lPWjFvdU5EZVdwUnRCZ2RHSDBFS3R0bEJITXZrbjRjcGpoK0NsSlhQUCtWZWZKZEpnTUg2bTJtOU9qU1hvcWw&traceId=1', altText: 'Mac Studio, front exterior, two USB‑C ports, SDXC card slot, status indicator light, tapered base at bottom, flat top, rounded sides, straight edges, silver colour enclosure', path: '/macbook', isDark: false }
+    { id: '1', name: 'iPhone Duo', tagline: 'Hello, hello.', price: 'From ₹2,99,900.00', image: '/uploads/upload_1791890562797_327.png', path: '/iphone', isActive: true },
+    { id: '2', name: 'iPhone 18 Pro', tagline: 'The ultimate performance and camera of any iPhone, with exceptional battery life.', price: 'From ₹1,64,900.00', image: '/uploads/upload_1791890780149_371.webp', path: '/iphone', isDark: true, isActive: true },
+    { id: '5', name: 'AirPods 5', tagline: 'Discover the magic of Active Noise Cancellation.', price: 'From ₹14,900.00', image: '/uploads/upload_1792409712224_59.webp', path: '/airpods', isDark: false, isActive: true },
+    { id: '3', name: 'Apple Watch Series 12', tagline: 'The most accurate heart rate sensing in a wearable.', price: 'From ₹56,900.00', image: '/uploads/upload_1791890802493_182.webp', path: '/watch', isDark: true, isActive: true },
+    { id: '1790765292224', name: 'Mac mini', tagline: 'Now  With M6 and M5 Pro', price: 'From ₹9,9900', image: '/uploads/upload_1791890752230_966.webp', path: '/mac', isDark: false, isActive: true },
+    { id: '4', name: 'Apple Watch Ultra 4', tagline: 'The ultimate sports and adventure watch.', price: 'From ₹89,900.00', image: '/uploads/upload_1791890837748_806.webp', path: '/watch', isDark: true, isActive: true },
+    { id: '1791891024445', name: 'Mac Studio', tagline: 'Now with M5 Max and M5 Ultra', price: 'From ₹27,9900.00', image: '/uploads/upload_1791891030554_854.webp', path: '/mac', isDark: false, isActive: true }
   ];
 
   const resolveArrivalProductPath = (item) => {
@@ -1939,48 +1976,51 @@ export default function Home() {
 
         .indiaistore-theme .deal-banner-frame {
           width: 100%;
-          border-radius: 28px;
+          height: 300px;
+          min-height: 300px;
+          max-height: 300px;
+          border-radius: 24px;
           overflow: hidden;
           position: relative;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
           border: 1px solid rgba(255, 255, 255, 0.08);
           background: #161617;
           box-sizing: border-box;
         }
 
-        /* Full graphical banner (Apple promotional creatives) */
         .indiaistore-theme .deal-banner-frame.deal-frame-full,
-        .indiaistore-theme .deal-banner-frame:has(.deal-full-img) {
-          height: auto !important;
-          min-height: unset !important;
-          max-height: none !important;
-          border-radius: 24px;
-          background: #161617;
-          line-height: 0;
+        .indiaistore-theme .deal-banner-frame.deal-frame-split {
+          height: 300px;
+          min-height: 300px;
+          max-height: 300px;
         }
 
-        .indiaistore-theme .deal-frame-full a,
-        .indiaistore-theme .deal-banner-frame:has(.deal-full-img) a {
+        .indiaistore-theme .deal-full-banner-link {
           display: block;
           width: 100%;
-          height: auto;
-          line-height: 0;
+          height: 100%;
+          position: relative;
+          overflow: hidden;
           text-decoration: none;
+          background: #161617;
+          box-sizing: border-box;
+          line-height: 0;
+          padding: 0;
+          margin: 0;
         }
 
         .indiaistore-theme .deal-full-img {
           width: 100%;
-          height: auto;
-          max-height: 420px;
-          object-fit: contain;
+          height: 100%;
+          object-fit: cover;
           object-position: center;
           display: block;
-          border-radius: 24px;
+          border-radius: 28px;
           transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .indiaistore-theme .deal-banner-frame:hover .deal-full-img {
-          transform: scale(1.015);
+          transform: scale(1.02);
         }
 
         /* Split deal banner layout */
@@ -2573,24 +2613,20 @@ export default function Home() {
             margin: 0 auto 30px;
             padding: 0 20px;
           }
-          .indiaistore-theme .deal-banner-frame.deal-frame-split {
-            height: 280px !important;
-            min-height: 280px !important;
-            max-height: 280px !important;
-            border-radius: 22px !important;
-          }
-          .indiaistore-theme .deal-banner-frame.deal-frame-full,
-          .indiaistore-theme .deal-banner-frame:has(.deal-full-img) {
-            height: auto !important;
-            min-height: unset !important;
-            max-height: none !important;
-            border-radius: 22px !important;
+          .indiaistore-theme .deal-banner-frame,
+          .indiaistore-theme .deal-banner-frame.deal-frame-split,
+          .indiaistore-theme .deal-banner-frame.deal-frame-full {
+            height: 190px !important;
+            min-height: 190px !important;
+            max-height: 190px !important;
+            border-radius: 20px !important;
           }
           .indiaistore-theme .deal-full-img {
             border-radius: 22px !important;
-            height: auto !important;
-            max-height: 280px !important;
-            object-fit: contain !important;
+            height: 100% !important;
+            width: 100% !important;
+            max-height: 100% !important;
+            object-fit: fill !important;
           }
           .indiaistore-theme .deal-banner {
             flex-direction: row !important;
@@ -2682,47 +2718,110 @@ export default function Home() {
           .indiaistore-theme .categories-divider { margin-bottom: 24px; }
           .indiaistore-theme .section-trending { padding-top: 16px; }
           .indiaistore-theme .deal-banner-container {
-            margin: 0 auto 24px !important;
+            margin: 0 auto 26px !important;
             padding: 0 16px !important;
           }
-          .indiaistore-theme .deal-banner-frame.deal-frame-full,
-          .indiaistore-theme .deal-banner-frame:has(.deal-full-img) {
-            height: auto !important;
-            min-height: unset !important;
-            max-height: none !important;
-            border-radius: 16px !important;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+          .indiaistore-theme .deal-banner-frame.deal-frame-full {
+            height: 150px !important;
+            min-height: 150px !important;
+            max-height: 150px !important;
+            border-radius: 20px !important;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
             background: #161617 !important;
             overflow: hidden !important;
           }
-          .indiaistore-theme .deal-frame-full a,
-          .indiaistore-theme .deal-banner-frame:has(.deal-full-img) a {
+          .indiaistore-theme .deal-banner-frame.deal-frame-split {
+            height: 155px !important;
+            min-height: 155px !important;
+            max-height: 155px !important;
+            border-radius: 20px !important;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: #161617 !important;
+            overflow: hidden !important;
+          }
+          .indiaistore-theme .deal-full-banner-link {
             display: block !important;
             width: 100% !important;
-            height: auto !important;
+            height: 100% !important;
+            position: relative !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
             line-height: 0 !important;
+            box-sizing: border-box !important;
           }
           .indiaistore-theme .deal-full-img {
             width: 100% !important;
-            height: auto !important;
-            max-height: none !important;
-            object-fit: contain !important;
+            height: 100% !important;
+            object-fit: cover !important;
             object-position: center !important;
             display: block !important;
-            border-radius: 16px !important;
+            border-radius: 20px !important;
             transform: none !important;
-          }
-          .indiaistore-theme .deal-banner-frame.deal-frame-split {
-            height: 160px !important;
-            min-height: 160px !important;
-            max-height: 160px !important;
-            border-radius: 16px !important;
           }
           .indiaistore-theme .deal-banner {
             margin: 0 !important;
-            padding: 14px 18px !important;
-            gap: 10px !important;
+            padding: 16px 22px !important;
+            gap: 14px !important;
+            height: 100% !important;
+          }
+          .indiaistore-theme .deal-content {
+            flex: 1 !important;
+            max-width: 58% !important;
+          }
+          .indiaistore-theme .deal-eyebrow {
+            font-size: 10px !important;
+            letter-spacing: 0.8px !important;
+            font-weight: 700 !important;
+            color: #f59e0b !important;
+            margin-bottom: 3px !important;
+          }
+          .indiaistore-theme .deal-title {
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            line-height: 1.25 !important;
+            margin-bottom: 4px !important;
+          }
+          .indiaistore-theme .deal-desc {
+            display: none !important;
+          }
+          .indiaistore-theme .deal-price {
+            font-size: 20px !important;
+            font-weight: 800 !important;
+            margin-bottom: 8px !important;
+          }
+          .indiaistore-theme .deal-price span {
+            font-size: 12px !important;
+            margin-left: 6px !important;
+            opacity: 0.65 !important;
+          }
+          .indiaistore-theme .deal-banner .btn {
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            padding: 7px 18px !important;
+            border-radius: 20px !important;
+            display: inline-flex !important;
+          }
+          .indiaistore-theme .deal-visual {
+            width: 44% !important;
+            max-width: 175px !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            padding-bottom: 4px !important;
+          }
+          .indiaistore-theme .deal-visual img {
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
+            max-height: 120px !important;
+            object-fit: contain !important;
+            object-position: bottom center !important;
+            transform: translateY(4px) scale(1.16) !important;
+            filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45)) !important;
           }
           .indiaistore-theme .wby-section { 
             padding: 18px 16px 36px !important; 
@@ -2857,25 +2956,105 @@ export default function Home() {
         @media (max-width: 480px) {
           .indiaistore-theme .section { padding: 28px 14px; }
           .indiaistore-theme .deal-banner-container {
-            margin: 0 auto 20px !important;
-            padding: 0 12px !important;
+            margin: 0 auto 22px !important;
+            padding: 0 14px !important;
           }
-          .indiaistore-theme .deal-banner-frame.deal-frame-full,
-          .indiaistore-theme .deal-banner-frame:has(.deal-full-img) {
-            border-radius: 14px !important;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16) !important;
-          }
-          .indiaistore-theme .deal-full-img {
-            border-radius: 14px !important;
+          .indiaistore-theme .deal-banner-frame.deal-frame-full {
+            height: 135px !important;
+            min-height: 135px !important;
+            max-height: 135px !important;
+            border-radius: 18px !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: #161617 !important;
+            overflow: hidden !important;
           }
           .indiaistore-theme .deal-banner-frame.deal-frame-split {
-            height: 145px !important;
-            min-height: 145px !important;
-            max-height: 145px !important;
-            border-radius: 14px !important;
+            height: 140px !important;
+            min-height: 140px !important;
+            max-height: 140px !important;
+            border-radius: 18px !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: #161617 !important;
+            overflow: hidden !important;
+          }
+          .indiaistore-theme .deal-full-banner-link {
+            padding: 0 !important;
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+            line-height: 0 !important;
+          }
+          .indiaistore-theme .deal-full-img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            border-radius: 18px !important;
+            transform: none !important;
           }
           .indiaistore-theme .deal-banner {
-            margin: 0 12px 16px !important;
+            padding: 14px 18px !important;
+            gap: 12px !important;
+            height: 100% !important;
+          }
+          .indiaistore-theme .deal-content {
+            flex: 1 !important;
+            max-width: 58% !important;
+          }
+          .indiaistore-theme .deal-eyebrow {
+            font-size: 9.5px !important;
+            letter-spacing: 0.8px !important;
+            font-weight: 700 !important;
+            color: #f59e0b !important;
+            margin-bottom: 3px !important;
+          }
+          .indiaistore-theme .deal-title {
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            line-height: 1.25 !important;
+            margin-bottom: 4px !important;
+            letter-spacing: -0.3px !important;
+          }
+          .indiaistore-theme .deal-desc {
+            display: none !important;
+          }
+          .indiaistore-theme .deal-price {
+            font-size: 18px !important;
+            font-weight: 800 !important;
+            margin-bottom: 8px !important;
+          }
+          .indiaistore-theme .deal-price span {
+            font-size: 11px !important;
+            margin-left: 6px !important;
+            opacity: 0.65 !important;
+          }
+          .indiaistore-theme .deal-banner .btn {
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            padding: 6px 16px !important;
+            border-radius: 18px !important;
+            display: inline-flex !important;
+          }
+          .indiaistore-theme .deal-visual {
+            width: 44% !important;
+            max-width: 145px !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            padding-bottom: 2px !important;
+          }
+          .indiaistore-theme .deal-visual img {
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
+            max-height: 106px !important;
+            object-fit: contain !important;
+            object-position: bottom center !important;
+            transform: translateY(3px) scale(1.15) !important;
+            filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.45)) !important;
           }
           .indiaistore-theme .wby-section {
             padding: 14px 12px 28px !important;
@@ -3135,6 +3314,58 @@ export default function Home() {
               })}
             </div>
 
+            {/* Left Chevron Arrow (Desktop & Mobile) */}
+            {effectiveHeroSlides.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlideIndex((prev) => (prev === 0 ? effectiveHeroSlides.length - 1 : prev - 1));
+                }}
+                className="absolute left-1.5 sm:left-4 lg:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-115 active:scale-90 select-none group"
+                aria-label="Previous Slide"
+                title="Previous Slide"
+              >
+                <svg
+                  className="w-7 h-7 sm:w-9 sm:h-9 text-[#0071e3] transition-transform duration-200 group-hover:-translate-x-0.5 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            )}
+
+            {/* Right Chevron Arrow (Desktop & Mobile) */}
+            {effectiveHeroSlides.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlideIndex((prev) => (prev + 1) % effectiveHeroSlides.length);
+                }}
+                className="absolute right-1.5 sm:right-4 lg:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-115 active:scale-90 select-none group"
+                aria-label="Next Slide"
+                title="Next Slide"
+              >
+                <svg
+                  className="w-7 h-7 sm:w-9 sm:h-9 text-[#0071e3] transition-transform duration-200 group-hover:translate-x-0.5 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 6 15 12 9 18" />
+                </svg>
+              </button>
+            )}
+
             {/* Pagination Dots (Apple Pill Bar from Reference) */}
             {effectiveHeroSlides.length > 1 && (
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#3f454b]/75 backdrop-blur-md border border-white/10 shadow-sm">
@@ -3298,7 +3529,7 @@ export default function Home() {
               const targetPath = resolveArrivalProductPath(item);
 
               return (
-                <Link key={item.id || idx} to={targetPath} className={`rf-ccard rf-ccard-40 ${isDarkCard ? 'rf-ccard-dark' : 'rf-card-msgtag-orange'}`}>
+                <Link key={item.id || item._id || item.name || idx} to={targetPath} className={`rf-ccard rf-ccard-40 ${isDarkCard ? 'rf-ccard-dark' : 'rf-card-msgtag-orange'}`}>
                   <div className="as-util-relatedlink">
                     <div className="rf-ccard-content rf-ccard-content-withfullimg">
                       <div className="rf-ccard-img-full-wrapper">
@@ -3499,7 +3730,7 @@ export default function Home() {
               className={`deal-banner-frame ${isFullBanner ? 'deal-frame-full' : 'deal-frame-split'}`}
             >
               {isFullBanner ? (
-                <Link to={productTarget} style={{ display: 'block', width: '100%', textDecoration: 'none' }}>
+                <Link to={productTarget} className="deal-full-banner-link">
                   <img
                     src={displayImg}
                     alt={banner.internalName || 'Deal Banner'}
@@ -3532,6 +3763,24 @@ export default function Home() {
                 </div>
               )}
             </div>
+            {dealBanners.length > 1 && (
+              <div className="flex justify-center items-center gap-1.5 mt-2.5">
+                {dealBanners.map((_, dotIdx) => (
+                  <button
+                    key={dotIdx}
+                    type="button"
+                    onClick={() => setCurrentDealIndex(dotIdx)}
+                    className={`transition-all duration-300 cursor-pointer rounded-full ${
+                      dotIdx === safeIndex
+                        ? 'w-5 h-1.5 bg-[#0071e3]'
+                        : 'w-1.5 h-1.5 bg-zinc-300 hover:bg-zinc-500'
+                    }`}
+                    aria-label={`Go to deal banner ${dotIdx + 1}`}
+                    title={`Deal Banner ${dotIdx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         );
       })()}

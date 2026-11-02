@@ -93,11 +93,12 @@ export const placeNewOrder = createAsyncThunk(
         addressId = addressData._id;
       }
 
-      // 2. Place order passing the address ID
+      // 2. Place order passing the address ID and cartItems
       const orderData = await orderApi.createOrder({
         shippingAddress: addressId,
         paymentMethod,
-        couponCode
+        couponCode,
+        cartItems: cartItems || []
       });
 
       return transformOrder(orderData);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axiosClient from '../services/axiosClient';
+import IinceptLogo from './IinceptLogo';
 
 const DEFAULT_FOOTER_DATA = {
   brandTitle: 'iiNCEPT',
@@ -144,7 +145,6 @@ export default function Footer() {
           object-fit: contain;
           margin-bottom: 16px;
           display: block;
-          filter: brightness(0) invert(1);
         }
 
         .indiaistore-footer-brand-tagline {
@@ -324,7 +324,6 @@ export default function Footer() {
             margin: 0 auto 14px auto !important;
             display: block !important;
             object-fit: contain !important;
-            filter: brightness(0) invert(1) !important;
           }
 
           .indiaistore-footer-brand-tagline {
@@ -478,11 +477,8 @@ export default function Footer() {
           
           {/* Column 1: Brand Info */}
           <div className="indiaistore-footer-brand-col">
-            <Link to="/" className="indiaistore-footer-logo-link">
-              <img 
-                src="/iincept_footer_logo_white.png" 
-                alt="iiNCEPT - Apple Authorised Platform" 
-              />
+            <Link to="/" className="indiaistore-footer-logo-link block mb-3">
+              <IinceptLogo bg="bg-transparent" compact={true} className="!py-0 !px-0" />
             </Link>
             <p className="indiaistore-footer-brand-tagline">
               {footerData.brandTagline}

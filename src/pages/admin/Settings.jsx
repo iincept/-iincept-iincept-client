@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Settings as SettingsIcon, Check, Loader2, User } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateUser } from '../../redux/authSlice';
+import { updateAdminUser } from '../../redux/adminAuthSlice';
 import axiosClient from '../../services/axiosClient';
 
 export default function Settings() {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.adminAuth);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
 
@@ -32,7 +32,7 @@ export default function Settings() {
         password: form.password || undefined
       });
       
-      dispatch(updateUser(response.data));
+      dispatch(updateAdminUser(response.data));
       showSuccessMessage('Admin Profile updated successfully!');
     } catch (err) {
       alert(err.response?.data?.message || err.message || 'Failed to update profile settings');

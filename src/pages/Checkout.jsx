@@ -35,6 +35,7 @@ export default function Checkout() {
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
   const [mockOrderData, setMockOrderData] = useState(null);
   const [localLoading, setLocalLoading] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -78,122 +79,241 @@ export default function Checkout() {
   const shippingFee = subtotal > 500 ? 0 : 15.00;
   const totalAmount = subtotal + shippingFee - discountAmount;
 
-  const sendWhatsAppOrderNotification = (order, items, addressObj, pMethod, finalTotal) => {
+  // Helper to extract variant details (Part Number, Colour, Storage, RAM, etc.)
+  const extractProductDetails = (item) => {
+    let baseName = item?.name || item?.title || 'Apple Product';
+    let color = item?.color || '';
+    let storage = item?.storage || '';
+    let partNumber = item?.partNumber || item?.mpn || item?.sku || item?.modelNumber || '';
+    let connectivity = item?.connectivity || '';
+    let ram = item?.ram || '';
+    let processor = item?.processor || '';
+    let size = item?.size || item?.accessoriesSize || item?.bandSize || '';
+    let appleCare = item?.appleCarePlan || (typeof item?.appleCare === 'string' ? item?.appleCare : '');
+
+    // Extract details if baseName is formatted like "Product Name (Color / Storage / ...)"
+    const parenMatch = typeof baseName === 'string' ? baseName.match(/^(.*?)\s*\((.*?)\)$/) : null;
+    if (parenMatch) {
+      baseName = parenMatch[1].trim();
+      const detailsString = parenMatch[2];
+      const parts = detailsString.split(/\s+\/\s+/).map(p => p.trim()).filter(Boolean);
+
+      const toMB = (s) => {
+        if (!s) return 0;
+        const num = parseFloat(s);
+        if (/TB/i.test(s)) return num * 1024 * 1024;
+        if (/GB/i.test(s)) return num * 1024;
+        return num;
+      };
+
+      let memoryCandidates = [];
+
+      for (const part of parts) {
+        if (/^(?:mpn|part\s*no|part\s*#|sku|model)[:\s]*(.*)$/i.test(part)) {
+          if (!partNumber) {
+            const m = part.match(/^(?:mpn|part\s*no|part\s*#|sku|model)[:\s]*(.*)$/i);
+            partNumber = m ? m[1].trim() : '';
+          }
+        } else if (/\b(\d+\s*(?:GB|TB))\b/i.test(part)) {
+          memoryCandidates.push(part);
+        } else if (/\b(wi-?fi\s*\+\s*cellular|wi-?fi|gps\s*\+\s*cellular|gps)\b/i.test(part) && !connectivity) {
+          connectivity = part;
+        } else if (/\b(m[1-5](?:\s*(?:pro|max|ultra))?|a1[5-8](?:\s*pro)?|apple\s*m\w*)\b/i.test(part) && !processor) {
+          processor = part;
+        } else if (/\bapplecare\b/i.test(part) && !appleCare) {
+          appleCare = part;
+        } else if (!color && !/\d/.test(part) && !part.toLowerCase().includes('inch') && !part.toLowerCase().includes('mm')) {
+          color = part;
+        } else if (!size && (part.includes('mm') || part.includes('″') || part.includes('"') || part.toLowerCase().includes('inch') || part.includes('S/M') || part.includes('M/L'))) {
+          size = part;
+        }
+      }
+
+      if (memoryCandidates.length === 1) {
+        if (!storage) storage = memoryCandidates[0];
+      } else if (memoryCandidates.length >= 2) {
+        const sorted = [...memoryCandidates].sort((a, b) => toMB(b) - toMB(a));
+        if (!storage) storage = sorted[0]; // larger size is storage (e.g. 256 GB)
+        if (!ram) ram = sorted[1];         // smaller size is RAM (e.g. 16 GB)
+      }
+    }
+
+    return {
+      baseName,
+      color,
+      storage,
+      partNumber,
+      connectivity,
+      ram,
+      processor,
+      size,
+      appleCare
+    };
+  };
+
+  const generateWhatsAppOrderMessage = ({ orderId, customer, items, subtotal, shippingFee, discountAmount, couponCode, finalTotal, paymentMethod }) => {
+    let message = `🛒 *NEW ORDER PLACED - iiNCEPT Electronics* 🛒\n\n`;
+    message += `🆔 *Order ID:* #${orderId}\n`;
+    message += `📅 *Date:* ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}\n\n`;
+
+    message += `👤 *CUSTOMER & DELIVERY DETAILS:*\n`;
+    message += `• *Full Name:* ${customer.fullName || 'Customer'}\n`;
+    message += `• *Phone Number:* ${customer.phone || 'N/A'}\n`;
+    if (customer.email) message += `• *Email Address:* ${customer.email}\n`;
+    message += `• *Delivery Address:* ${customer.address || 'N/A'}\n`;
+    message += `• *City:* ${customer.city || 'N/A'}\n`;
+    message += `• *State:* ${customer.state || 'N/A'}\n`;
+    message += `• *Pincode:* ${customer.pincode || 'N/A'}\n\n`;
+
+    message += `📦 *ORDERED PRODUCTS:*\n`;
+    (items || []).forEach((item, idx) => {
+      const details = extractProductDetails(item);
+      const qty = item.quantity || 1;
+      const price = item.price || 0;
+      const itemTotal = price * qty;
+
+      message += `${idx + 1}. *${details.baseName}*\n`;
+      if (details.partNumber) message += `   • *Part Number (MPN):* ${details.partNumber}\n`;
+      if (details.color) message += `   • *Colour:* ${details.color}\n`;
+      if (details.storage) message += `   • *Storage:* ${details.storage}\n`;
+      if (details.connectivity) message += `   • *Connectivity:* ${details.connectivity}\n`;
+      if (details.ram) message += `   • *RAM:* ${details.ram}\n`;
+      if (details.processor) message += `   • *Processor:* ${details.processor}\n`;
+      if (details.size) message += `   • *Size:* ${details.size}\n`;
+      if (details.appleCare) message += `   • *AppleCare+:* ${details.appleCare}\n`;
+      message += `   • *Quantity:* ${qty}\n`;
+      message += `   • *Item Price:* ₹${Number(price).toLocaleString('en-IN')}\n`;
+      message += `   • *Total:* ₹${Number(itemTotal).toLocaleString('en-IN')}\n\n`;
+    });
+
+    message += `💳 *ORDER SUMMARY:*\n`;
+    message += `• *Subtotal:* ₹${Number(subtotal).toLocaleString('en-IN')}\n`;
+    message += `• *Shipping Fee:* ${shippingFee === 0 ? 'FREE' : '₹' + shippingFee}\n`;
+    if (discountAmount > 0) {
+      message += `• *Discount (${(couponCode || '').toUpperCase()}):* -₹${Number(discountAmount).toLocaleString('en-IN')}\n`;
+    }
+    message += `• *Grand Total:* ₹${Number(finalTotal).toLocaleString('en-IN')}\n`;
+    message += `• *Payment Method:* ${paymentMethod || 'Cash on Delivery (COD)'}\n\n`;
+
+    message += `Thank you for shopping with iiNCEPT! Hum aapka order jald hi verify karke dispatch kar denge.`;
+    return message;
+  };
+
+  const executeBackendOrderSync = async (addressData, items, pMethod, finalTotal) => {
     try {
-      const orderIdStr = order?.id || order?._id || 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-      const custName = addressObj?.fullName || addressObj?.name || user?.name || 'Customer';
-      const custEmail = addressObj?.email || user?.email || '';
-      const custPhone = addressObj?.phone || addressObj?.phoneNumber || '';
-      const street = addressObj?.address || addressObj?.street || addressObj?.addressLine1 || '';
-      const city = addressObj?.city || '';
-      const state = addressObj?.state || '';
-      const pincode = addressObj?.pincode || addressObj?.postalCode || '';
+      let token = localStorage.getItem('token');
+      if (!token && addressData.email) {
+        const guestEmail = addressData.email.toLowerCase().trim();
+        const guestName = addressData.fullName || 'Guest Customer';
+        const guestPassword = 'GuestPass_' + guestEmail.replace(/[^a-zA-Z0-9]/g, '');
+        try {
+          const regRes = await axiosClient.post('/auth/register', { name: guestName, email: guestEmail, password: guestPassword });
+          if (regRes.data?.token) {
+            token = regRes.data.token;
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(regRes.data));
+            dispatch({ type: 'auth/registerUser/fulfilled', payload: regRes.data });
+          }
+        } catch (_) {
+          try {
+            const loginRes = await axiosClient.post('/auth/login', { email: guestEmail, password: guestPassword });
+            if (loginRes.data?.token) {
+              token = loginRes.data.token;
+              localStorage.setItem('token', token);
+              localStorage.setItem('user', JSON.stringify(loginRes.data));
+              dispatch({ type: 'auth/loginUser/fulfilled', payload: loginRes.data });
+            }
+          } catch (__) { }
+        }
+      }
 
-      let message = `🛒 *NEW ORDER PLACED - iiNCEPT Electronics* 🛒\n\n`;
-      message += `🆔 *Order ID:* #${orderIdStr}\n`;
-      message += `👤 *Customer Name:* ${custName}\n`;
-      if (custEmail) message += `📧 *Email:* ${custEmail}\n`;
-      if (custPhone) message += `📞 *Phone Number:* ${custPhone}\n`;
-      message += `📍 *Delivery Address:* ${street}, ${city}, ${state} - ${pincode}\n`;
-      message += `💳 *Payment Method:* ${pMethod}\n\n`;
-      message += `📦 *Ordered Products:*\n`;
-
-      (items || []).forEach((item, idx) => {
-        const itemTitle = item.name || item.title || 'Product';
-        const skuText = (item.sku && !itemTitle.includes('SKU:')) ? ` (SKU: ${item.sku})` : '';
-        const itemQty = item.quantity || 1;
-        const itemPrice = (item.price || 0) * itemQty;
-        message += `${idx + 1}. *${itemTitle}${skuText}*\n   Qty: ${itemQty} | Amount: ₹${itemPrice.toLocaleString('en-IN')}\n`;
-      });
-
-      message += `\n💰 *Total Amount:* ₹${Number(finalTotal).toLocaleString('en-IN')}\n\n`;
-      message += `Thank you for shopping with iiNCEPT! Hum aapka order jald hi process kar denge.`;
-
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/918607222417?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
+      if (token) {
+        const addrRes = await axiosClient.post('/address', addressData);
+        if (addrRes.data?._id) {
+          await axiosClient.post('/orders', {
+            shippingAddress: addrRes.data._id,
+            paymentMethod: pMethod,
+            couponCode: discountAmount > 0 ? couponCode : undefined,
+            cartItems: items
+          });
+        }
+      }
     } catch (err) {
-      console.error('Failed to launch WhatsApp order notification:', err);
+      console.warn('Background backend order sync note:', err);
     }
   };
 
-  const ensureUserAuthenticated = async (addressData) => {
-    let token = localStorage.getItem('token');
-    if (token) return token;
-
-    if (!addressData || !addressData.email) {
-      throw new Error('Please fill in your email address to complete your order.');
-    }
-
-    const email = (addressData.email || '').toLowerCase().trim();
-    const name = addressData.fullName || 'Customer';
-    const password = 'GuestPass_' + email.replace(/[^a-zA-Z0-9]/g, '');
-
+  const sendWhatsAppOrderNotification = (order, items, addressObj, pMethod, finalTotal) => {
     try {
-      const regRes = await axiosClient.post('/auth/register', {
-        name,
-        email,
-        password
+      const orderIdStr = order?.id || order?._id || 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+      const message = generateWhatsAppOrderMessage({
+        orderId: orderIdStr,
+        customer: addressObj,
+        items,
+        subtotal,
+        shippingFee,
+        discountAmount,
+        couponCode,
+        finalTotal,
+        paymentMethod: pMethod
       });
-      if (regRes.data?.token) {
-        localStorage.setItem('token', regRes.data.token);
-        localStorage.setItem('user', JSON.stringify(regRes.data));
-        dispatch({ type: 'auth/registerUser/fulfilled', payload: regRes.data });
-        return regRes.data.token;
-      }
-    } catch (regErr) {
-      try {
-        const loginRes = await axiosClient.post('/auth/login', {
-          email,
-          password
-        });
-        if (loginRes.data?.token) {
-          localStorage.setItem('token', loginRes.data.token);
-          localStorage.setItem('user', JSON.stringify(loginRes.data));
-          dispatch({ type: 'auth/loginUser/fulfilled', payload: loginRes.data });
-          return loginRes.data.token;
-        }
-      } catch (loginErr) {
-        throw new Error('An account with this email already exists. Please sign in to your account.');
-      }
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/918607222417?text=${encodedMessage}`;
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      return whatsappUrl;
+    } catch (err) {
+      console.error('Failed to launch WhatsApp order notification:', err);
+      return '';
     }
   };
 
   const executeOrderPlacement = async () => {
-    const activeAddress = shippingAddress;
-    const pMethod = 'COD';
+    const activeAddress = { ...shippingAddress };
+    const pMethod = 'Cash on Delivery (COD)';
     const finalTotal = Math.max(0, totalAmount);
     const snapshotItems = [...cartItems];
+    const orderIdStr = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
 
-    setLocalLoading(true);
+    const message = generateWhatsAppOrderMessage({
+      orderId: orderIdStr,
+      customer: activeAddress,
+      items: snapshotItems,
+      subtotal,
+      shippingFee,
+      discountAmount,
+      couponCode,
+      finalTotal,
+      paymentMethod: pMethod
+    });
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/918607222417?text=${encodedMessage}`;
+
+    // 1. Instantly open WhatsApp (synchronously triggered on submit)
     try {
-      await ensureUserAuthenticated(activeAddress);
-    } catch (authErr) {
-      setLocalLoading(false);
-      alert(authErr.message || 'Please sign in to place your order.');
-      return;
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      console.warn('Could not launch window directly:', err);
     }
 
-    dispatch(placeNewOrder({
-      shippingAddressData: shippingAddress,
+    // 2. Set placed order state (shows confirmation view with WhatsApp button)
+    setPlacedOrder({
+      orderId: orderIdStr,
+      customer: activeAddress,
+      items: snapshotItems,
+      subtotal,
+      shippingFee,
+      discountAmount,
+      finalTotal,
       paymentMethod: pMethod,
-      couponCode: discountAmount > 0 ? couponCode : undefined,
-      cartItems,
-      totalAmount: finalTotal
-    }))
-      .unwrap()
-      .then((order) => {
-        dispatch(clearCart()); // Empty the cart on successful checkout
-        sendWhatsAppOrderNotification(order, snapshotItems, activeAddress, pMethod, finalTotal);
-        navigate('/orders');
-      })
-      .catch((err) => {
-        const cleanMsg = typeof err === 'string' ? err : (err?.message || 'Failed to place order. Please try again.');
-        alert(cleanMsg);
-      })
-      .finally(() => {
-        setLocalLoading(false);
-      });
+      whatsappUrl
+    });
+
+    // 3. Clear cart
+    dispatch(clearCart());
+
+    // 4. In background: sync with backend DB so Admin Orders panel records the order
+    executeBackendOrderSync(activeAddress, snapshotItems, pMethod, finalTotal);
   };
 
   const handleRazorpayCheckout = async () => {
@@ -342,6 +462,95 @@ export default function Checkout() {
 
     executeOrderPlacement(); // Direct order placement & WhatsApp redirect
   };
+
+  if (placedOrder) {
+    return (
+      <div className="max-w-2xl mx-auto my-8 space-y-6 animate-in fade-in duration-300 text-left">
+        <div className="bg-white border border-zinc-200 rounded-3xl p-6 sm:p-10 shadow-sm text-center space-y-6">
+          <div className="h-16 w-16 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center mx-auto text-emerald-600">
+            <CheckCircle2 className="h-9 w-9 stroke-[2.5]" />
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+              Order Confirmed
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 pt-2">Order Placed Successfully!</h2>
+            <p className="text-sm text-zinc-500">Order ID: <strong className="text-zinc-900">#{placedOrder.orderId}</strong></p>
+          </div>
+
+          <p className="text-xs text-zinc-500 max-w-md mx-auto">
+            Aapka order details ke sath WhatsApp par bhej diya gya hai. Agar WhatsApp apne-aap nahi khula, to niche diye gaye button par click karein:
+          </p>
+
+          {/* Prominent WhatsApp Button */}
+          <div className="pt-2">
+            <a
+              href={placedOrder.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-3.5 px-8 rounded-2xl shadow-md hover:shadow-lg transition-all text-sm cursor-pointer"
+            >
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.99.54 1.761.817 2.796.818 3.182 0 5.768-2.587 5.768-5.766.001-3.181-2.585-5.77-5.768-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.144.39-.086s1.011.477 1.184.564.289.13.332.203c.043.072.043.419-.101.824z" />
+              </svg>
+              <span>Open in WhatsApp (व्हॉट्सऐप पर भेजें)</span>
+            </a>
+          </div>
+
+          {/* Details summary */}
+          <div className="bg-zinc-50 border border-zinc-200/80 rounded-2xl p-5 text-left text-xs space-y-3">
+            <h4 className="font-bold text-zinc-900 border-b border-zinc-200 pb-2">Order Summary</h4>
+            <div className="space-y-2">
+              {placedOrder.items.map((item, idx) => {
+                const details = extractProductDetails(item);
+                return (
+                  <div key={idx} className="flex justify-between items-start gap-3 py-1">
+                    <div>
+                      <p className="font-semibold text-zinc-900">{details.baseName} <span className="text-zinc-500 font-normal">× {item.quantity}</span></p>
+                      <div className="text-[11px] text-zinc-500 space-x-2 mt-0.5">
+                        {details.partNumber && <span className="font-medium text-zinc-700">Part: {details.partNumber}</span>}
+                        {details.color && <span>• Colour: {details.color}</span>}
+                        {details.storage && <span>• Storage: {details.storage}</span>}
+                        {details.connectivity && <span>• {details.connectivity}</span>}
+                        {details.processor && <span>• {details.processor}</span>}
+                      </div>
+                    </div>
+                    <span className="font-bold text-zinc-800 shrink-0">₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-zinc-200 pt-3 space-y-1 text-zinc-600">
+              <div className="flex justify-between">
+                <span>Deliver to:</span>
+                <span className="font-medium text-zinc-900 text-right">{placedOrder.customer.fullName} ({placedOrder.customer.phone})</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Address:</span>
+                <span className="text-right max-w-xs truncate">{placedOrder.customer.address}, {placedOrder.customer.city} - {placedOrder.customer.pincode}</span>
+              </div>
+              <div className="flex justify-between font-bold text-sm text-zinc-900 pt-2 border-t border-zinc-200">
+                <span>Grand Total:</span>
+                <span>₹{placedOrder.finalTotal.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 bg-zinc-900 hover:bg-black text-white font-semibold px-6 py-2.5 rounded-xl text-xs transition-colors"
+            >
+              Continue Shopping
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (

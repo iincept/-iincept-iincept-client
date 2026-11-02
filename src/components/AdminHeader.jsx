@@ -1,22 +1,22 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Bell, LogOut, ChevronRight } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../redux/authSlice';
+import { adminLogout } from '../redux/adminAuthSlice';
 
 export default function AdminHeader() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.adminAuth);
 
   // Generate dynamic breadcrumbs from URL paths
   const pathnames = location.pathname.split('/').filter((x) => x);
   const pageName = pathnames[1] ? pathnames[1] : 'Dashboard';
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(adminLogout());
     alert('Logged out successfully!');
-    navigate('/login');
+    navigate('/admin/login');
   };
 
   return (

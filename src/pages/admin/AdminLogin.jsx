@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, clearAuthError, logout } from '../../redux/authSlice';
+import { adminLoginUser, clearAdminAuthError, adminLogout } from '../../redux/adminAuthSlice';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loading, error, isAuthenticated, user } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated, user } = useSelector((state) => state.adminAuth);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    dispatch(clearAuthError());
+    dispatch(clearAdminAuthError());
   }, [dispatch]);
 
   useEffect(() => {
@@ -24,18 +24,18 @@ export default function AdminLogin() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(loginUser({ email, password }))
+    dispatch(adminLoginUser({ email, password }))
       .unwrap()
       .then((data) => {
         if (data.role === 'admin') {
           navigate('/admin/dashboard');
         } else {
           alert('Access denied. Only administrators are allowed to enter.');
-          dispatch(logout());
+          dispatch(adminLogout());
         }
       })
       .catch((err) => {
-        console.error('Login failed:', err);
+        console.error('Admin login failed:', err);
       });
   };
 
