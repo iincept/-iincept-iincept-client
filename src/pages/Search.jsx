@@ -107,7 +107,7 @@ export default function Search() {
           </div>
           <div className="flex justify-center gap-2 pt-2">
             <Link 
-              to="/shop" 
+              to="/accessories" 
               className="inline-flex items-center gap-2 bg-black hover:bg-zinc-900 text-white font-bold px-5 py-2.5 rounded-xl transition-all cursor-pointer text-xs shadow-sm"
             >
               Browse Catalog

@@ -282,7 +282,7 @@ export default function About() {
         <p>Get in touch with our B2B desk to request custom volume quotes or browse our current catalog with live stock status.</p>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
           <Link to="/bulk-orders" className="btn btn-light">Request Bulk Quote</Link>
-          <Link to="/shop" className="btn" style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}>Browse Catalogue</Link>
+          <Link to="/accessories" className="btn" style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}>Browse Catalogue</Link>
         </div>
       </section>
     </div>

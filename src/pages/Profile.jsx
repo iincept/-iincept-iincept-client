@@ -496,7 +496,7 @@ export default function Profile() {
                       <p className="text-xs text-zinc-500 max-w-xs mx-auto">You have not placed any orders yet. Head to the store to make a checkout.</p>
                     </div>
                     <Link 
-                      to="/shop" 
+                      to="/accessories" 
                       className="inline-flex items-center gap-1.5 bg-black hover:bg-zinc-800 text-white font-bold py-2.5 px-5 rounded-xl text-xs transition-colors cursor-pointer shadow-sm"
                     >
                       Shop Products

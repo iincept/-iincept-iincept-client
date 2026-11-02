@@ -298,7 +298,7 @@ const IPHONE_SUB_NAV_ITEMS = [
   { name: 'iPhone 17', query: 'iPhone 17', image: '/iphone_nav/iphone_17.png', scale: 'scale-100' },
   { name: 'iPhone 17e', query: 'iPhone 17e', image: '/iphone_nav/iphone_17e.png', scale: 'scale-100' },
   { name: 'iPhone 16', query: 'iPhone 16', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
-  { name: 'Accessories', path: '/shop?category=Accessories', image: '/iphone_nav/airtag.png', scale: 'scale-90' },
+  { name: 'Accessories', path: '/accessories', image: '/iphone_nav/airtag.png', scale: 'scale-90' },
   { name: 'Shop iPhone', path: '/iphone', query: '', image: '/iphone_nav/iphone_16_pro.png', scale: 'scale-100' },
   { name: 'AppleCare', path: '/iphone?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' }
 ];

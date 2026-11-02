@@ -1299,7 +1299,7 @@ export default function ProductDetails() {
     if (category.includes('airpod')) return '/airpods';
     if (category.includes('tv') || category.includes('home')) return '/tv-home';
     if (category.includes('accessory') || category.includes('accessories')) return '/accessories';
-    return '/shop';
+    return '/accessories';
   };
 
   const getCategoryName = () => {

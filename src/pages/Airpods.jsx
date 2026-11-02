@@ -144,7 +144,7 @@ const AIRPODS_SUB_NAV_ITEMS = [
   { name: 'AirPods Pro', query: 'Pro 2', image: 'https://www.apple.com/v/airpods/shared/icon_airpods_pro__c4g86280j6eu_large.svg', scale: 'scale-100' },
   { name: 'AirPods Max', query: 'AirPods Max', image: 'https://www.apple.com/v/airpods/shared/icon_airpods_max__c1i39v5a1pqu_large.svg', scale: 'scale-100' },
   { name: 'Compare', path: '/compare', image: 'https://www.apple.com/v/airpods/shared/icon_compare__e3a7h9h7ywa6_large.svg', scale: 'scale-100' },
-  { name: 'Accessories', path: '/shop?category=Accessories', image: 'https://www.apple.com/v/airpods/shared/icon_accessories__f29e160a0z6q_large.svg', scale: 'scale-100' },
+  { name: 'Accessories', path: '/accessories', image: 'https://www.apple.com/v/airpods/shared/icon_accessories__f29e160a0z6q_large.svg', scale: 'scale-100' },
   { name: 'AppleCare+', path: '/airpods?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' }
 ];
 

@@ -1185,11 +1185,11 @@ export default function Navbar() {
     if (lower.includes('watch')) return '/watch';
     if (lower.includes('airpod')) return '/airpods';
     if (lower.includes('tv')) return '/tv-home';
-    return customLink || '/shop';
+    return customLink || '/accessories';
   };
 
   const defaultMenuItems = [
-    { label: 'New Arrivals', path: '/shop?sort=newest' },
+    { label: 'New Arrivals', path: '/accessories' },
     { label: 'Mac', path: '/macbook' },
     { label: 'iPad', path: '/ipad' },
     { label: 'iPhone', path: '/iphone' },
@@ -1535,7 +1535,8 @@ export default function Navbar() {
                     }}
                     onClick={() => {
                       closeAllDropdowns();
-                      navigate(item.path || '/shop');
+                      const targetPath = (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? item.path : '/accessories';
+                      navigate(targetPath);
                     }}
                     className={getNavBtnClass(location.pathname === item.path)}
                   >
@@ -1722,15 +1723,15 @@ export default function Navbar() {
                     </span>
                     <div className="flex flex-col gap-2.5">
                       {[
-                        { label: 'Explore Entertainment', path: '/shop?category=electronics' },
-                        { label: 'Apple One', path: '/shop?category=electronics' },
-                        { label: 'Apple TV', path: '/shop?category=electronics' },
-                        { label: 'Apple Music', path: '/shop?category=electronics' },
-                        { label: 'Apple Arcade', path: '/shop?category=electronics' },
-                        { label: 'Apple Fitness+', path: '/shop?category=electronics' },
-                        { label: 'Apple Podcasts', path: '/shop?category=electronics' },
-                        { label: 'Apple Books', path: '/shop?category=electronics' },
-                        { label: 'App Store', path: '/shop?category=electronics' }
+                        { label: 'Explore Entertainment', path: '/tv-home' },
+                        { label: 'Apple One', path: '/tv-home' },
+                        { label: 'Apple TV', path: '/tv-home' },
+                        { label: 'Apple Music', path: '/tv-home' },
+                        { label: 'Apple Arcade', path: '/tv-home' },
+                        { label: 'Apple Fitness+', path: '/tv-home' },
+                        { label: 'Apple Podcasts', path: '/tv-home' },
+                        { label: 'Apple Books', path: '/tv-home' },
+                        { label: 'App Store', path: '/tv-home' }
                       ].map((sub, sIdx) => (
                         <Link
                           key={sIdx}

@@ -524,7 +524,7 @@ export default function Footer() {
                             {link.label}
                           </a>
                         ) : (
-                          <Link to={link?.url || '/shop'} className="indiaistore-footer-link">
+                          <Link to={(link?.url && link.url !== '/shop' && !link.url.startsWith('/shop')) ? link.url : '/accessories'} className="indiaistore-footer-link">
                             {link?.label || 'Link'}
                           </Link>
                         )}

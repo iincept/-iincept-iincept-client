@@ -4,6 +4,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchProducts } from '../redux/productSlice';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 // Default Category Icons for the store strip
 const DEFAULT_CATEGORY_STRIP = [
@@ -34,19 +39,58 @@ const formatRupee = (val) => {
 
 const DEFAULT_DEAL_BANNERS = [
   {
-    id: 'default-deal-1',
-    name: 'MacBook Neo – Stock Clearance',
-    smallLabel: 'DEAL OF THE WEEK',
-    title: 'MacBook Neo – Stock Clearance',
-    description: 'Amazing Mac at a surprising price. Limited stock this week. Exclusive bank offers + free AppleCare+ for first 50 buyers.',
-    productImage: '/mac_deal_fan.png',
-    originalMrp: 79900,
-    discount: 8.76,
-    finalPrice: 72900,
-    buttonText: 'Grab the Deal',
-    buttonLink: '/macbook',
+    id: '1793604338538',
+    internalName: 'iMac - All in one',
+    dealEyebrow: 'DEAL OF THE WEEK',
+    dealTitle: 'iMac',
+    dealDesc: 'Limited time offer on genuine Apple devices. Order today to claim free shipping.',
+    productId: '6a44d3ee4a9f2d3d8e711107',
+    dealImage: '/uploads/upload_1793604344247_535.webp',
+    mobileDealImage: '/uploads/upload_imac_deal_mobile.webp',
+    mrp: 79900,
+    discount: 10,
+    dealPrice: 71910,
+    dealButtonText: 'Grab the Deal',
+    dealButtonLink: '/product/6a44d3ee4a9f2d3d8e711107',
+    displayOrder: 1,
     isActive: true,
-    displayOrder: 1
+    isFullBanner: true
+  },
+  {
+    id: '1793604210741',
+    internalName: 'iPad mini',
+    dealEyebrow: 'DEAL OF THE WEEK',
+    dealTitle: 'iPad mini',
+    dealDesc: 'Limited time offer on genuine Apple devices. Order today to claim free shipping.',
+    productId: '',
+    dealImage: '/uploads/upload_1793604220097_988.webp',
+    mobileDealImage: '/uploads/upload_ipadmini_deal_mobile.webp',
+    mrp: 79900,
+    discount: 10,
+    dealPrice: 71910,
+    dealButtonText: 'Grab the Deal',
+    dealButtonLink: '/ipad',
+    displayOrder: 2,
+    isActive: true,
+    isFullBanner: true
+  },
+  {
+    id: '1793603504123',
+    internalName: '13-inch MacBook Air M5',
+    dealEyebrow: 'DEAL OF THE WEEK',
+    dealTitle: '13-inch MacBook Air M5',
+    dealDesc: 'The best experience for everything Apple. Limited time deal.',
+    productId: '',
+    dealImage: '/uploads/upload_1793611162391_106.webp',
+    mobileDealImage: '/uploads/upload_1793611240422_132.webp',
+    mrp: 99900,
+    discount: 10,
+    dealPrice: 89900,
+    dealButtonText: 'Buy Now',
+    dealButtonLink: 'https://itechstore.co.in/product/13-inch_macbook_air_m5',
+    displayOrder: 3,
+    isActive: true,
+    isFullBanner: true
   }
 ];
 
@@ -352,6 +396,7 @@ export default function Home() {
         {
           _id: 'default-fallback-slide-1',
           title: 'iPhone Duo',
+          buttonLink: '/product/6aa25bb453b793bd9d5009ac',
           image: '/uploads/upload_1792058368844_855.jpeg',
           mobileImage: '/uploads/upload_iphone_duo_mobile.png',
           bgStyle: 'slide-dark',
@@ -362,6 +407,7 @@ export default function Home() {
         {
           _id: 'default-fallback-slide-2',
           title: 'AirPods 5',
+          buttonLink: '/product/6aa7d0f5a6548b642226e185',
           image: '/uploads/upload_1792058375185_444.jpg',
           mobileImage: '/uploads/upload_airpods_5_mobile.png',
           bgStyle: 'slide-dark',
@@ -372,6 +418,7 @@ export default function Home() {
         {
           _id: 'default-fallback-slide-3',
           title: 'Apple Watch Series 12',
+          buttonLink: '/product/6ab37d0a04c4572f8814616f',
           image: '/uploads/upload_1792058382295_674.jpeg',
           mobileImage: '/uploads/upload_apple_watch_mobile.png',
           bgStyle: 'slide-dark',
@@ -381,26 +428,11 @@ export default function Home() {
         }
       ];
 
-  // Clamp currentSlideIndex if array shrinks
-  useEffect(() => {
-    if (currentSlideIndex >= effectiveHeroSlides.length && effectiveHeroSlides.length > 0) {
-      setCurrentSlideIndex(Math.max(0, effectiveHeroSlides.length - 1));
-    }
-  }, [effectiveHeroSlides.length, currentSlideIndex]);
-
-  // Autoplay slider timer (5000ms configurable) with infinite looping and unmount cleanup
-  useEffect(() => {
-    if (isHeroPaused || effectiveHeroSlides.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % effectiveHeroSlides.length);
-    }, HERO_SLIDER_AUTOPLAY_INTERVAL);
-    return () => clearInterval(timer);
-  }, [isHeroPaused, effectiveHeroSlides.length, currentSlideIndex]);
 
   // Deal of the Week State (with LocalStorage Cache)
   const [dealBanners, setDealBanners] = useState(() => {
     try {
-      const cached = localStorage.getItem('iincept_home_deal_banners_v12');
+      const cached = localStorage.getItem('iincept_home_deal_banners_v14') || localStorage.getItem('iincept_home_deal_banners_v13');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -411,17 +443,6 @@ export default function Home() {
     } catch (e) { }
     return DEFAULT_DEAL_BANNERS;
   });
-
-  const [currentDealIndex, setCurrentDealIndex] = useState(0);
-
-  // Auto-slide Deal of the Week banners when multiple are active
-  useEffect(() => {
-    if (!dealBanners || dealBanners.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentDealIndex(prev => (prev + 1) % dealBanners.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, [dealBanners?.length]);
 
   // Category Strip Default Images Lookup
   const DEFAULT_CATEGORY_IMAGES = {
@@ -665,7 +686,7 @@ export default function Home() {
             setDealBanners(prev => {
               if (JSON.stringify(prev) !== JSON.stringify(activeBanners)) {
                 try {
-                  localStorage.setItem('iincept_home_deal_banners_v12', JSON.stringify(response.data.homeDealBanners));
+                  localStorage.setItem('iincept_home_deal_banners_v14', JSON.stringify(response.data.homeDealBanners));
                 } catch (e) { }
                 return activeBanners;
               }
@@ -859,17 +880,17 @@ export default function Home() {
 
   // Products from Database / Admin Settings for New Arrivals & Trending
   const defaultNewArrivals = [
-    { id: '1', name: 'iPhone Duo', tagline: 'Hello, hello.', price: 'From ₹2,99,900.00', image: '/uploads/upload_1791890562797_327.png', path: '/iphone', isActive: true },
+    { id: '1', productId: '6aa25bb453b793bd9d5009ac', name: 'iPhone Duo', tagline: 'Hello, hello.', price: 'From ₹2,99,900.00', image: '/uploads/upload_1791890562797_327.png', path: '/product/6aa25bb453b793bd9d5009ac', isActive: true },
     { id: '2', name: 'iPhone 18 Pro', tagline: 'The ultimate performance and camera of any iPhone, with exceptional battery life.', price: 'From ₹1,64,900.00', image: '/uploads/upload_1791890780149_371.webp', path: '/iphone', isDark: true, isActive: true },
-    { id: '5', name: 'AirPods 5', tagline: 'Discover the magic of Active Noise Cancellation.', price: 'From ₹14,900.00', image: '/uploads/upload_1792409712224_59.webp', path: '/airpods', isDark: false, isActive: true },
-    { id: '3', name: 'Apple Watch Series 12', tagline: 'The most accurate heart rate sensing in a wearable.', price: 'From ₹56,900.00', image: '/uploads/upload_1791890802493_182.webp', path: '/watch', isDark: true, isActive: true },
+    { id: '5', productId: '6aa7d0f5a6548b642226e185', name: 'AirPods 5', tagline: 'Discover the magic of Active Noise Cancellation.', price: 'From ₹14,900.00', image: '/uploads/upload_1792409712224_59.webp', path: '/product/6aa7d0f5a6548b642226e185', isDark: false, isActive: true },
+    { id: '3', productId: '6ab37d0a04c4572f8814616f', name: 'Apple Watch Series 12', tagline: 'The most accurate heart rate sensing in a wearable.', price: 'From ₹56,900.00', image: '/uploads/upload_1791890802493_182.webp', path: '/product/6ab37d0a04c4572f8814616f', isDark: true, isActive: true },
     { id: '1790765292224', name: 'Mac mini', tagline: 'Now  With M6 and M5 Pro', price: 'From ₹9,9900', image: '/uploads/upload_1791890752230_966.webp', path: '/mac', isDark: false, isActive: true },
     { id: '4', name: 'Apple Watch Ultra 4', tagline: 'The ultimate sports and adventure watch.', price: 'From ₹89,900.00', image: '/uploads/upload_1791890837748_806.webp', path: '/watch', isDark: true, isActive: true },
     { id: '1791891024445', name: 'Mac Studio', tagline: 'Now with M5 Max and M5 Ultra', price: 'From ₹27,9900.00', image: '/uploads/upload_1791891030554_854.webp', path: '/mac', isDark: false, isActive: true }
   ];
 
   const resolveArrivalProductPath = (item) => {
-    if (!item) return '/shop';
+    if (!item) return '/accessories';
 
     // 1. Explicit productId stored on card
     if (item.productId) {
@@ -897,8 +918,8 @@ export default function Home() {
       return item.path;
     }
 
-    // 4. Default path or fallback to /shop
-    return item.path || '/shop';
+    // 4. Default path or fallback to /accessories (never /shop)
+    return (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? item.path : '/accessories';
   };
 
   const activeHomeArrivals = (homeNewArrivals && Array.isArray(homeNewArrivals))
@@ -1968,59 +1989,259 @@ export default function Home() {
         /* ========== DEAL OF THE WEEK (RESPONSIVE BANNER SYSTEM) ========== */
         .indiaistore-theme .deal-banner-container {
           position: relative;
-          max-width: 1400px;
+          max-width: 1380px;
           margin: 0 auto 40px;
-          padding: 0 22px;
+          padding: 0 20px;
           box-sizing: border-box;
         }
 
         .indiaistore-theme .deal-banner-frame {
           width: 100%;
-          height: 300px;
-          min-height: 300px;
-          max-height: 300px;
           border-radius: 24px;
           overflow: hidden;
           position: relative;
-          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: #161617;
+          box-shadow: none !important;
+          border: none !important;
+          background: transparent !important;
           box-sizing: border-box;
         }
 
-        .indiaistore-theme .deal-banner-frame.deal-frame-full,
+        .indiaistore-theme .deal-banner-frame.deal-frame-full {
+          height: auto;
+          min-height: unset;
+          max-height: unset;
+          border-radius: 24px;
+          box-shadow: none !important;
+          border: none !important;
+          background: transparent !important;
+        }
+
         .indiaistore-theme .deal-banner-frame.deal-frame-split {
-          height: 300px;
-          min-height: 300px;
-          max-height: 300px;
+          height: 380px;
+          min-height: 380px;
+          max-height: 380px;
         }
 
         .indiaistore-theme .deal-full-banner-link {
           display: block;
           width: 100%;
-          height: 100%;
+          height: auto;
           position: relative;
           overflow: hidden;
           text-decoration: none;
-          background: #161617;
+          background: transparent;
           box-sizing: border-box;
           line-height: 0;
           padding: 0;
           margin: 0;
+          border-radius: 24px;
         }
 
         .indiaistore-theme .deal-full-img {
           width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
+          height: auto;
           display: block;
-          border-radius: 28px;
-          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          border-radius: 24px;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+          object-fit: cover;
+          aspect-ratio: 4328 / 1128;
+          transform: translateZ(0) !important;
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
         }
 
         .indiaistore-theme .deal-banner-frame:hover .deal-full-img {
-          transform: scale(1.02);
+          transform: none !important;
+        }
+
+        .indiaistore-theme .deal-swiper,
+        .indiaistore-theme .hero-swiper {
+          width: 100%;
+          border-radius: 24px;
+          position: relative;
+          overflow: hidden;
+          box-shadow: none !important;
+          border: none !important;
+          background: transparent !important;
+          --swiper-theme-color: #007aff;
+          --swiper-navigation-color: #007aff;
+          --swiper-navigation-size: 44px;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-wrapper,
+        .indiaistore-theme .hero-swiper .swiper-wrapper {
+          transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1) !important;
+          will-change: transform;
+          transform: translateZ(0);
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-slide,
+        .indiaistore-theme .hero-swiper .swiper-slide {
+          height: auto !important;
+          transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+          will-change: transform;
+        }
+
+        .indiaistore-theme .hero-swiper {
+          border-radius: 24px;
+          height: 100% !important;
+        }
+
+        @media (min-width: 640px) {
+          .indiaistore-theme .hero-swiper {
+            border-radius: 28px;
+          }
+        }
+        @media (min-width: 1024px) {
+          .indiaistore-theme .hero-swiper {
+            border-radius: 36px;
+          }
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-button-prev,
+        .indiaistore-theme .deal-swiper .swiper-button-next,
+        .indiaistore-theme .hero-swiper .swiper-button-prev,
+        .indiaistore-theme .hero-swiper .swiper-button-next {
+          width: 28px !important;
+          height: 44px !important;
+          margin-top: -22px;
+          top: 50%;
+          color: #007aff !important;
+          opacity: 1 !important;
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          transition: transform 0.2s ease;
+          z-index: 25;
+          filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-button-prev,
+        .indiaistore-theme .hero-swiper .swiper-button-prev {
+          left: 18px !important;
+          right: auto;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-button-next,
+        .indiaistore-theme .hero-swiper .swiper-button-next {
+          right: 18px !important;
+          left: auto;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-button-prev svg,
+        .indiaistore-theme .deal-swiper .swiper-button-next svg,
+        .indiaistore-theme .deal-swiper .swiper-navigation-icon,
+        .indiaistore-theme .hero-swiper .swiper-button-prev svg,
+        .indiaistore-theme .hero-swiper .swiper-button-next svg,
+        .indiaistore-theme .hero-swiper .swiper-navigation-icon {
+          width: 100% !important;
+          height: 100% !important;
+          fill: #007aff !important;
+          color: #007aff !important;
+          opacity: 1 !important;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-button-prev:hover,
+        .indiaistore-theme .deal-swiper .swiper-button-next:hover,
+        .indiaistore-theme .hero-swiper .swiper-button-prev:hover,
+        .indiaistore-theme .hero-swiper .swiper-button-next:hover {
+          transform: scale(1.15);
+          color: #007aff !important;
+          background: transparent !important;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-button-disabled,
+        .indiaistore-theme .hero-swiper .swiper-button-disabled {
+          opacity: 1 !important;
+          cursor: pointer !important;
+          pointer-events: auto !important;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-pagination,
+        .indiaistore-theme .hero-swiper .swiper-pagination {
+          bottom: 14px !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          width: auto !important;
+          left: 50% !important;
+          transform: translateX(-50%);
+          background: transparent !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          padding: 4px 0 !important;
+          border-radius: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+          z-index: 25;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-pagination-bullet,
+        .indiaistore-theme .hero-swiper .swiper-pagination-bullet {
+          width: 7px;
+          height: 7px;
+          background: #b5b8bd !important;
+          opacity: 1 !important;
+          border-radius: 9999px;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          margin: 0 !important;
+          cursor: pointer;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-pagination-bullet:hover,
+        .indiaistore-theme .hero-swiper .swiper-pagination-bullet:hover {
+          background: #8e939a !important;
+        }
+
+        .indiaistore-theme .deal-swiper .swiper-pagination-bullet-active,
+        .indiaistore-theme .hero-swiper .swiper-pagination-bullet-active {
+          width: 28px !important;
+          height: 7px !important;
+          background: #000000 !important;
+          border-radius: 9999px !important;
+        }
+
+        @media (max-width: 650px) {
+          .indiaistore-theme .deal-swiper .swiper-pagination,
+          .indiaistore-theme .hero-swiper .swiper-pagination {
+            bottom: 10px !important;
+            padding: 2px 0 !important;
+            gap: 8px;
+          }
+          .indiaistore-theme .deal-swiper .swiper-pagination-bullet,
+          .indiaistore-theme .hero-swiper .swiper-pagination-bullet {
+            width: 6px;
+            height: 6px;
+          }
+          .indiaistore-theme .deal-swiper .swiper-pagination-bullet-active,
+          .indiaistore-theme .hero-swiper .swiper-pagination-bullet-active {
+            width: 22px !important;
+            height: 6px !important;
+          }
+          .indiaistore-theme .deal-swiper .swiper-button-prev,
+          .indiaistore-theme .deal-swiper .swiper-button-next,
+          .indiaistore-theme .hero-swiper .swiper-button-prev,
+          .indiaistore-theme .hero-swiper .swiper-button-next {
+            width: 20px !important;
+            height: 32px !important;
+            margin-top: -16px;
+          }
+          .indiaistore-theme .deal-swiper .swiper-button-prev,
+          .indiaistore-theme .hero-swiper .swiper-button-prev {
+            left: 8px !important;
+          }
+          .indiaistore-theme .deal-swiper .swiper-button-next,
+          .indiaistore-theme .hero-swiper .swiper-button-next {
+            right: 8px !important;
+          }
         }
 
         /* Split deal banner layout */
@@ -2610,23 +2831,27 @@ export default function Home() {
         @media (max-width: 1100px) {
           .indiaistore-theme .category-grid { grid-template-columns: repeat(4, 1fr); }
           .indiaistore-theme .deal-banner-container {
+            max-width: 100% !important;
             margin: 0 auto 30px;
-            padding: 0 20px;
+            padding: 0 16px;
           }
-          .indiaistore-theme .deal-banner-frame,
-          .indiaistore-theme .deal-banner-frame.deal-frame-split,
           .indiaistore-theme .deal-banner-frame.deal-frame-full {
+            height: auto !important;
+            min-height: unset !important;
+            max-height: unset !important;
+            border-radius: 20px !important;
+          }
+          .indiaistore-theme .deal-banner-frame.deal-frame-split {
             height: 190px !important;
             min-height: 190px !important;
             max-height: 190px !important;
             border-radius: 20px !important;
           }
           .indiaistore-theme .deal-full-img {
-            border-radius: 22px !important;
-            height: 100% !important;
+            border-radius: 20px !important;
+            height: auto !important;
             width: 100% !important;
-            max-height: 100% !important;
-            object-fit: fill !important;
+            object-fit: cover !important;
           }
           .indiaistore-theme .deal-banner {
             flex-direction: row !important;
@@ -2720,15 +2945,16 @@ export default function Home() {
           .indiaistore-theme .deal-banner-container {
             margin: 0 auto 26px !important;
             padding: 0 16px !important;
+            max-width: 100% !important;
           }
           .indiaistore-theme .deal-banner-frame.deal-frame-full {
-            height: 150px !important;
-            min-height: 150px !important;
-            max-height: 150px !important;
+            height: auto !important;
+            min-height: unset !important;
+            max-height: unset !important;
             border-radius: 20px !important;
-            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            background: #161617 !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: transparent !important;
             overflow: hidden !important;
           }
           .indiaistore-theme .deal-banner-frame.deal-frame-split {
@@ -2744,17 +2970,24 @@ export default function Home() {
           .indiaistore-theme .deal-full-banner-link {
             display: block !important;
             width: 100% !important;
-            height: 100% !important;
+            height: auto !important;
             position: relative !important;
             overflow: hidden !important;
             padding: 0 !important;
             margin: 0 !important;
             line-height: 0 !important;
             box-sizing: border-box !important;
+            border-radius: 20px !important;
+          }
+          .indiaistore-theme .deal-full-banner-link picture {
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
           }
           .indiaistore-theme .deal-full-img {
             width: 100% !important;
-            height: 100% !important;
+            height: auto !important;
+            aspect-ratio: 1 / 1 !important;
             object-fit: cover !important;
             object-position: center !important;
             display: block !important;
@@ -2957,16 +3190,17 @@ export default function Home() {
           .indiaistore-theme .section { padding: 28px 14px; }
           .indiaistore-theme .deal-banner-container {
             margin: 0 auto 22px !important;
-            padding: 0 14px !important;
+            padding: 0 12px !important;
+            max-width: 100% !important;
           }
           .indiaistore-theme .deal-banner-frame.deal-frame-full {
-            height: 135px !important;
-            min-height: 135px !important;
-            max-height: 135px !important;
+            height: auto !important;
+            min-height: unset !important;
+            max-height: unset !important;
             border-radius: 18px !important;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            background: #161617 !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: transparent !important;
             overflow: hidden !important;
           }
           .indiaistore-theme .deal-banner-frame.deal-frame-split {
@@ -2983,12 +3217,19 @@ export default function Home() {
             padding: 0 !important;
             display: block !important;
             width: 100% !important;
-            height: 100% !important;
+            height: auto !important;
             line-height: 0 !important;
+            border-radius: 18px !important;
+          }
+          .indiaistore-theme .deal-full-banner-link picture {
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
           }
           .indiaistore-theme .deal-full-img {
             width: 100% !important;
-            height: 100% !important;
+            height: auto !important;
+            aspect-ratio: 1 / 1 !important;
             object-fit: cover !important;
             object-position: center !important;
             border-radius: 18px !important;
@@ -3117,28 +3358,49 @@ export default function Home() {
 
 
 
-      {/* 1. APPLE-INSPIRED PRODUCTION HERO BANNER CAROUSEL */}
+      {/* 1. APPLE-INSPIRED PRODUCTION HERO BANNER CAROUSEL (POWERED BY SWIPER) */}
       {effectiveHeroSlides && effectiveHeroSlides.length > 0 && (
         <section 
-          className="hero-carousel-section relative w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 pt-0 pb-6 select-none"
-          onMouseEnter={() => setIsHeroPaused(true)}
-          onMouseLeave={() => setIsHeroPaused(false)}
-          onTouchStart={() => setIsHeroPaused(true)}
-          onTouchEnd={() => setIsHeroPaused(false)}
+          className="hero-carousel-section relative w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 pt-5 sm:pt-7 lg:pt-8 pb-6 select-none"
           aria-label="Apple Featured Promotions Hero Carousel"
         >
           <div className="relative w-full rounded-2xl sm:rounded-3xl lg:rounded-[36px] overflow-hidden bg-white shadow-sm border border-black/[0.04] aspect-square sm:aspect-auto sm:h-[500px] lg:h-[520px]">
-            {/* Slider Track */}
-            <div 
-              className="flex w-full h-full transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
-              style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+            <Swiper
+              speed={800}
+              grabCursor={true}
+              navigation={true}
+              pagination={effectiveHeroSlides.length > 1 ? { clickable: true } : false}
+              modules={[Navigation, Pagination, Autoplay]}
+              autoplay={effectiveHeroSlides.length > 1 ? {
+                delay: 5000,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true
+              } : false}
+              loop={effectiveHeroSlides.length > 1}
+              spaceBetween={0}
+              slidesPerView={1}
+              className="hero-swiper w-full h-full"
             >
               {effectiveHeroSlides.map((slide, idx) => {
                 const displayTitle = slide.title || (slide.titleBold ? `${slide.titleBold} ${slide.titleNormal || ''}`.trim() : 'Apple devices for your business.');
                 const displayBadge = slide.badge || 'APPLE AUTHORISED RESELLERS ACROSS INDIA';
                 const displaySubtitle = slide.subtitle || 'Equip your business teams with Apple Silicon. Volume pricing, GST invoicing, and dedicated account support.';
                 const primaryBtnText = slide.buttonText || 'Explore Lineup →';
-                const primaryBtnLink = slide.buttonLink || '#shop-by-category';
+                const rawPrimaryBtnLink = (slide.buttonLink || '').trim();
+                let cleanHeroLink = (rawPrimaryBtnLink && rawPrimaryBtnLink !== '#' && rawPrimaryBtnLink !== '') ? rawPrimaryBtnLink : '';
+                if (cleanHeroLink === '/shop' || cleanHeroLink.startsWith('/shop')) {
+                  cleanHeroLink = (slide.title?.toLowerCase().includes('home') || slide.image?.includes('1793607263289')) ? '/tv-home' : '/accessories';
+                }
+                const slideTitleLower = (slide.title || '').toLowerCase();
+                const slideImgStr = (slide.image || '');
+                if (slideImgStr.includes('1792058368844_855') || slideTitleLower.includes('duo')) {
+                  cleanHeroLink = '/product/6aa25bb453b793bd9d5009ac';
+                } else if (slideImgStr.includes('1792058375185_444') || slideTitleLower.includes('airpods 5') || (slideTitleLower.includes('airpods') && !slideTitleLower.includes('max') && !slideTitleLower.includes('pro'))) {
+                  cleanHeroLink = '/product/6aa7d0f5a6548b642226e185';
+                } else if (slideImgStr.includes('1792058382295_674') || slideImgStr.includes('1792822488692_974') || slideTitleLower.includes('series 12') || slideTitleLower.includes('watch 12')) {
+                  cleanHeroLink = '/product/6ab37d0a04c4572f8814616f';
+                }
+                const primaryBtnLink = cleanHeroLink || '#shop-by-category';
                 const secondaryBtnText = slide.secondaryButtonText || 'Find Nearest Store';
                 const secondaryBtnLink = slide.secondaryButtonLink || '#store-locator';
 
@@ -3161,230 +3423,166 @@ export default function Home() {
                 const mobileImg = hasMobileImg ? slide.mobileImage.trim() : bannerImg;
 
                 return (
-                  <div 
-                    key={slide._id || slide.id || idx}
-                    className={`flex-none w-full h-full relative overflow-hidden ${slideBgClass}`}
-                  >
-                    {slide.hideText !== false || !slide.showTextOverlay ? (
-                      /* IMAGE-ONLY BANNER (Pure Visual Banner Mode - Image added from Admin Panel appears cleanly) */
-                      <div className="absolute inset-0 w-full h-full overflow-hidden">
-                        <picture key={`pic-hide-${slide._id || idx}-${bannerImg}-${hasMobileImg ? mobileImg : 'fallback'}`} className="w-full h-full block">
-                          {hasMobileImg && <source media="(max-width: 768px)" srcSet={mobileImg} />}
-                          <img
-                            key={`img-hide-${slide._id || idx}-${bannerImg}`}
-                            src={bannerImg}
-                            alt={displayTitle || 'Hero Banner'}
-                            loading={idx === 0 ? "eager" : "lazy"}
-                            decoding="async"
-                            className="w-full h-full object-contain sm:object-cover object-center block select-none pointer-events-none"
-                          />
-                        </picture>
-                        {primaryBtnLink && primaryBtnLink !== '#' && (
-                          <Link
-                            to={primaryBtnLink.startsWith('/') ? primaryBtnLink : '#shop-by-category'}
-                            className="absolute inset-0 z-10 block"
-                            aria-label={displayTitle}
-                          />
-                        )}
-                      </div>
-                    ) : (
-                      /* STANDARD HERO BANNER: Left Text Content + Right Product Image */
-                      <div className="w-full h-full flex flex-col lg:flex-row items-center justify-between relative z-10 max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-6 lg:py-0">
-                        {/* Left Text Block (Floating Dark Card as in Apple Reference or Clean Minimal) */}
-                        {slide.overlayStyle === 'card' || slide.bgStyle === 'slide-dark' ? (
-                          <div className="w-full lg:max-w-[500px] flex flex-col items-center lg:items-start text-center lg:text-left z-20 shrink-0 bg-[#474d53]/95 text-white p-6 sm:p-8 lg:p-9 rounded-[26px] sm:rounded-[30px] shadow-2xl backdrop-blur-md border border-white/10 my-auto">
-                            {displayBadge && (
-                              <div className="text-[11px] sm:text-xs font-bold tracking-wider text-[#2997ff] uppercase mb-2 sm:mb-3">
-                                {displayBadge}
-                              </div>
-                            )}
-
-                            <h1 className="text-xl sm:text-2xl lg:text-[32px] font-extrabold text-white tracking-tight leading-[1.2] mb-3 break-words">
-                              {displayTitle}
-                            </h1>
-
-                            {displaySubtitle && (
-                              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-[440px] mb-5 sm:mb-6 line-clamp-3">
-                                {displaySubtitle}
-                              </p>
-                            )}
-
-                            <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap">
-                              <Link
-                                to={primaryBtnLink.startsWith('/') ? primaryBtnLink : '#shop-by-category'}
-                                onClick={(e) => {
-                                  if (primaryBtnLink.startsWith('#')) {
-                                    e.preventDefault();
-                                    const sec = document.getElementById(primaryBtnLink.replace('#', ''));
-                                    if (sec) sec.scrollIntoView({ behavior: 'smooth' });
-                                  }
-                                }}
-                                className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                              >
-                                {primaryBtnText}
-                              </Link>
-
-                              {secondaryBtnText && (
-                                <Link
-                                  to={secondaryBtnLink.startsWith('/') ? secondaryBtnLink : '#store-locator'}
-                                  onClick={(e) => {
-                                    if (secondaryBtnLink.startsWith('#')) {
-                                      e.preventDefault();
-                                      const sec = document.getElementById(secondaryBtnLink.replace('#', ''));
-                                      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
-                                    }
-                                  }}
-                                  className="px-6 py-2.5 rounded-full bg-[#2c3033]/90 hover:bg-[#2c3033] text-white border border-white/20 text-xs sm:text-sm font-medium shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-sm"
-                                >
-                                  {secondaryBtnText}
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="w-full lg:max-w-[540px] flex flex-col items-center lg:items-start text-center lg:text-left z-20 shrink-0 my-auto">
-                            {displayBadge && (
-                              <div className="text-[11px] sm:text-xs font-semibold tracking-wider text-[#0071e3] uppercase mb-2">
-                                {displayBadge}
-                              </div>
-                            )}
-
-                            <h1 className="text-2xl sm:text-3xl lg:text-[40px] font-bold text-[#1d1d1f] tracking-tight leading-[1.12] mb-3 break-words">
-                              {displayTitle}
-                            </h1>
-
-                            {displaySubtitle && (
-                              <p className="text-xs sm:text-sm lg:text-base text-[#424245] leading-relaxed max-w-[480px] mb-5 sm:mb-6 line-clamp-3">
-                                {displaySubtitle}
-                              </p>
-                            )}
-
-                            <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap">
-                              <Link
-                                to={primaryBtnLink.startsWith('/') ? primaryBtnLink : '#shop-by-category'}
-                                onClick={(e) => {
-                                  if (primaryBtnLink.startsWith('#')) {
-                                    e.preventDefault();
-                                    const sec = document.getElementById(primaryBtnLink.replace('#', ''));
-                                    if (sec) sec.scrollIntoView({ behavior: 'smooth' });
-                                  }
-                                }}
-                                className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                              >
-                                {primaryBtnText}
-                              </Link>
-
-                              {secondaryBtnText && (
-                                <Link
-                                  to={secondaryBtnLink.startsWith('/') ? secondaryBtnLink : '#store-locator'}
-                                  onClick={(e) => {
-                                    if (secondaryBtnLink.startsWith('#')) {
-                                      e.preventDefault();
-                                      const sec = document.getElementById(secondaryBtnLink.replace('#', ''));
-                                      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
-                                    }
-                                  }}
-                                  className="px-6 py-2.5 rounded-full bg-white/80 hover:bg-white text-[#1d1d1f] border border-black/15 text-xs sm:text-sm font-medium shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-sm"
-                                >
-                                  {secondaryBtnText}
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Right Product Image */}
-                        <div className="w-full lg:flex-1 h-[220px] sm:h-[280px] lg:h-full flex items-center justify-center lg:justify-end overflow-hidden pt-4 lg:pt-0">
-                          <picture key={`pic-norm-${slide._id || idx}-${bannerImg}-${hasMobileImg ? mobileImg : 'fallback'}`} className="w-full h-full flex items-center justify-center lg:justify-end">
+                  <SwiperSlide key={slide._id || slide.id || idx}>
+                    <div 
+                      className={`w-full h-full relative overflow-hidden ${slideBgClass}`}
+                    >
+                      {slide.hideText !== false || !slide.showTextOverlay ? (
+                        /* IMAGE-ONLY BANNER (Pure Visual Banner Mode - Image added from Admin Panel appears cleanly) */
+                        <div className="absolute inset-0 w-full h-full overflow-hidden">
+                          <picture key={`pic-hide-${slide._id || idx}-${bannerImg}-${hasMobileImg ? mobileImg : 'fallback'}`} className="w-full h-full block">
                             {hasMobileImg && <source media="(max-width: 768px)" srcSet={mobileImg} />}
                             <img
-                              key={`img-norm-${slide._id || idx}-${bannerImg}`}
+                              key={`img-hide-${slide._id || idx}-${bannerImg}`}
                               src={bannerImg}
-                              alt={displayTitle}
+                              alt={displayTitle || 'Hero Banner'}
                               loading={idx === 0 ? "eager" : "lazy"}
                               decoding="async"
-                              className={`max-h-full max-w-full ${fitClass} ${focalClass} drop-shadow-md transition-transform duration-700`}
+                              className="w-full h-full object-contain sm:object-cover object-center block select-none pointer-events-none"
                             />
                           </picture>
+                          {cleanHeroLink && (
+                            <Link
+                              to={cleanHeroLink.startsWith('/') ? cleanHeroLink : '#shop-by-category'}
+                              onClick={(e) => {
+                                if (cleanHeroLink.startsWith('#')) {
+                                  e.preventDefault();
+                                  const sec = document.getElementById(cleanHeroLink.replace('#', ''));
+                                  if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                }
+                              }}
+                              className="absolute inset-0 z-10 block"
+                              aria-label={displayTitle}
+                            />
+                          )}
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      ) : (
+                        /* STANDARD HERO BANNER: Left Text Content + Right Product Image */
+                        <div className="w-full h-full flex flex-col lg:flex-row items-center justify-between relative z-10 max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-6 lg:py-0">
+                          {/* Left Text Block */}
+                          {slide.overlayStyle === 'card' || slide.bgStyle === 'slide-dark' ? (
+                            <div className="w-full lg:max-w-[500px] flex flex-col items-center lg:items-start text-center lg:text-left z-20 shrink-0 bg-[#474d53]/95 text-white p-6 sm:p-8 lg:p-9 rounded-[26px] sm:rounded-[30px] shadow-2xl backdrop-blur-md border border-white/10 my-auto">
+                              {displayBadge && (
+                                <div className="text-[11px] sm:text-xs font-bold tracking-wider text-[#2997ff] uppercase mb-2 sm:mb-3">
+                                  {displayBadge}
+                                </div>
+                              )}
+
+                              <h1 className="text-xl sm:text-2xl lg:text-[32px] font-extrabold text-white tracking-tight leading-[1.2] mb-3 break-words">
+                                {displayTitle}
+                              </h1>
+
+                              {displaySubtitle && (
+                                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-[440px] mb-5 sm:mb-6 line-clamp-3">
+                                  {displaySubtitle}
+                                </p>
+                              )}
+
+                              <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap">
+                                <Link
+                                  to={primaryBtnLink.startsWith('/') ? primaryBtnLink : '#shop-by-category'}
+                                  onClick={(e) => {
+                                    if (primaryBtnLink.startsWith('#')) {
+                                      e.preventDefault();
+                                      const sec = document.getElementById(primaryBtnLink.replace('#', ''));
+                                      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                  }}
+                                  className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                                >
+                                  {primaryBtnText}
+                                </Link>
+
+                                {secondaryBtnText && (
+                                  <Link
+                                    to={secondaryBtnLink.startsWith('/') ? secondaryBtnLink : '#store-locator'}
+                                    onClick={(e) => {
+                                      if (secondaryBtnLink.startsWith('#')) {
+                                        e.preventDefault();
+                                        const sec = document.getElementById(secondaryBtnLink.replace('#', ''));
+                                        if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                      }
+                                    }}
+                                    className="px-6 py-2.5 rounded-full bg-[#2c3033]/90 hover:bg-[#2c3033] text-white border border-white/20 text-xs sm:text-sm font-medium shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-sm"
+                                  >
+                                    {secondaryBtnText}
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-full lg:max-w-[540px] flex flex-col items-center lg:items-start text-center lg:text-left z-20 shrink-0 my-auto">
+                              {displayBadge && (
+                                <div className="text-[11px] sm:text-xs font-semibold tracking-wider text-[#0071e3] uppercase mb-2">
+                                  {displayBadge}
+                                </div>
+                              )}
+
+                              <h1 className="text-2xl sm:text-3xl lg:text-[40px] font-bold text-[#1d1d1f] tracking-tight leading-[1.12] mb-3 break-words">
+                                {displayTitle}
+                              </h1>
+
+                              {displaySubtitle && (
+                                <p className="text-xs sm:text-sm lg:text-base text-[#424245] leading-relaxed max-w-[480px] mb-5 sm:mb-6 line-clamp-3">
+                                  {displaySubtitle}
+                                </p>
+                              )}
+
+                              <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap">
+                                <Link
+                                  to={primaryBtnLink.startsWith('/') ? primaryBtnLink : '#shop-by-category'}
+                                  onClick={(e) => {
+                                    if (primaryBtnLink.startsWith('#')) {
+                                      e.preventDefault();
+                                      const sec = document.getElementById(primaryBtnLink.replace('#', ''));
+                                      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                  }}
+                                  className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                                >
+                                  {primaryBtnText}
+                                </Link>
+
+                                {secondaryBtnText && (
+                                  <Link
+                                    to={secondaryBtnLink.startsWith('/') ? secondaryBtnLink : '#store-locator'}
+                                    onClick={(e) => {
+                                      if (secondaryBtnLink.startsWith('#')) {
+                                        e.preventDefault();
+                                        const sec = document.getElementById(secondaryBtnLink.replace('#', ''));
+                                        if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                                      }
+                                    }}
+                                    className="px-6 py-2.5 rounded-full bg-white/80 hover:bg-white text-[#1d1d1f] border border-black/15 text-xs sm:text-sm font-medium shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-sm"
+                                  >
+                                    {secondaryBtnText}
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Right Product Image */}
+                          <div className="w-full lg:flex-1 h-[220px] sm:h-[280px] lg:h-full flex items-center justify-center lg:justify-end overflow-hidden pt-4 lg:pt-0">
+                            <picture key={`pic-norm-${slide._id || idx}-${bannerImg}-${hasMobileImg ? mobileImg : 'fallback'}`} className="w-full h-full flex items-center justify-center lg:justify-end">
+                              {hasMobileImg && <source media="(max-width: 768px)" srcSet={mobileImg} />}
+                              <img
+                                key={`img-norm-${slide._id || idx}-${bannerImg}`}
+                                src={bannerImg}
+                                alt={displayTitle}
+                                loading={idx === 0 ? "eager" : "lazy"}
+                                decoding="async"
+                                className={`max-h-full max-w-full ${fitClass} ${focalClass} drop-shadow-md transition-transform duration-700`}
+                              />
+                            </picture>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </SwiperSlide>
                 );
               })}
-            </div>
-
-            {/* Left Chevron Arrow (Desktop & Mobile) */}
-            {effectiveHeroSlides.length > 1 && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSlideIndex((prev) => (prev === 0 ? effectiveHeroSlides.length - 1 : prev - 1));
-                }}
-                className="absolute left-1.5 sm:left-4 lg:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-115 active:scale-90 select-none group"
-                aria-label="Previous Slide"
-                title="Previous Slide"
-              >
-                <svg
-                  className="w-7 h-7 sm:w-9 sm:h-9 text-[#0071e3] transition-transform duration-200 group-hover:-translate-x-0.5 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-            )}
-
-            {/* Right Chevron Arrow (Desktop & Mobile) */}
-            {effectiveHeroSlides.length > 1 && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSlideIndex((prev) => (prev + 1) % effectiveHeroSlides.length);
-                }}
-                className="absolute right-1.5 sm:right-4 lg:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-115 active:scale-90 select-none group"
-                aria-label="Next Slide"
-                title="Next Slide"
-              >
-                <svg
-                  className="w-7 h-7 sm:w-9 sm:h-9 text-[#0071e3] transition-transform duration-200 group-hover:translate-x-0.5 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="9 6 15 12 9 18" />
-                </svg>
-              </button>
-            )}
-
-            {/* Pagination Dots (Apple Pill Bar from Reference) */}
-            {effectiveHeroSlides.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#3f454b]/75 backdrop-blur-md border border-white/10 shadow-sm">
-                {effectiveHeroSlides.map((_, dotIdx) => (
-                  <button
-                    key={dotIdx}
-                    type="button"
-                    onClick={() => setCurrentSlideIndex(dotIdx)}
-                    className={`transition-all duration-300 cursor-pointer rounded-full ${
-                      dotIdx === currentSlideIndex
-                        ? 'w-6 h-1.5 bg-white shadow-xs'
-                        : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/80'
-                    }`}
-                    aria-label={`Go to slide ${dotIdx + 1}`}
-                    title={`Slide ${dotIdx + 1}`}
-                  />
-                ))}
-              </div>
-            )}
+            </Swiper>
           </div>
         </section>
       )}
@@ -3410,7 +3608,7 @@ export default function Home() {
               if (!item) return null;
               const hasImg = Boolean(item.image && item.image.trim());
               return (
-                <Link key={idx} to={item.path || '/shop'} className="strip-item">
+                <Link key={idx} to={(item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? item.path : '/accessories'} className="strip-item">
                   <div className="strip-icon">
                     {hasImg ? (
                       <img
@@ -3601,7 +3799,7 @@ export default function Home() {
               const displayPrice = cat.startingPrice || cat.price || (cat.name === 'Mac' ? '₹89,900' : cat.name === 'iPhone' ? '₹59,900' : cat.name === 'iPad' ? '₹34,900' : cat.name === 'Watch' ? '₹29,900' : cat.name === 'AirPods' ? '₹12,900' : cat.name === 'TV & Home' ? '₹14,900' : cat.name === 'Accessories' ? '₹1,900' : cat.name === 'AppleCare+' ? '₹2,900' : '');
 
               return (
-                <Link key={idx} to={cat.link || '/shop'} className="category-card">
+                <Link key={idx} to={(cat.link && cat.link !== '/shop' && !cat.link.startsWith('/shop')) ? cat.link : '/accessories'} className="category-card">
                   <div className="category-card-body">
                     <div className="category-card-eyebrow">{cat.name}</div>
                   </div>
@@ -3707,83 +3905,119 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. DEAL OF THE WEEK CAROUSEL */}
-      {dealBanners && dealBanners.length > 0 && (() => {
-        const safeIndex = currentDealIndex < dealBanners.length ? currentDealIndex : 0;
-        const banner = dealBanners[safeIndex] || dealBanners[0];
-        if (!banner) return null;
-        const productTarget = banner.productId ? `/product/${banner.productId}` : (banner.buttonLink || '/shop');
-        const formattedFinal = formatRupee(banner.finalPrice !== undefined && banner.finalPrice !== null ? banner.finalPrice : banner.dealPrice);
-        const formattedMrp = formatRupee(banner.originalMrp !== undefined && banner.originalMrp !== null ? banner.originalMrp : banner.dealOldPrice);
-        const displayImg = banner.productImage || banner.dealImage || '/mac_deal_fan.png';
+      {/* 6. DEAL OF THE WEEK CAROUSEL (POWERED BY SWIPER) */}
+      {dealBanners && dealBanners.length > 0 && (
+        <div className="deal-banner-container">
+          <Swiper
+            key="home-deal-carousel"
+            speed={800}
+            grabCursor={true}
+            autoHeight={false}
+            updateOnImagesReady={true}
+            navigation={true}
+            pagination={dealBanners.length > 1 ? { clickable: true } : false}
+            modules={[Navigation, Pagination, Autoplay]}
+            autoplay={dealBanners.length > 1 ? {
+              delay: 4500,
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true
+            } : false}
+            loop={dealBanners.length > 1}
+            spaceBetween={0}
+            slidesPerView={1}
+            observer={true}
+            observeParents={true}
+            className="deal-swiper mySwiper rounded-3xl"
+          >
+            {dealBanners.map((banner, idx) => {
+              const rawTarget = banner.productId 
+                ? `/product/${banner.productId}` 
+                : (banner.buttonLink || banner.dealButtonLink || '');
+              const productTarget = (rawTarget && rawTarget !== '/shop' && rawTarget !== '#') ? rawTarget : '';
+              const formattedFinal = formatRupee(banner.finalPrice !== undefined && banner.finalPrice !== null ? banner.finalPrice : banner.dealPrice);
+              const formattedMrp = formatRupee(banner.originalMrp !== undefined && banner.originalMrp !== null ? banner.originalMrp : banner.dealOldPrice);
+              const displayImg = banner.productImage || banner.dealImage || '/mac_deal_fan.png';
 
-        // Check if banner is a full graphic promotional banner (uploaded wide banner image or isFullBanner enabled)
-        const isFullBanner = Boolean(banner.isFullBanner) || 
-          banner.isFullBanner === 'true' || 
-          (Boolean(banner.dealImage) && banner.dealImage.includes('upload_1793435484509_863')) ||
-          (!banner.dealTitle?.trim() && !banner.title?.trim());
+              const isFullBanner = Boolean(banner.isFullBanner) || 
+                banner.isFullBanner === 'true' || 
+                (Boolean(banner.dealImage) && banner.dealImage.includes('upload_1793435484509_863')) ||
+                (!banner.dealTitle?.trim() && !banner.title?.trim());
 
-        return (
-          <div className="deal-banner-container">
-            <div
-              key={banner.id || banner._id || `deal-${safeIndex}`}
-              className={`deal-banner-frame ${isFullBanner ? 'deal-frame-full' : 'deal-frame-split'}`}
-            >
-              {isFullBanner ? (
-                <Link to={productTarget} className="deal-full-banner-link">
+              const bannerImageContent = (
+                <picture className="w-full h-full block">
+                  {(banner.mobileDealImage || banner.mobileImage) && (
+                    <source
+                      media="(max-width: 768px)"
+                      srcSet={banner.mobileDealImage || banner.mobileImage}
+                    />
+                  )}
                   <img
                     src={displayImg}
-                    alt={banner.internalName || 'Deal Banner'}
-                    className="deal-full-img"
-                    loading="lazy"
+                    alt={banner.internalName || banner.dealTitle || 'Deal Banner'}
+                    className="deal-full-img w-full rounded-2xl md:rounded-3xl"
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    decoding="async"
                   />
-                </Link>
-              ) : (
-                <div className="deal-banner">
-                  <div className="deal-content">
-                    <div className="deal-eyebrow">{banner.smallLabel || banner.dealEyebrow || 'DEAL OF THE WEEK'}</div>
-                    <h2 className="deal-title">{banner.title || banner.dealTitle || banner.internalName || 'Special Deal Banner'}</h2>
-                    <p className="deal-desc">
-                      {banner.description || banner.dealDesc || 'Limited time offer on genuine Apple devices. Order today to claim free shipping.'}
-                    </p>
-                    <div className="deal-price">
-                      {formattedFinal} {formattedMrp && <span>{formattedMrp}</span>}
-                    </div>
-                    <Link to={productTarget} className="btn btn-primary" style={{ marginTop: '14px' }}>
-                      {banner.buttonText || banner.dealButtonText || 'Grab the Deal'}
-                    </Link>
+                </picture>
+              );
+
+              return (
+                <SwiperSlide key={banner.id || banner._id || `deal-${idx}`}>
+                  <div className={`deal-banner-frame ${isFullBanner ? 'deal-frame-full' : 'deal-frame-split'}`}>
+                    {isFullBanner ? (
+                      productTarget ? (
+                        productTarget.startsWith('http') ? (
+                          <a
+                            href={productTarget}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="deal-full-banner-link"
+                          >
+                            {bannerImageContent}
+                          </a>
+                        ) : (
+                          <Link to={productTarget} className="deal-full-banner-link">
+                            {bannerImageContent}
+                          </Link>
+                        )
+                      ) : (
+                        <div className="deal-full-banner-link cursor-default select-none">
+                          {bannerImageContent}
+                        </div>
+                      )
+                    ) : (
+                      <div className="deal-banner">
+                        <div className="deal-content">
+                          <div className="deal-eyebrow">{banner.smallLabel || banner.dealEyebrow || 'DEAL OF THE WEEK'}</div>
+                          <h2 className="deal-title">{banner.title || banner.dealTitle || banner.internalName || 'Special Deal Banner'}</h2>
+                          <p className="deal-desc">
+                            {banner.description || banner.dealDesc || 'Limited time offer on genuine Apple devices. Order today to claim free shipping.'}
+                          </p>
+                          <div className="deal-price">
+                            {formattedFinal} {formattedMrp && <span>{formattedMrp}</span>}
+                          </div>
+                          {productTarget && (
+                            <Link to={productTarget} className="btn btn-primary" style={{ marginTop: '14px' }}>
+                              {banner.buttonText || banner.dealButtonText || 'Grab the Deal'}
+                            </Link>
+                          )}
+                        </div>
+                        <div className="deal-visual">
+                          <img
+                            src={displayImg}
+                            alt={banner.title || banner.dealTitle || 'Deal Product'}
+                            className="max-h-full max-w-full object-contain filter drop-shadow-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="deal-visual">
-                    <img
-                      src={displayImg}
-                      alt={banner.title || banner.dealTitle || 'Deal Product'}
-                      className="max-h-full max-w-full object-contain filter drop-shadow-lg"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-            {dealBanners.length > 1 && (
-              <div className="flex justify-center items-center gap-1.5 mt-2.5">
-                {dealBanners.map((_, dotIdx) => (
-                  <button
-                    key={dotIdx}
-                    type="button"
-                    onClick={() => setCurrentDealIndex(dotIdx)}
-                    className={`transition-all duration-300 cursor-pointer rounded-full ${
-                      dotIdx === safeIndex
-                        ? 'w-5 h-1.5 bg-[#0071e3]'
-                        : 'w-1.5 h-1.5 bg-zinc-300 hover:bg-zinc-500'
-                    }`}
-                    aria-label={`Go to deal banner ${dotIdx + 1}`}
-                    title={`Deal Banner ${dotIdx + 1}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })()}
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
+        </div>
+      )}
 
       {/* 5.5 WHY BUY FROM AUTHORISED RESELLER */}
       <div className="wby-section">

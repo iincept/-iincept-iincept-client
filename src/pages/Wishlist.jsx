@@ -71,7 +71,7 @@ export default function Wishlist() {
           <p className="text-sm text-slate-500 max-w-xs mx-auto">Save items you are interested in here to review or purchase them later.</p>
         </div>
         <Link
-          to="/shop"
+          to="/accessories"
           className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold px-6 py-3 rounded-xl transition-all cursor-pointer text-xs"
         >
           Explore Products

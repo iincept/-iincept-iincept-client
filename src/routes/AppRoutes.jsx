@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import Home from '../pages/Home';
-import Shop from '../pages/Shop';
 import ProductDetails from '../pages/ProductDetails';
 import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
@@ -83,7 +82,7 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: '', element: <Home /> },
-      { path: 'shop', element: <Shop /> },
+      { path: 'shop', element: <Navigate to="/" replace /> },
       { path: 'iphone', element: <Iphone /> },
       { path: 'iphone-duo', element: <Navigate to="/iphone?search=iPhone%20Duo" replace /> },
       { path: 'iphone_duo', element: <Navigate to="/iphone?search=iPhone%20Duo" replace /> },
