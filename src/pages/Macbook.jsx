@@ -14,15 +14,14 @@ import { subscribeToLiveSync } from '../services/liveSyncService';
 import { resolveColorValue } from '../utils/colorResolver';
 
 const MAC_SUB_NAV_ITEMS = [
-  { name: 'MacBook Neo', query: 'MacBook Neo', image: '/mac_nav/macbook_neo.png', scale: 'scale-100' },
+  { name: 'MacBook Neo', query: 'MacBook Neo', image: '/mac_nav/macbook_neo_clean.png', scale: 'scale-100' },
   { name: 'MacBook Air', query: 'MacBook Air', image: '/mac_nav/macbook_air.png', scale: 'scale-100' },
   { name: 'MacBook Pro', query: 'MacBook Pro', image: '/mac_nav/macbook_pro.png', scale: 'scale-100' },
-  { name: 'iMac', query: 'iMac', image: '/imac_studio_lifestyle.jpg', scale: 'scale-95' },
-  { name: 'Mac mini', query: 'Mac mini', image: 'https://www.apple.com/assets-www/en_WW/mac/04_chapternav/small/nav_mac_mini_f628f615d_2x.png', scale: 'scale-100' },
-  { name: 'Mac Studio', query: 'Mac Studio', image: '/mac_nav/mac_studio.png', scale: 'scale-105' },
-  { name: 'Compare', path: '/compare?category=mac', image: '/mac_nav/mac_compare.png', scale: 'scale-100' },
-  { name: 'Displays', query: 'Studio Display', image: '/mac_nav/mac_displays.png', scale: 'scale-95' },
-  { name: 'AppleCare+', path: '/macbook?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' }
+  { name: 'iMac', query: 'iMac', image: '/mac_nav/imac_clean.png', scale: 'scale-95' },
+  { name: 'Mac mini', query: 'Mac mini', image: '/mac_nav/mac_mini_clean.png', scale: 'scale-100' },
+  { name: 'Mac Studio', query: 'Mac Studio', image: '/uploads/upload_1788982031857_989.png', scale: 'scale-105' },
+  { name: 'Displays', query: 'Studio Display', image: '/mac_nav/displays_clean.png', scale: 'scale-95' },
+  { name: 'AppleCare+', path: '/macbook?tab=applecare', image: '/uploads/upload_1792413061470_102.png', scale: 'scale-100' }
 ];
 
 const ensureAppleCareInSubItems = (items = []) => {
@@ -33,7 +32,7 @@ const ensureAppleCareInSubItems = (items = []) => {
     careItem = {
       name: 'AppleCare+',
       path: '/macbook?tab=applecare',
-      image: '/applecare_official_hero.png',
+      image: '/uploads/upload_1792413061470_102.png',
       scale: 'scale-100'
     };
   }
@@ -70,10 +69,10 @@ const getInitialSubItems = (categoryKey, defaultItems) => {
 };
 
 const MAC_APPLECARE_ROWS = [
-  { model: 'Mac mini', monthly: '₹429.00', yearly: '₹12,900.00', image: 'https://www.apple.com/assets-www/en_WW/mac/04_chapternav/small/nav_mac_mini_f628f615d_2x.png' },
+  { model: 'Mac mini', monthly: '₹429.00', yearly: '₹12,900.00', image: '/mac_nav/mac_mini_clean.png' },
   { model: 'Mac Studio', monthly: '₹679.00', yearly: '₹19,900.00', image: '/mac_nav/mac_studio.png' },
-  { model: 'iMac', monthly: '₹679.00', yearly: '₹19,900.00', image: '/mac_nav/imac.png' },
-  { model: 'Macbook Neo', monthly: '₹579.00', yearly: '₹16,900.00', image: '/mac_nav/macbook_neo.png' },
+  { model: 'iMac', monthly: '₹679.00', yearly: '₹19,900.00', image: '/mac_nav/imac_clean.png' },
+  { model: 'Macbook Neo', monthly: '₹579.00', yearly: '₹16,900.00', image: '/mac_nav/macbook_neo_clean.png' },
   { model: 'MacBook Air 13″', monthly: '₹779.00', yearly: '₹22,900.00', image: '/mac_nav/macbook_air.png' },
   { model: 'MacBook Air 15″', monthly: '₹849.00', yearly: '₹24,900.00', image: '/mac_nav/macbook_air.png' },
   { model: 'MacBook Pro 14″', monthly: '₹999.00', yearly: '₹29,900.00', image: '/mac_nav/macbook_pro.png' },
@@ -82,9 +81,11 @@ const MAC_APPLECARE_ROWS = [
 ];
 
 const resolveIconImage = (img, label) => {
-  // If image was set/uploaded in Admin panel, use the admin image directly
-  if (img && typeof img === 'string' && img.trim() && img.trim() !== '/mac_nav/mac_mini.png') {
+  if (img && typeof img === 'string' && img.trim()) {
     let clean = img.trim();
+    if (clean.includes('nav_mac_mini_f628f615d') || clean === '/mac_nav/mac_mini.png') return '/mac_nav/mac_mini_clean.png';
+    if (clean.includes('nav_imac_24_fbf85926c') || clean.includes('imac_studio_lifestyle')) return '/mac_nav/imac_clean.png';
+    if (clean.includes('nav_displays_e08c5b904')) return '/mac_nav/displays_clean.png';
     if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('data:') && !clean.startsWith('blob:') && !clean.startsWith('/')) {
       clean = '/' + clean;
     }
@@ -93,13 +94,13 @@ const resolveIconImage = (img, label) => {
 
   // Fallback to default crisp sub nav icons if no image is set in Admin panel
   const lblLower = (label || '').toLowerCase().trim();
-  if (lblLower.includes('care')) return '/applecare_official_hero.png';
-  if (lblLower === 'imac' || lblLower.includes('imac')) return '/mac_nav/imac.png';
-  if (lblLower.includes('neo')) return '/mac_nav/macbook_neo.png';
-  if (lblLower.includes('studio')) return '/mac_nav/mac_studio.png';
-  if (lblLower.includes('mini')) return 'https://www.apple.com/assets-www/en_WW/mac/04_chapternav/small/nav_mac_mini_f628f615d_2x.png';
+  if (lblLower.includes('care')) return '/uploads/upload_1792413061470_102.png';
+  if (lblLower === 'imac' || lblLower.includes('imac')) return '/mac_nav/imac_clean.png';
+  if (lblLower.includes('neo')) return '/mac_nav/macbook_neo_clean.png';
+  if (lblLower.includes('studio')) return '/uploads/upload_1788982031857_989.png';
+  if (lblLower.includes('mini')) return '/mac_nav/mac_mini_clean.png';
   if (lblLower.includes('compare')) return '/mac_nav/mac_compare.png';
-  if (lblLower.includes('display')) return '/mac_nav/mac_displays.png';
+  if (lblLower.includes('display')) return '/mac_nav/displays_clean.png';
   if (lblLower.includes('air')) return '/mac_nav/macbook_air.png';
   if (lblLower.includes('pro')) return '/mac_nav/macbook_pro.png';
 
@@ -136,13 +137,411 @@ const resolveSubItemPath = (item) => {
 const getModelImageByName = (modelName) => {
   if (!modelName) return '/mac_nav/macbook_air.png';
   const name = modelName.toLowerCase();
-  if (name.includes('mini')) return 'https://www.apple.com/assets-www/en_WW/mac/04_chapternav/small/nav_mac_mini_f628f615d_2x.png';
+  if (name.includes('mini')) return '/mac_nav/mac_mini_clean.png';
   if (name.includes('studio')) return '/mac_nav/mac_studio.png';
   if (name.includes('imac')) return '/mac_nav/imac.png';
   if (name.includes('neo')) return '/mac_nav/macbook_neo.png';
   if (name.includes('air')) return '/mac_nav/macbook_air.png';
   if (name.includes('pro')) return '/mac_nav/macbook_pro.png';
   return '/mac_nav/mac_studio.png';
+};
+
+const DEFAULT_MAC_PRODUCTS = [
+  {
+    "id": "6ab7c0f25e19e74322347db9",
+    "name": "Mac Mini M4",
+    "price": 94900,
+    "priceStr": "\u20b994,900",
+    "discountPercent": 0,
+    "discountPrice": 85410,
+    "displayImage": "/uploads/upload_1790427375919_897.webp",
+    "image": "/uploads/upload_1790427375919_897.webp",
+    "images": [
+      "/uploads/upload_1790427375919_897.webp",
+      "/uploads/upload_1790427330086_344.webp"
+    ],
+    "variants": [
+      {
+        "price": 94900
+      }
+    ],
+    "colors": [],
+    "rating": 5.0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab15ca8716d8e2a9fadf6cb",
+    "name": "Mac mini: Apple M6",
+    "price": 99900,
+    "priceStr": "\u20b999,900",
+    "discountPercent": 0,
+    "discountPrice": 89910,
+    "displayImage": "/uploads/upload_1790008048014_184.webp",
+    "image": "/uploads/upload_1790008048014_184.webp",
+    "images": [
+      "/uploads/upload_1790008048014_184.webp",
+      "/uploads/upload_1790008048021_576.webp"
+    ],
+    "variants": [
+      {
+        "price": 99900
+      }
+    ],
+    "colors": [],
+    "rating": 5.0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6aa8044067bbb0a59686f6f3",
+    "name": "Mac Studio M5-ULTRA",
+    "price": 629900,
+    "priceStr": "\u20b9629,900",
+    "discountPercent": 0,
+    "discountPrice": 566910,
+    "displayImage": "/uploads/upload_1789395908773_625.webp",
+    "image": "/uploads/upload_1789395908773_625.webp",
+    "images": [
+      "/uploads/upload_1789395908773_625.webp",
+      "/uploads/upload_1789395908778_543.webp"
+    ],
+    "variants": [
+      {
+        "price": 629900
+      }
+    ],
+    "colors": [],
+    "rating": 5.0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6aa7ffd567bbb0a596866b1c",
+    "name": "Mac Studio M5-MAX",
+    "price": 279900,
+    "priceStr": "\u20b9279,900",
+    "discountPercent": 0,
+    "discountPrice": 251910,
+    "displayImage": "/uploads/upload_1789394672692_157.webp",
+    "image": "/uploads/upload_1789394672692_157.webp",
+    "images": [
+      "/uploads/upload_1789394672692_157.webp",
+      "/uploads/upload_1789394672698_834.webp"
+    ],
+    "variants": [
+      {
+        "price": 279900
+      }
+    ],
+    "colors": [],
+    "rating": 5.0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a6d9e89f99193e18109fa73",
+    "name": "15-inch MacBook Air: Apple M5 chip with 10\u2011core CPU and 10\u2011core GPU",
+    "price": 179900,
+    "priceStr": "\u20b9179,900",
+    "discountPercent": 0,
+    "discountPrice": 161910,
+    "displayImage": "/uploads/upload_1789640491649_8.png",
+    "image": "/uploads/upload_1789640491649_8.png",
+    "images": [
+      "/uploads/upload_1789640491649_8.png",
+      "/uploads/upload_1785568796331_955.webp"
+    ],
+    "variants": [
+      {
+        "price": 179900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Midnight",
+        "value": "#191F26",
+        "image": null
+      },
+      {
+        "name": "Sky Blue",
+        "value": "#87CEEB",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "image": null
+      }
+    ],
+    "rating": 5.0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a4893171c391419c19b5420",
+    "name": "Studio Display XDR",
+    "price": 349900,
+    "priceStr": "\u20b9349,900",
+    "discountPercent": 0,
+    "discountPrice": 314910,
+    "displayImage": "/uploads/upload_1783141135955_269.jpeg",
+    "image": "/uploads/upload_1783141135955_269.jpeg",
+    "images": [
+      "/uploads/upload_1783141135955_269.jpeg",
+      "/uploads/upload_1783141140803_68.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 349900
+      }
+    ],
+    "colors": [],
+    "rating": 5.0,
+    "isSoldOut": true
+  },
+  {
+    "id": "6a44d92b4a9f2d3d8e71110a",
+    "name": "Studio Display",
+    "price": 189900,
+    "priceStr": "\u20b9189,900",
+    "discountPercent": 0,
+    "discountPrice": 170910,
+    "displayImage": "/uploads/upload_1789640911010_111.png",
+    "image": "/uploads/upload_1789640911010_111.png",
+    "images": [
+      "/uploads/upload_1789640911010_111.png",
+      "/uploads/upload_1782896933797_194.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 189900
+      }
+    ],
+    "colors": [],
+    "rating": 5.0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44d3ee4a9f2d3d8e711107",
+    "name": "24-inch iMac with Retina 4.5K display with Apple M4 chip",
+    "price": 174900,
+    "priceStr": "\u20b9174,900",
+    "discountPercent": 0,
+    "discountPrice": 157410,
+    "displayImage": "/uploads/upload_1789640788393_393.webp",
+    "image": "/uploads/upload_1789640788393_393.webp",
+    "images": [
+      "/uploads/upload_1788868561710_348.webp"
+    ],
+    "variants": [
+      {
+        "price": 174900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Green",
+        "value": "#008000",
+        "image": null
+      },
+      {
+        "name": "Blue",
+        "value": "#0000FF",
+        "image": null
+      },
+      {
+        "name": "Pink",
+        "value": "#FFC0CB",
+        "image": null
+      },
+      {
+        "name": "Purple",
+        "value": "#800080",
+        "image": null
+      },
+      {
+        "name": "Orange",
+        "value": "#FFA500",
+        "image": null
+      },
+      {
+        "name": "Yellow",
+        "value": "#FFFF00",
+        "image": null
+      }
+    ],
+    "rating": 5.0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44ca05101e1328003fbb05",
+    "name": "13-inch MacBook Air: Apple M5 chip with 10\u2011core CPU and 8\u2011core GPU",
+    "price": 149900,
+    "priceStr": "\u20b9149,900",
+    "discountPercent": 0,
+    "discountPrice": 134910,
+    "displayImage": "/uploads/upload_1789640541475_931.png",
+    "image": "/uploads/upload_1789640541475_931.png",
+    "images": [
+      "/uploads/upload_1789640541475_931.png",
+      "/uploads/upload_1783520032309_425.webp"
+    ],
+    "variants": [
+      {
+        "price": 149900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Midnight",
+        "value": "#191F26",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Sky Blue",
+        "value": "#87CEEB",
+        "image": null
+      },
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "image": null
+      }
+    ],
+    "rating": 4.6,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44ca05101e1328003fbb04",
+    "name": "14-inch MacBook Pro: Apple M5 chip with 10\u2011core CPU and 10\u2011core GPU",
+    "price": 209900,
+    "priceStr": "\u20b9209,900",
+    "discountPercent": 0,
+    "discountPrice": 215910,
+    "displayImage": "/uploads/upload_1789640553396_785.png",
+    "image": "/uploads/upload_1789640553396_785.png",
+    "images": [
+      "/uploads/upload_1789640553396_785.png",
+      "/uploads/upload_1783591400389_409.webp"
+    ],
+    "variants": [
+      {
+        "price": 209900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Space Black",
+        "value": "#1C1C1C",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      }
+    ],
+    "rating": 4.8,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a438c4c236925a15ed0a57d",
+    "name": "13-inch MacBook Neo: Apple A18 Pro chip with 6\u2011core CPU and 5\u2011core GPU",
+    "price": 79899,
+    "priceStr": "\u20b979,899",
+    "discountPercent": 0,
+    "discountPrice": 71909,
+    "displayImage": "/uploads/upload_1789640579988_521.jpeg",
+    "image": "/uploads/upload_1789640579988_521.jpeg",
+    "images": [
+      "/uploads/upload_1789640579988_521.jpeg",
+      "/uploads/upload_1786966249297_202.webp"
+    ],
+    "variants": [
+      {
+        "price": 79899
+      }
+    ],
+    "colors": [
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Blush",
+        "value": "#E8D4D4",
+        "image": null
+      },
+      {
+        "name": "Citrus",
+        "value": "#E1E49C",
+        "image": null
+      },
+      {
+        "name": "Indigo",
+        "value": "#4B0082",
+        "image": null
+      }
+    ],
+    "rating": 5.0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a437eb3345ade0885f68a55",
+    "name": "16-inch MacBook Pro: Apple M5 Pro chip with 18\u2011core CPU and 20\u2011core GPU",
+    "price": 359900,
+    "priceStr": "\u20b9359,900",
+    "discountPercent": 0,
+    "discountPrice": 323910,
+    "displayImage": "/uploads/upload_1789640594332_536.png",
+    "image": "/uploads/upload_1789640594332_536.png",
+    "images": [
+      "/uploads/upload_1789640594332_536.png",
+      "/uploads/upload_1783591648394_648.webp"
+    ],
+    "variants": [
+      {
+        "price": 359900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Space Black",
+        "value": "#1C1C1C",
+        "image": null
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  }
+];
+
+const getCachedMacProducts = () => {
+  try {
+    const cached = sessionStorage.getItem('iincept_cached_mac_products');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_MAC_PRODUCTS;
 };
 
 export default function Macbook() {
@@ -645,7 +1044,15 @@ export default function Macbook() {
     };
   });
 
-  const combinedProducts = dbMacbooks;
+  const combinedProducts = dbMacbooks.length > 0 ? dbMacbooks : getCachedMacProducts();
+
+  useEffect(() => {
+    if (dbMacbooks.length > 0) {
+      try {
+        sessionStorage.setItem('iincept_cached_mac_products', JSON.stringify(dbMacbooks));
+      } catch (e) {}
+    }
+  }, [dbMacbooks]);
 
   const getMacSequenceRank = (productName) => {
     const name = (productName || '').toLowerCase();
@@ -708,7 +1115,7 @@ export default function Macbook() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none relative">
 
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-1 pb-2 select-none font-sans mb-3">
@@ -740,10 +1147,12 @@ export default function Macbook() {
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
+                      loading="eager"
+                      decoding="async"
                       onError={(e) => {
                         const lower = (item.name || '').toLowerCase();
                         if (lower.includes('care')) {
-                          e.currentTarget.src = '/applecare_official_hero.png';
+                          e.currentTarget.src = '/uploads/upload_1792413061470_102.png';
                         } else {
                           e.currentTarget.src = '/mac_nav/macbook_air.png';
                         }

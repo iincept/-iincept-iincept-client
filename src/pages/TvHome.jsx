@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ShieldCheck, Wrench, Headphones, Check } from 'lucide-react';
@@ -13,42 +13,257 @@ import CleanProductImage from '../components/CleanProductImage';
 import { resolveColorValue } from '../utils/colorResolver';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 
-// Default TV & Home AppleCare rows fallback
+// Default TV & Home AppleCare rows fallback matching live DB
 const DEFAULT_TVHOME_APPLECARE_ROWS = [
   { 
-    model: 'Apple TV 4K', 
-    title: 'AppleCare+ for Apple TV 4K', 
-    description: '3 Years Apple-certified coverage for Apple TV 4K with technical support & hardware service.', 
-    sku: 'AC-TV-4K', 
-    mrp: '₹3,500.00', 
-    discount: '10% OFF', 
-    salePrice: '₹3,100.00', 
-    monthly: '₹155.00', 
-    yearly: '₹3,100.00', 
-    image: '/tvhome_nav/apple_tv_4k.png', 
+    model: 'Apple TV', 
+    title: 'AppleCare+ for Apple TV', 
+    description: 'Apple-certified coverage for Apple TV with technical support & hardware service.', 
+    sku: 'S9634HN/A', 
+    mrp: '₹2,900.00', 
+    discount: '18% OFF', 
+    salePrice: '₹2,378.00', 
+    monthly: '₹99.00', 
+    yearly: '₹2,378.00', 
+    image: '/uploads/upload_1789438370600_868.jpeg', 
     isActive: true 
   },
   { 
-    model: 'HomePod / HomePod mini', 
+    model: 'HomePod mini', 
+    title: 'AppleCare+ for HomePod mini', 
+    description: '2 Years Apple-certified coverage for HomePod mini with accidental damage protection.', 
+    sku: 'DE6C2HN/A', 
+    mrp: '₹11,600.00', 
+    discount: '18% OFF', 
+    salePrice: '₹9,512.00', 
+    monthly: '₹79.00', 
+    yearly: '₹9,512.00', 
+    image: '/uploads/upload_1789438361522_258.jpg', 
+    isActive: true 
+  },
+  { 
+    model: 'HomePod', 
     title: 'AppleCare+ for HomePod', 
-    description: '2 Years Apple-certified coverage for HomePod & HomePod mini with accidental damage protection.', 
-    sku: 'AC-HOMEPOD', 
-    mrp: '₹2,900.00', 
-    discount: '10% OFF', 
-    salePrice: '₹2,600.00', 
-    monthly: '₹130.00', 
-    yearly: '₹2,600.00', 
-    image: '/tvhome_nav/homepod.png', 
+    description: '2 Years Apple-certified coverage for HomePod with accidental damage protection.', 
+    sku: 'S6446HN/A', 
+    mrp: '₹3,900.00', 
+    discount: '18% OFF', 
+    salePrice: '₹3,198.00', 
+    monthly: '₹199.00', 
+    yearly: '₹3,198.00', 
+    image: '/uploads/upload_1789438355569_951.jpeg', 
     isActive: true 
   }
 ];
 
+const DEFAULT_TVHOME_PRODUCTS = [
+  {
+    "id": "6a437eb3345ade0885f68a5e",
+    "name": "Apple TV 4K",
+    "price": 25900,
+    "priceStr": "₹25,900",
+    "discountPercent": 0,
+    "discountPrice": 24087,
+    "displayImage": "/uploads/upload_1789706448846_774.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1789706448846_774.jpeg",
+    "images": [
+      "/uploads/upload_1789706448846_774.jpeg",
+      "/uploads/upload_1782910314028_345.jpeg",
+      "/uploads/upload_1790571194866_270.jpeg"
+    ],
+    "variants": [
+      {
+        "id": "6ab36ff007490226723c8499",
+        "color": "Black",
+        "storage": "64GB",
+        "price": 25900,
+        "discountPrice": 24087,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1782910314028_345.jpeg"
+        ],
+        "image": "/uploads/upload_1782910314028_345.jpeg"
+      },
+      {
+        "id": "6ab9f2bd5e19e7432244c456",
+        "color": "Black",
+        "storage": "128GB",
+        "price": 31900,
+        "discountPrice": 29667,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1790571194866_270.jpeg"
+        ],
+        "image": "/uploads/upload_1790571194866_270.jpeg"
+      }
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "value": "#1D1D1F",
+        "colorHex": "#1D1D1F"
+      }
+    ],
+    "rating": 4.9,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44ca05101e1328003fbb11",
+    "name": "HomePod mini",
+    "price": 15900,
+    "priceStr": "₹15,900",
+    "discountPercent": 0,
+    "discountPrice": 14787,
+    "displayImage": "/uploads/upload_1789706492230_348.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1789706492230_348.jpeg",
+    "images": [
+      "/uploads/upload_1789706492230_348.jpeg",
+      "/uploads/upload_1789401956840_786.jpeg",
+      "/uploads/upload_1789402347788_12.jpeg",
+      "/uploads/upload_1783689127970_178.jpeg",
+      "/uploads/upload_1783689114593_716.jpeg",
+      "/uploads/upload_1789402381418_88.jpeg"
+    ],
+    "variants": [
+      {
+        "id": "6ab36ff007490226723c849f",
+        "color": "Blue",
+        "storage": "",
+        "price": 15900,
+        "discountPrice": 14787,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1789401956840_786.jpeg"
+        ],
+        "image": "/uploads/upload_1789401956840_786.jpeg"
+      },
+      {
+        "id": "6ab36ff007490226723c84a0",
+        "color": "Midnight",
+        "storage": "",
+        "price": 15900,
+        "discountPrice": 14787,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1789402347788_12.jpeg"
+        ],
+        "image": "/uploads/upload_1789402347788_12.jpeg"
+      },
+      {
+        "id": "6ab36ff007490226723c84a1",
+        "color": "Yellow",
+        "storage": "",
+        "price": 15900,
+        "discountPrice": 14787,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1783689127970_178.jpeg"
+        ],
+        "image": "/uploads/upload_1783689127970_178.jpeg"
+      },
+      {
+        "id": "6ab36ff007490226723c84a2",
+        "color": "White",
+        "storage": "",
+        "price": 15900,
+        "discountPrice": 14787,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1783689114593_716.jpeg"
+        ],
+        "image": "/uploads/upload_1783689114593_716.jpeg"
+      },
+      {
+        "id": "6ab36ff007490226723c84a3",
+        "color": "Orange",
+        "storage": "",
+        "price": 15900,
+        "discountPrice": 14787,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1789402381418_88.jpeg"
+        ],
+        "image": "/uploads/upload_1789402381418_88.jpeg"
+      }
+    ],
+    "colors": [
+      { "name": "Blue", "value": "#2d5c88", "colorHex": "#2d5c88" },
+      { "name": "Midnight", "value": "#1D1D1F", "colorHex": "#1D1D1F" },
+      { "name": "Yellow", "value": "#f3c13a", "colorHex": "#f3c13a" },
+      { "name": "White", "value": "#FFFFFF", "colorHex": "#FFFFFF" },
+      { "name": "Orange", "value": "#df5635", "colorHex": "#df5635" }
+    ],
+    "rating": 4.7,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44ca05101e1328003fbb12",
+    "name": "HomePod",
+    "price": 44900,
+    "priceStr": "₹44,900",
+    "discountPercent": 0,
+    "discountPrice": 41757,
+    "displayImage": "/uploads/upload_1789706501921_398.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1789706501921_398.jpeg",
+    "images": [
+      "/uploads/upload_1789706501921_398.jpeg",
+      "/uploads/upload_1782909755146_256.png",
+      "/uploads/upload_1790082724061_534.png"
+    ],
+    "variants": [
+      {
+        "id": "6ab36ff007490226723c84a6",
+        "color": "Midnight",
+        "storage": "",
+        "price": 44900,
+        "discountPrice": 41757,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1782909755146_256.png"
+        ],
+        "image": "/uploads/upload_1782909755146_256.png"
+      },
+      {
+        "id": "6ab36ff007490226723c84a7",
+        "color": "White",
+        "storage": "",
+        "price": 44900,
+        "discountPrice": 41757,
+        "discountPercent": 7,
+        "images": [
+          "/uploads/upload_1790082724061_534.png"
+        ],
+        "image": "/uploads/upload_1790082724061_534.png"
+      }
+    ],
+    "colors": [
+      { "name": "Midnight", "value": "#1D1D1F", "colorHex": "#1D1D1F" },
+      { "name": "White", "value": "#FFFFFF", "colorHex": "#FFFFFF" }
+    ],
+    "rating": 4.6,
+    "isSoldOut": false
+  }
+];
+
+const getCachedTvHomeProducts = () => {
+  try {
+    const cached = sessionStorage.getItem('iincept_cached_tvhome_products');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_TVHOME_PRODUCTS;
+};
+
 const TVHOME_SUB_NAV_ITEMS = [
-  { name: 'Apple TV 4K', query: 'Apple TV', image: '/tvhome_nav/apple_tv_4k.png', scale: 'scale-100' },
-  { name: 'HomePod', query: 'HomePod', image: '/tvhome_nav/homepod.png', scale: 'scale-100' },
-  { name: 'HomePod mini', query: 'HomePod mini', image: '/tvhome_nav/homepod_mini.png', scale: 'scale-100' },
-  { name: 'AppleCare+', path: '/tv-home?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' },
-  { name: 'Compare', path: '/compare', image: '/tvhome_nav/tv_compare.png', scale: 'scale-100' }
+  { name: 'Apple TV 4K', query: 'Apple TV', path: '/tv-home?search=Apple TV', image: '/uploads/upload_1789367987713_381.jpg', scale: 'scale-100' },
+  { name: 'HomePod', query: 'HomePod', path: '/tv-home?search=HomePod', image: '/uploads/upload_1789398752543_116.jpeg', scale: 'scale-100' },
+  { name: 'HomePod mini', query: 'HomePod mini', path: '/tv-home?search=HomePod mini', image: '/uploads/upload_1789398762156_618.jpeg', scale: 'scale-100' },
+  { name: 'AppleCare +', query: 'New TV & Home Model', path: '/tv-home?tab=applecare', image: '/uploads/upload_1792413099015_731.png', scale: 'scale-100' }
 ];
 
 const resolveSubItemPath = (item) => {
@@ -58,6 +273,9 @@ const resolveSubItemPath = (item) => {
 
   if (nameLower.includes('care') || queryLower.includes('care') || pathLower.includes('care')) {
     return '/tv-home?tab=applecare';
+  }
+  if (nameLower.includes('shop tv') || nameLower === 'all' || nameLower === 'all tv') {
+    return '/tv-home';
   }
   if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
     return '/compare?category=tv-home';
@@ -79,9 +297,9 @@ const ensureAppleCareInSubItems = (items = []) => {
   let careItem = items.find(item => (item.name || item.label || '').toLowerCase().includes('care'));
   if (!careItem) {
     careItem = {
-      name: 'AppleCare+',
+      name: 'AppleCare +',
       path: '/tv-home?tab=applecare',
-      image: '/applecare_official_hero.png',
+      image: '/uploads/upload_1792413099015_731.png',
       scale: 'scale-100'
     };
   }
@@ -115,21 +333,28 @@ const getInitialSubItems = (categoryKey, defaultItems) => {
 const resolveIconImage = (img, label) => {
   if (img && typeof img === 'string' && img.trim()) {
     let clean = img.trim();
-    if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('data:') && !clean.startsWith('blob:') && !clean.startsWith('/')) {
-      clean = '/' + clean;
+    if (!clean.includes('tvhome_nav') && !clean.includes('applecare_official_hero') && clean !== 'null' && clean !== 'undefined') {
+      if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('data:') && !clean.startsWith('/')) {
+        clean = '/' + clean;
+      }
+      return clean;
     }
-    return clean;
   }
   const lblLower = (label || '').toLowerCase().trim();
-  if (lblLower.includes('care')) return '/applecare_official_hero.png';
+  if (lblLower.includes('care')) return '/uploads/upload_1792413099015_731.png';
+  if (lblLower.includes('mini')) return '/uploads/upload_1789398762156_618.jpeg';
+  if (lblLower.includes('homepod')) return '/uploads/upload_1789398752543_116.jpeg';
+  if (lblLower.includes('tv')) return '/uploads/upload_1789367987713_381.jpg';
+
   const matched = TVHOME_SUB_NAV_ITEMS.find(m => m.name.toLowerCase().trim() === lblLower);
-  return matched?.image || '/tvhome_nav/apple_tv_4k.png';
+  return matched?.image || '/uploads/upload_1789367987713_381.jpg';
 };
 
 const getModelImageByName = (modelName = '') => {
   const m = modelName.toLowerCase();
-  if (m.includes('homepod')) return '/tvhome_nav/homepod.png';
-  return '/tvhome_nav/apple_tv_4k.png';
+  if (m.includes('mini')) return '/uploads/upload_1789438361522_258.jpg';
+  if (m.includes('homepod')) return '/uploads/upload_1789438355569_951.jpeg';
+  return '/uploads/upload_1789438370600_868.jpeg';
 };
 
 export default function TvHome() {
@@ -409,7 +634,7 @@ export default function TvHome() {
   };
 
   const getProductImage = (prod) => {
-    if (!prod) return '/tv_nav/apple_tv_4k.png';
+    if (!prod) return '/uploads/upload_1789706448846_774.jpeg';
 
     const pId = prod._id || prod.id;
     const selectedColorName = selectedColors[pId];
@@ -454,7 +679,7 @@ export default function TvHome() {
     if (prod.image && !prod.image.includes('tv_category')) return prod.image;
     const extracted = prod.image || (prod.images && prod.images[0]);
     if (extracted && !extracted.includes('mock-cloud')) return extracted;
-    return prod.image || '/tv_nav/apple_tv_4k.png';
+    return prod.image || '/uploads/upload_1789706448846_774.jpeg';
   };
 
   const getSelectedVariantPricing = (prod) => {
@@ -503,47 +728,78 @@ export default function TvHome() {
   };
 
 
-  const dbTvHome = products.filter(p => {
-    const catName = p.category?.name || p.category?.toString() || '';
-    const catSlug = p.category?.slug || '';
-    return catName.toLowerCase() === 'tv & home' || 
-           catSlug.toLowerCase() === 'tv-home' || 
-           catName.toLowerCase().includes('tv') || 
-           catName.toLowerCase().includes('home');
-  }).map(p => {
-    const firstImg = p.image || (p.images && p.images[0]);
-    const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/tv_nav/apple_tv_4k.png'));
-    return {
-      id: p._id || p.id,
-      name: p.title || p.name,
-      price: Number(p.price) || 0,
-      priceStr: `₹${(Number(p.price) || 0).toLocaleString('en-IN')}`,
-      discountPercent: p.discountPercent,
-      discountPrice: p.discountPrice,
-      displayImage: primaryImg,
-      colorImages: p.colorImages || {},
-      image: primaryImg,
-      images: p.images || [],
-      variants: p.variants || [],
-      colors: Array.isArray(p.colors) ? p.colors.map(c => {
-        const name = typeof c === 'string' ? c : (c.name || '');
-        const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
-        const resolved = resolveColorValue(val);
-        return { name, value: resolved, colorHex: resolved };
-      }) : [],
-      rating: p.rating || 5.0,
-      isSoldOut: p.stock <= 0
-    };
-  });
+  const dbTvHome = useMemo(() => {
+    return products.filter(p => {
+      const catName = p.category?.name || p.category?.toString() || '';
+      const catSlug = p.category?.slug || '';
+      const titleLower = (p.title || p.name || '').toLowerCase();
 
-  const combinedProducts = dbTvHome;
+      return catName.toLowerCase() === 'tv & home' || 
+             catSlug.toLowerCase() === 'tv-home' || 
+             catName.toLowerCase().includes('tv') || 
+             catName.toLowerCase().includes('home') ||
+             titleLower.includes('apple tv') ||
+             titleLower.includes('homepod');
+    }).map(p => {
+      const firstImg = p.image || (p.images && p.images[0]);
+      const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/uploads/upload_1789706448846_774.jpeg'));
+      return {
+        id: p._id || p.id,
+        name: p.title || p.name,
+        price: Number(p.price) || 0,
+        priceStr: `₹${(Number(p.price) || 0).toLocaleString('en-IN')}`,
+        discountPercent: p.discountPercent || 0,
+        discountPrice: p.discountPrice || 0,
+        displayImage: primaryImg,
+        colorImages: p.colorImages || {},
+        image: primaryImg,
+        images: (p.images && p.images.length > 0) ? p.images : [primaryImg],
+        variants: p.variants || [],
+        colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors.map(c => {
+          const name = typeof c === 'string' ? c : (c.name || '');
+          const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
+          const resolved = resolveColorValue(val);
+          return { name, value: resolved, colorHex: resolved };
+        }) : [{ name: 'Standard', value: '#1D1D1F', colorHex: '#1D1D1F' }],
+        rating: p.rating || 5.0,
+        isSoldOut: p.stock <= 0
+      };
+    });
+  }, [products]);
 
-  const sortedProducts = [...combinedProducts].sort((a, b) => {
-    if (sortBy === 'price-asc') return a.price - b.price;
-    if (sortBy === 'price-desc') return b.price - a.price;
-    if (sortBy === 'rating') return b.rating - a.rating;
-    return 0;
-  });
+  const combinedProducts = useMemo(() => {
+    if (dbTvHome.length > 0) return dbTvHome;
+    return getCachedTvHomeProducts();
+  }, [dbTvHome]);
+
+  useEffect(() => {
+    if (dbTvHome.length > 0) {
+      try {
+        sessionStorage.setItem('iincept_cached_tvhome_products', JSON.stringify(dbTvHome));
+      } catch (e) {}
+    }
+  }, [dbTvHome]);
+
+  const getTvHomeSequenceRank = (productName) => {
+    const name = (productName || '').toLowerCase();
+    if (name.includes('apple tv') || name.includes('tv 4k') || name.includes('tv')) return 0;
+    if (name.includes('homepod mini') || name.includes('mini')) return 2;
+    if (name.includes('homepod')) return 1;
+    return 3;
+  };
+
+  const sortedProducts = useMemo(() => {
+    return [...combinedProducts].sort((a, b) => {
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'rating') return b.rating - a.rating;
+
+      const rA = getTvHomeSequenceRank(a.name || a.title);
+      const rB = getTvHomeSequenceRank(b.name || b.title);
+      if (rA !== rB) return rA - rB;
+      return a.price - b.price;
+    });
+  }, [combinedProducts, sortBy]);
 
   const filteredProducts = sortedProducts.filter((prod) => {
     const search = searchParams.get('search') || '';
@@ -557,7 +813,7 @@ export default function TvHome() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none relative">
       
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3">
@@ -571,11 +827,18 @@ export default function TvHome() {
             {subItems.map((item, idx) => {
               const currentTab = searchParams.get('tab') || '';
               const currentSearch = searchParams.get('search') || '';
-              const isAppleCareItem = (item.name || item.label || '').toLowerCase().includes('care');
+              const itemLowerName = (item.name || item.label || '').toLowerCase();
+              const isAppleCareItem = itemLowerName.includes('care');
               const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
-              const isActive = isAppleCareActive
-                ? isAppleCareItem
-                : (currentSearch && currentSearch.toLowerCase() === (item.query || '').toLowerCase());
+
+              let isActive = false;
+              if (isAppleCareActive) {
+                isActive = isAppleCareItem;
+              } else if (currentSearch) {
+                const normSearch = currentSearch.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const normQuery = (item.query || item.name || item.label || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                isActive = normSearch === normQuery || normSearch.includes(normQuery) || normQuery.includes(normSearch);
+              }
 
               return (
                 <Link
@@ -589,12 +852,18 @@ export default function TvHome() {
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
+                      loading="eager"
+                      decoding="async"
                       onError={(e) => {
                         const lower = (item.name || '').toLowerCase();
                         if (lower.includes('care')) {
-                          e.currentTarget.src = '/applecare_official_hero.png';
+                          e.currentTarget.src = '/uploads/upload_1792413099015_731.png';
+                        } else if (lower.includes('mini')) {
+                          e.currentTarget.src = '/uploads/upload_1789398762156_618.jpeg';
+                        } else if (lower.includes('homepod')) {
+                          e.currentTarget.src = '/uploads/upload_1789398752543_116.jpeg';
                         } else {
-                          e.currentTarget.src = '/tv_home_nav/apple_tv_4k.png';
+                          e.currentTarget.src = '/uploads/upload_1789367987713_381.jpg';
                         }
                       }}
                       className={`max-h-full max-w-full object-contain transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1 ${
@@ -621,7 +890,7 @@ export default function TvHome() {
 
         if (isAppleCareActive) {
           return (
-            <div className="max-w-7xl mx-auto my-6 animate-in fade-in duration-300">
+            <div className="max-w-7xl mx-auto my-6">
               <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
                 {/* Header section */}
                 <div className="border-b border-zinc-100 pb-4 mb-4 text-center">

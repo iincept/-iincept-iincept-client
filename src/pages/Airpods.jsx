@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ShieldCheck, Wrench, Headphones, Check } from 'lucide-react';
@@ -13,139 +13,297 @@ import CleanProductImage from '../components/CleanProductImage';
 import { resolveColorValue } from '../utils/colorResolver';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 
-// Default AirPods AppleCare rows fallback
+// Default AirPods AppleCare rows fallback matching live DB
 const DEFAULT_AIRPODS_APPLECARE_ROWS = [
   { 
-    model: 'AirPods (4th Gen) / Beats', 
-    title: 'AppleCare+ for AirPods / Beats', 
-    description: 'Apple-certified coverage for AirPods & Beats with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for AirPods & Beats with accidental damage protection.',
-    description2yr: '2 Years Apple-certified coverage for AirPods & Beats with accidental damage protection.',
-    sku: 'AC-AIRPODS-STD', 
-    sku1yr: 'AC-AIRPODS-STD-1YR',
-    sku2yr: 'AC-AIRPODS-STD-2YR',
-    mrp: '₹3,490.00', 
-    mrp1yr: '₹2,490.00',
-    mrp2yr: '₹3,490.00',
-    discount: '17% OFF', 
-    discount1yr: '10% OFF',
-    discount2yr: '17% OFF',
-    salePrice: '₹2,900.00', 
-    salePrice1yr: '₹2,241.00',
-    salePrice2yr: '₹2,900.00',
+    model: 'AirPods 5', 
+    title: 'AppleCare+ for AirPods 5', 
+    description: '2 Years Apple-certified coverage for AirPods 5', 
+    description1yr: '1 Year Apple-certified coverage for AirPods 5',
+    description2yr: '2 Years Apple-certified coverage for AirPods 5',
+    sku: 'S9066HN/A', 
+    sku1yr: 'DE6D2HN/A',
+    sku2yr: 'S9066HN/A',
+    mrp: '₹3,390.00', 
+    mrp1yr: '₹1,799.00',
+    mrp2yr: '₹3,390.00',
+    discount: '18% OFF', 
+    discount1yr: '18% OFF',
+    discount2yr: '18% OFF',
+    salePrice: '₹2,780.00', 
+    salePrice1yr: '₹1,475.00',
+    salePrice2yr: '₹2,780.00',
     monthly: '₹149.00', 
-    yearly: '₹2,900.00', 
-    image: '/airpods_category.jpg', 
+    yearly: '₹2,780.00', 
+    image: '/uploads/upload_1789366058920_902.jpeg', 
     isActive: true 
   },
   { 
-    model: 'AirPods Pro 2', 
-    title: 'AppleCare+ for AirPods Pro 2', 
-    description: 'Apple-certified coverage for AirPods Pro 2 with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for AirPods Pro 2 with accidental damage protection.',
-    description2yr: '2 Years Apple-certified coverage for AirPods Pro 2 with accidental damage protection.',
-    sku: 'AC-AIRPODS-PRO', 
-    sku1yr: 'AC-AIRPODS-PRO-1YR',
-    sku2yr: 'AC-AIRPODS-PRO-2YR',
-    mrp: '₹5,900.00', 
-    mrp1yr: '₹3,900.00',
-    mrp2yr: '₹5,900.00',
-    discount: '16% OFF', 
-    discount1yr: '10% OFF',
-    discount2yr: '16% OFF',
-    salePrice: '₹4,900.00', 
-    salePrice1yr: '₹3,510.00',
-    salePrice2yr: '₹4,900.00',
+    model: 'AirPods Pro 3', 
+    title: 'AppleCare+ for AirPods Pro 3', 
+    description: '2 Years Apple-certified coverage for AirPods Pro 3', 
+    description1yr: '1 Year Apple-certified coverage for AirPods Pro 3',
+    description2yr: '2 Years Apple-certified coverage for AirPods Pro 3',
+    sku: 'SYLW2HN/A', 
+    sku1yr: 'DG7Y2HN/A',
+    sku2yr: 'SYLW2HN/A',
+    mrp: '₹4,890.00', 
+    mrp1yr: '₹2,499.00',
+    mrp2yr: '₹4,890.00',
+    discount: '18% OFF', 
+    discount1yr: '18% OFF',
+    discount2yr: '18% OFF',
+    salePrice: '₹4,010.00', 
+    salePrice1yr: '₹2,049.00',
+    salePrice2yr: '₹4,010.00',
     monthly: '₹249.00', 
-    yearly: '₹4,900.00', 
-    image: '/airpods_category.jpg', 
+    yearly: '₹4,010.00', 
+    image: '/uploads/upload_1789386462387_751.jpeg', 
     isActive: true 
   },
   { 
-    model: 'AirPods Max', 
-    title: 'AppleCare+ for AirPods Max', 
-    description: 'Apple-certified coverage for AirPods Max with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for AirPods Max with accidental damage protection.',
-    description2yr: '2 Years Apple-certified coverage for AirPods Max with accidental damage protection.',
-    sku: 'AC-AIRPODS-MAX', 
-    sku1yr: 'AC-AIRPODS-MAX-1YR',
-    sku2yr: 'AC-AIRPODS-MAX-2YR',
-    mrp: '₹7,900.00', 
-    mrp1yr: '₹4,900.00',
-    mrp2yr: '₹7,900.00',
-    discount: '12% OFF', 
-    discount1yr: '10% OFF',
-    discount2yr: '12% OFF',
-    salePrice: '₹6,900.00', 
-    salePrice1yr: '₹4,410.00',
-    salePrice2yr: '₹6,900.00',
+    model: 'AirPods Max 2', 
+    title: 'AppleCare+ for AirPods Max 2', 
+    description: '2 Years Apple-certified coverage for AirPods Max 2', 
+    description1yr: '1 Year Apple-certified coverage for AirPods Max 2',
+    description2yr: '2 Years Apple-certified coverage for AirPods Max 2',
+    sku: 'S9086HN/A', 
+    sku1yr: 'S9086HN/A-1YR',
+    sku2yr: 'S9086HN/A',
+    mrp: '₹6,890.00', 
+    mrp1yr: '₹4,499.00',
+    mrp2yr: '₹6,890.00',
+    discount: '18% OFF', 
+    discount1yr: '18% OFF',
+    discount2yr: '18% OFF',
+    salePrice: '₹5,650.00', 
+    salePrice1yr: '₹3,689.00',
+    salePrice2yr: '₹5,650.00',
     monthly: '₹349.00', 
-    yearly: '₹6,900.00', 
-    image: '/airpods_category.jpg', 
+    yearly: '₹5,650.00', 
+    image: '/uploads/upload_1789399972058_579.jpeg', 
     isActive: true 
   }
 ];
 
 const DEFAULT_AIRPODS_PRODUCTS = [
   {
-    id: 'default-airpods-pro-2',
-    name: 'AirPods Pro 2',
-    price: 24900,
-    priceStr: '₹24,900',
-    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-pro-2-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90',
-    images: ['https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-pro-2-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90'],
-    colors: [{ name: 'White', value: '#ffffff' }],
-    rating: 5.0,
-    isSoldOut: false
-  },
-  {
-    id: 'default-airpods-4',
-    name: 'AirPods 4',
-    price: 12900,
-    priceStr: '₹12,900',
-    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90',
-    images: ['https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90'],
-    colors: [{ name: 'White', value: '#ffffff' }],
-    rating: 4.9,
-    isSoldOut: false
-  },
-  {
-    id: 'default-airpods-4-anc',
-    name: 'AirPods 4 with ANC',
-    price: 17900,
-    priceStr: '₹17,900',
-    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-anc-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90',
-    images: ['https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-anc-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90'],
-    colors: [{ name: 'White', value: '#ffffff' }],
-    rating: 4.9,
-    isSoldOut: false
-  },
-  {
-    id: 'default-airpods-max',
-    name: 'AirPods Max',
-    price: 59900,
-    priceStr: '₹59,900',
-    image: 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-max-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90',
-    images: ['https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-max-hero-select-202409?wid=800&hei=1000&fmt=webp&qlt=90'],
-    colors: [
-      { name: 'Midnight', value: '#1e293b' },
-      { name: 'Starlight', value: '#f5f5f4' },
-      { name: 'Blue', value: '#1d3557' },
-      { name: 'Purple', value: '#a855f7' },
-      { name: 'Orange', value: '#e07a5f' }
+    "id": "6aa7d0f5a6548b642226e185",
+    "name": "AirPods 5",
+    "price": 14900,
+    "priceStr": "₹14,900",
+    "discountPercent": 0,
+    "discountPrice": 13708,
+    "displayImage": "/uploads/upload_1789706332153_965.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1789706332153_965.jpeg",
+    "images": [
+      "/uploads/upload_1789706332153_965.jpeg",
+      "/uploads/upload_1789382897409_629.jpeg"
     ],
-    rating: 5.0,
-    isSoldOut: false
+    "variants": [
+      {
+        "price": 14900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a4502c64a9f2d3d8e711117",
+    "name": "AirPods 4 with Active Noise Cancellation",
+    "price": 17900,
+    "priceStr": "₹17,900",
+    "discountPercent": 0,
+    "discountPrice": 16468,
+    "displayImage": "/uploads/upload_1786949935354_989.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1786949935354_989.jpeg",
+    "images": [
+      "/uploads/upload_1786949935354_989.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 17900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a4501194a9f2d3d8e711113",
+    "name": "AirPods 4",
+    "price": 12900,
+    "priceStr": "₹12,900",
+    "discountPercent": 0,
+    "discountPrice": 11868,
+    "displayImage": "/uploads/upload_1782907117990_780.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1782907117990_780.jpeg",
+    "images": [
+      "/uploads/upload_1782907117990_780.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 12900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6aa7d157a6548b642226fedc",
+    "name": "AirPods Pro 3",
+    "price": 27900,
+    "priceStr": "₹27,900",
+    "discountPercent": 0,
+    "discountPrice": 25668,
+    "displayImage": "/uploads/upload_1789706365038_628.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1789706365038_628.jpeg",
+    "images": [
+      "/uploads/upload_1789706365038_628.jpeg",
+      "/uploads/upload_1789382984505_944.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 27900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a82b1fba360c3b1628d23d6",
+    "name": "AirPods Pro 2",
+    "price": 24900,
+    "priceStr": "₹24,900",
+    "discountPercent": 0,
+    "discountPrice": 22908,
+    "displayImage": "/uploads/upload_1790223705291_936.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790223705291_936.jpeg",
+    "images": [
+      "/uploads/upload_1790223705291_936.jpeg",
+      "/uploads/upload_1790223694695_566.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 24900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44ca05101e1328003fbb10",
+    "name": "AirPods Max 2",
+    "price": 74900,
+    "priceStr": "₹74,900",
+    "discountPercent": 0,
+    "discountPrice": 68908,
+    "displayImage": "/uploads/upload_1789706394737_212.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1789706394737_212.jpeg",
+    "images": [
+      "/uploads/upload_1789706394737_212.jpeg",
+      "/uploads/upload_1786950352579_808.jpeg",
+      "/uploads/upload_1786950428491_7.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 74900
+      },
+      {
+        "price": 74900
+      },
+      {
+        "price": 74900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Blue",
+        "value": "#0000FF",
+        "colorHex": "#0000FF"
+      },
+      {
+        "name": "Purple",
+        "value": "#800080",
+        "colorHex": "#800080"
+      },
+      {
+        "name": "Midnight",
+        "value": "#191F26",
+        "colorHex": "#191F26"
+      },
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "colorHex": "#F5F5F4"
+      },
+      {
+        "name": "Orange",
+        "value": "#FFA500",
+        "colorHex": "#FFA500"
+      }
+    ],
+    "rating": 4.7,
+    "isSoldOut": false
   }
 ];
 
+const getCachedAirpodsProducts = () => {
+  try {
+    const cached = sessionStorage.getItem('iincept_cached_airpods_products');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_AIRPODS_PRODUCTS;
+};
+
 const AIRPODS_SUB_NAV_ITEMS = [
-  { name: 'AirPods', isNew: true, query: 'AirPods', image: 'https://www.apple.com/v/airpods/shared/icon_airpods_4__b83p14jxgzkm_large.svg', scale: 'scale-100' },
-  { name: 'AirPods Pro', query: 'Pro 2', image: 'https://www.apple.com/v/airpods/shared/icon_airpods_pro__c4g86280j6eu_large.svg', scale: 'scale-100' },
-  { name: 'AirPods Max', query: 'AirPods Max', image: 'https://www.apple.com/v/airpods/shared/icon_airpods_max__c1i39v5a1pqu_large.svg', scale: 'scale-100' },
-  { name: 'Compare', path: '/compare', image: 'https://www.apple.com/v/airpods/shared/icon_compare__e3a7h9h7ywa6_large.svg', scale: 'scale-100' },
-  { name: 'Accessories', path: '/accessories', image: 'https://www.apple.com/v/airpods/shared/icon_accessories__f29e160a0z6q_large.svg', scale: 'scale-100' },
-  { name: 'AppleCare+', path: '/airpods?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' }
+  { name: 'AirPods 5', isNew: true, query: 'AirPods 5', path: '/airpods?search=AirPods 5', image: '/uploads/upload_1789029864188_604.jpeg', scale: 'scale-100' },
+  { name: 'AirPods Pro 3', query: 'AirPods Pro 3', path: '/airpods?search=AirPods Pro 3', image: '/uploads/upload_1789307333193_515.jpeg', scale: 'scale-100' },
+  { name: 'AirPods Max 2', query: 'AirPods Max 2', path: '/airpods?search=AirPods Max 2', image: '/uploads/upload_1789382465959_947.jpeg', scale: 'scale-100' },
+  { name: 'AppleCare +', query: 'New AirPods Model', path: '/airpods?tab=applecare', image: '/uploads/upload_1792413089277_352.png', scale: 'scale-100' }
 ];
 
 const resolveSubItemPath = (item) => {
@@ -179,9 +337,9 @@ const ensureAppleCareInSubItems = (items = []) => {
   let careItem = items.find(item => (item.name || item.label || '').toLowerCase().includes('care'));
   if (!careItem) {
     careItem = {
-      name: 'AppleCare+',
+      name: 'AppleCare +',
       path: '/airpods?tab=applecare',
-      image: '/applecare_official_hero.png',
+      image: '/uploads/upload_1792413089277_352.png',
       scale: 'scale-100'
     };
   }
@@ -224,14 +382,13 @@ const resolveIconImage = (img, label) => {
   }
 
   const lblLower = (label || '').toLowerCase().trim();
-  if (lblLower.includes('care') || lblLower.includes('applecare')) return '/applecare_official_hero.png';
-  if (lblLower.includes('compare')) return 'https://www.apple.com/v/airpods/shared/icon_compare__e3a7h9h7ywa6_large.svg';
-  if (lblLower.includes('accessory') || lblLower.includes('accessories')) return 'https://www.apple.com/v/airpods/shared/icon_accessories__f29e160a0z6q_large.svg';
-  if (lblLower.includes('max')) return 'https://www.apple.com/v/airpods/shared/icon_airpods_max__c1i39v5a1pqu_large.svg';
-  if (lblLower.includes('pro')) return 'https://www.apple.com/v/airpods/shared/icon_airpods_pro__c4g86280j6eu_large.svg';
-  if (lblLower.includes('airpods') || lblLower.includes('4') || lblLower.includes('5')) return 'https://www.apple.com/v/airpods/shared/icon_airpods_4__b83p14jxgzkm_large.svg';
+  if (lblLower.includes('care')) return '/uploads/upload_1792413089277_352.png';
+  if (lblLower.includes('max')) return '/uploads/upload_1789382465959_947.jpeg';
+  if (lblLower.includes('pro')) return '/uploads/upload_1789307333193_515.jpeg';
+  if (lblLower.includes('5') || lblLower.includes('4') || lblLower.includes('airpods')) return '/uploads/upload_1789029864188_604.jpeg';
 
-  return 'https://www.apple.com/v/airpods/shared/icon_airpods_4__b83p14jxgzkm_large.svg';
+  const matched = AIRPODS_SUB_NAV_ITEMS.find(m => (m.name || '').toLowerCase().trim() === lblLower);
+  return matched?.image || '/uploads/upload_1789029864188_604.jpeg';
 };
 
 const getModelImageByName = (modelName = '') => {
@@ -616,73 +773,85 @@ export default function Airpods() {
   };
 
 
-  const dbAirpods = products.filter(p => {
-    const catName = p.category?.name || p.category?.toString() || '';
-    const catSlug = p.category?.slug || '';
-    const titleLower = (p.title || p.name || '').toLowerCase();
+  const dbAirpods = useMemo(() => {
+    return products.filter(p => {
+      const catName = p.category?.name || p.category?.toString() || '';
+      const catSlug = p.category?.slug || '';
+      const titleLower = (p.title || p.name || '').toLowerCase();
 
-    if (titleLower.includes('earpods') || catName.toLowerCase() === 'accessories' || catSlug.toLowerCase() === 'accessories') {
-      return false;
-    }
-
-    return catName.toLowerCase() === 'airpods' || 
-           catName.toLowerCase() === 'premium audio' || 
-           catSlug.toLowerCase() === 'airpods' || 
-           catSlug.toLowerCase() === 'premium-audio' || 
-           catName.toLowerCase().includes('airpod');
-  }).map(p => {
-    const firstImg = p.image || (p.images && p.images[0]);
-    const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/airpods_pro_3.jpg'));
-    return {
-      id: p._id || p.id,
-      name: p.title || p.name,
-      price: Number(p.price) || 0,
-      priceStr: `₹${(Number(p.price) || 0).toLocaleString('en-IN')}`,
-      discountPercent: p.discountPercent,
-      discountPrice: p.discountPrice,
-      displayImage: primaryImg,
-      colorImages: p.colorImages || {},
-      image: primaryImg,
-      images: p.images || [],
-      variants: p.variants || [],
-      colors: Array.isArray(p.colors) ? p.colors.map(c => {
-        const name = typeof c === 'string' ? c : (c.name || '');
-        const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
-        const resolved = resolveColorValue(val);
-        return { name, value: resolved, colorHex: resolved };
-      }) : [],
-      rating: p.rating || 5.0,
-      isSoldOut: p.stock <= 0
-    };
-  });
-
-  const combinedProducts = (() => {
-    let list = dbAirpods.length > 0 ? [...dbAirpods] : [];
-    DEFAULT_AIRPODS_PRODUCTS.forEach(defProd => {
-      const cleanDef = defProd.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const idx = list.findIndex(p => {
-        const cleanP = (p.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        return cleanP === cleanDef || cleanP.includes(cleanDef) || cleanDef.includes(cleanP);
-      });
-      if (idx === -1) {
-        list.push(defProd);
-      } else {
-        list[idx] = {
-          ...defProd,
-          ...list[idx],
-          image: (list[idx].image && !list[idx].image.includes('airpods_pro_3')) ? list[idx].image : defProd.image
-        };
+      if (titleLower.includes('earpods') || titleLower.includes('ear tips') || catName.toLowerCase() === 'accessories' || catSlug.toLowerCase() === 'accessories') {
+        return false;
       }
-    });
-    return list;
-  })();
 
-  const sortedProducts = [...combinedProducts].sort((a, b) => {
-    if (sortBy === 'price-asc') return a.price - b.price;
-    if (sortBy === 'price-desc') return b.price - a.price;
-    if (sortBy === 'rating') return b.rating - a.rating;
-    return 0;
-  });
+      return catName.toLowerCase() === 'airpods' || 
+             catName.toLowerCase() === 'premium audio' || 
+             catSlug.toLowerCase() === 'airpods' || 
+             catSlug.toLowerCase() === 'premium-audio' || 
+             catName.toLowerCase().includes('airpod') ||
+             titleLower.startsWith('airpods');
+    }).map(p => {
+      const firstImg = p.image || (p.images && p.images[0]);
+      const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/uploads/upload_1789706332153_965.jpeg'));
+      return {
+        id: p._id || p.id,
+        name: p.title || p.name,
+        price: Number(p.price) || 0,
+        priceStr: `₹${(Number(p.price) || 0).toLocaleString('en-IN')}`,
+        discountPercent: p.discountPercent || 0,
+        discountPrice: p.discountPrice || 0,
+        displayImage: primaryImg,
+        colorImages: p.colorImages || {},
+        image: primaryImg,
+        images: (p.images && p.images.length > 0) ? p.images : [primaryImg],
+        variants: p.variants || [],
+        colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors.map(c => {
+          const name = typeof c === 'string' ? c : (c.name || '');
+          const val = typeof c === 'string' ? c : (c.colorHex || c.value || '#000');
+          const resolved = resolveColorValue(val);
+          return { name, value: resolved, colorHex: resolved };
+        }) : [{ name: 'White', value: '#FFFFFF', colorHex: '#FFFFFF' }],
+        rating: p.rating || 5.0,
+        isSoldOut: p.stock <= 0
+      };
+    });
+  }, [products]);
+
+  const combinedProducts = useMemo(() => {
+    if (dbAirpods.length > 0) return dbAirpods;
+    return getCachedAirpodsProducts();
+  }, [dbAirpods]);
+
+  useEffect(() => {
+    if (dbAirpods.length > 0) {
+      try {
+        sessionStorage.setItem('iincept_cached_airpods_products', JSON.stringify(dbAirpods));
+      } catch (e) {}
+    }
+  }, [dbAirpods]);
+
+  const getAirpodsSequenceRank = (productName) => {
+    const name = (productName || '').toLowerCase();
+    if (name.includes('5')) return 0;
+    if (name.includes('active noise') || name.includes('anc')) return 1;
+    if (name.includes('airpods 4')) return 2;
+    if (name.includes('pro 3')) return 3;
+    if (name.includes('pro 2') || name.includes('pro')) return 4;
+    if (name.includes('max')) return 5;
+    return 6;
+  };
+
+  const sortedProducts = useMemo(() => {
+    return [...combinedProducts].sort((a, b) => {
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'rating') return b.rating - a.rating;
+
+      const rA = getAirpodsSequenceRank(a.name || a.title);
+      const rB = getAirpodsSequenceRank(b.name || b.title);
+      if (rA !== rB) return rA - rB;
+      return a.price - b.price;
+    });
+  }, [combinedProducts, sortBy]);
 
   const filteredProducts = sortedProducts.filter((prod) => {
     const search = searchParams.get('search') || '';
@@ -696,7 +865,7 @@ export default function Airpods() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none relative">
       
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3">
@@ -735,12 +904,14 @@ export default function Airpods() {
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
+                      loading="eager"
+                      decoding="async"
                       onError={(e) => {
                         const lower = (item.name || '').toLowerCase();
                         if (lower.includes('care')) {
-                          e.currentTarget.src = '/applecare_official_hero.png';
+                          e.currentTarget.src = '/uploads/upload_1792413089277_352.png';
                         } else {
-                          e.currentTarget.src = '/airpods_category_uploaded.png';
+                          e.currentTarget.src = '/uploads/upload_1789029864188_604.jpeg';
                         }
                       }}
                       className={`max-h-full max-w-full object-contain transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1 ${
@@ -751,7 +922,7 @@ export default function Airpods() {
                   </div>
                   <span className={`text-xs tracking-tight transition-colors duration-200 flex flex-col items-center gap-0.5 ${isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'}`}>
                     <span>{item.name}</span>
-                    {(item.isNew || item.name.toLowerCase() === 'airpods') && (
+                    {(item.isNew || item.name.toLowerCase().includes('5')) && (
                       <span className="text-[10px] font-normal text-[#f56300] leading-none mt-0.5">New</span>
                     )}
                   </span>
@@ -770,7 +941,7 @@ export default function Airpods() {
 
         if (isAppleCareActive) {
           return (
-            <div className="max-w-7xl mx-auto my-6 animate-in fade-in duration-300">
+            <div className="max-w-7xl mx-auto my-6">
               <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
                 {/* Header section with Global Duration Selector */}
                 <div className="border-b border-zinc-100 pb-4 mb-4 text-center">

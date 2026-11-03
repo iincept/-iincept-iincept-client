@@ -13,164 +13,528 @@ import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
 import { resolveColorValue } from '../utils/colorResolver';
 
-// Fallback iPhone products in case DB returns 0 items
+// Fallback iPhone products matching MongoDB
 const DEFAULT_IPHONE_PRODUCTS = [
   {
-    id: 'default-iphone-18-pro',
-    name: 'iPhone 18 Pro',
-    price: 164900,
-    priceStr: '₹1,64,900',
-    image: '/iphone_nav/dropdown_iphone_18_pro.jpg',
-    images: [
-      '/iphone_nav/dropdown_iphone_18_pro.jpg',
-      '/iphone17p_white.jpg',
-      '/iphone_nav/iphone_16_pro.png'
+    "id": "6aa25bb453b793bd9d5009ac",
+    "name": "iPhone Duo",
+    "price": 299900,
+    "priceStr": "₹2,99,900",
+    "discountPercent": 0,
+    "discountPrice": 0,
+    "displayImage": "/uploads/upload_1789648863590_190.webp",
+    "image": "/uploads/upload_1789648863590_190.webp",
+    "images": [
+      "/uploads/upload_1789024887023_683.webp",
+      "/uploads/upload_1789024887024_418.webp",
+      "/uploads/upload_1789024887025_983.webp"
     ],
-    colors: [
+    "variants": [
       {
-        name: 'Burgundy',
-        value: '#4a1525',
-        image: '/iphone_nav/dropdown_iphone_18_pro.jpg'
+        "price": 299900
       },
       {
-        name: 'Glacier',
-        value: '#e4effb',
-        image: '/iphone_nav/dropdown_iphone_18_pro.jpg'
+        "price": 299900
       },
       {
-        name: 'Silver',
-        value: '#e5e6e8',
-        image: '/iphone17p_white.jpg'
-      },
-      {
-        name: 'Sky Blue',
-        value: '#e2effc',
-        image: '/iphone_nav/dropdown_iphone_18_pro.jpg'
-      },
-      {
-        name: 'White Titanium',
-        value: '#f4f4f6',
-        image: '/iphone17p_white.jpg'
-      },
-      {
-        name: 'Black Titanium',
-        value: '#323335',
-        image: '/iphone_nav/iphone_16_pro.png'
+        "price": 324900
       }
     ],
-    storage: ['256GB', '512GB', '1TB', '2TB'],
-    variants: [
-      { storage: '256GB', price: 164900 },
-      { storage: '512GB', price: 189000 },
-      { storage: '1TB', price: 239900 },
-      { storage: '2TB', price: 314900 }
-    ],
-    rating: 5.0,
-    isSoldOut: false
-  },
-  {
-    id: 'default-iphone-duo',
-    name: 'iPhone Duo',
-    price: 299900,
-    priceStr: '₹2,99,900',
-    image: '/iphone_nav/dropdown_iphone_duo.png',
-    images: [
-      '/iphone_nav/dropdown_iphone_duo.png'
-    ],
-    colors: [
+    "colors": [
       {
-        name: 'Star White',
-        value: '#fafafa',
-        image: '/iphone_nav/dropdown_iphone_duo.png'
+        "name": "Star White",
+        "value": "#FAFAFA",
+        "colorHex": "#FAFAFA",
+        "image": null
       },
       {
-        name: 'Night Sky',
-        value: '#353e4a',
-        image: '/iphone_nav/dropdown_iphone_duo.png'
+        "name": "Night Sky",
+        "value": "#353E4A",
+        "colorHex": "#353E4A",
+        "image": null
       }
     ],
-    rating: 5.0,
-    isSoldOut: false
+    "rating": 5,
+    "isSoldOut": false
   },
   {
-    id: 'default-iphone-17-pro',
-    name: 'iPhone 17 Pro',
-    price: 134900,
-    priceStr: '₹1,34,900',
-    image: '/iphone_nav/iphone_17_pro.png',
-    images: ['/iphone_nav/iphone_17_pro.png', '/iphone17p_white.jpg'],
-    colors: [
-      { name: 'Cosmic Orange', value: '#e07a5f' },
-      { name: 'White Titanium', value: '#f4f4f6' },
-      { name: 'Black Titanium', value: '#323335' }
+    "id": "6aa257dd53b793bd9d4fc799",
+    "name": "iPhone 18 Pro Max",
+    "price": 179900,
+    "priceStr": "₹1,79,900",
+    "discountPercent": 0,
+    "discountPrice": 0,
+    "displayImage": "/uploads/upload_1789648987851_609.webp",
+    "image": "/uploads/upload_1789648987851_609.webp",
+    "images": [
+      "/uploads/upload_1789023972685_687.webp",
+      "/uploads/upload_1789023972691_908.webp",
+      "/uploads/upload_1789023972695_654.webp"
     ],
-    rating: 5.0,
-    isSoldOut: false
+    "variants": [
+      {
+        "price": 179900
+      },
+      {
+        "price": 179900
+      },
+      {
+        "price": 179900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Burgundy",
+        "value": "#761930",
+        "colorHex": "#761930",
+        "image": null
+      },
+      {
+        "name": "Glacier",
+        "value": "#E4EFFB",
+        "colorHex": "#E4EFFB",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "colorHex": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000",
+        "image": null
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
   },
   {
-    id: 'default-iphone-17',
-    name: 'iPhone 17',
-    price: 79900,
-    priceStr: '₹79,900',
-    image: '/iphone_nav/iphone_17.png',
-    images: ['/iphone_nav/iphone_17.png'],
-    colors: [
-      { name: 'Lavender', value: '#d8b4fe' },
-      { name: 'Sage Green', value: '#a7f3d0' },
-      { name: 'Starlight', value: '#fafaf9' }
+    "id": "6aa2495653b793bd9d4e7410",
+    "name": "iPhone 18 Pro",
+    "price": 164900,
+    "priceStr": "₹1,64,900",
+    "discountPercent": 0,
+    "discountPrice": 0,
+    "displayImage": "/uploads/upload_1789648998731_760.webp",
+    "image": "/uploads/upload_1789648998731_760.webp",
+    "images": [
+      "/uploads/upload_1789020278695_434.webp",
+      "/uploads/upload_1789020284380_631.webp",
+      "/uploads/upload_1789020289313_493.webp"
     ],
-    rating: 4.9,
-    isSoldOut: false
+    "variants": [
+      {
+        "price": 164900
+      },
+      {
+        "price": 164900
+      },
+      {
+        "price": 164900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Burgundy",
+        "value": "#761930",
+        "colorHex": "#761930",
+        "image": null
+      },
+      {
+        "name": "Glacier",
+        "value": "#E4EFFB",
+        "colorHex": "#E4EFFB",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "colorHex": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000",
+        "image": null
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
   },
   {
-    id: 'default-iphone-17e',
-    name: 'iPhone 17e',
-    price: 59900,
-    priceStr: '₹59,900',
-    image: '/iphone_nav/iphone_16.png',
-    images: ['/iphone_nav/iphone_16.png'],
-    colors: [
-      { name: 'Soft Pink', value: '#fbcfe8' },
-      { name: 'White', value: '#ffffff' },
-      { name: 'Midnight', value: '#1e293b' }
+    "id": "6a437eb3345ade0885f68a4f",
+    "name": "iPhone 17 Pro Max",
+    "price": 149900,
+    "priceStr": "₹1,49,900",
+    "discountPercent": 0,
+    "discountPrice": 149900,
+    "displayImage": "/uploads/upload_1789649198658_733.webp",
+    "image": "/uploads/upload_1789649198658_733.webp",
+    "images": [
+      "/uploads/upload_1789649198658_733.webp",
+      "/uploads/upload_1788977380761_786.png",
+      "/uploads/upload_1788977384526_999.png"
     ],
-    rating: 4.8,
-    isSoldOut: false
+    "variants": [
+      {
+        "price": 149900
+      },
+      {
+        "price": 149900
+      },
+      {
+        "price": 149900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Cosmic Orange",
+        "value": "#D9A07A",
+        "colorHex": "#D9A07A",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "colorHex": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Deep Blue",
+        "value": "#043D8E",
+        "colorHex": "#043D8E",
+        "image": null
+      }
+    ],
+    "rating": 4.9,
+    "isSoldOut": false
   },
   {
-    id: 'default-iphone-16-pro',
-    name: 'iPhone 16 Pro',
-    price: 119900,
-    priceStr: '₹1,19,900',
-    image: '/iphone_nav/iphone_16_pro.png',
-    images: ['/iphone_nav/iphone_16_pro.png'],
-    colors: [
-      { name: 'Desert Titanium', value: '#e6c2b9' },
-      { name: 'Natural Titanium', value: '#a39e99' },
-      { name: 'Black Titanium', value: '#232426' },
-      { name: 'White Titanium', value: '#f2f1ed' }
+    "id": "6a437eb3345ade0885f68a50",
+    "name": "iPhone 17 Pro",
+    "price": 134900,
+    "priceStr": "₹1,34,900",
+    "discountPercent": 0,
+    "discountPrice": 134900,
+    "displayImage": "/uploads/upload_1789649188671_459.webp",
+    "image": "/uploads/upload_1789649188671_459.webp",
+    "images": [
+      "/uploads/upload_1789649188671_459.webp",
+      "/uploads/upload_1788976815649_942.png",
+      "/uploads/upload_1788976858289_569.png"
     ],
-    rating: 5.0,
-    isSoldOut: false
+    "variants": [
+      {
+        "price": 134900
+      },
+      {
+        "price": 134900
+      },
+      {
+        "price": 134900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Cosmic Orange",
+        "value": "#D9A07A",
+        "colorHex": "#D9A07A",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "colorHex": "#C0C0C0",
+        "image": null
+      },
+      {
+        "name": "Deep Blue",
+        "value": "#043D8E",
+        "colorHex": "#043D8E",
+        "image": null
+      }
+    ],
+    "rating": 4.8,
+    "isSoldOut": false
   },
   {
-    id: 'default-iphone-16',
-    name: 'iPhone 16',
-    price: 79900,
-    priceStr: '₹79,900',
-    image: '/iphone_nav/iphone_16.png',
-    images: ['/iphone_nav/iphone_16.png'],
-    colors: [
-      { name: 'Ultramarine', value: '#2a4b7c' },
-      { name: 'Teal', value: '#1d3557' },
-      { name: 'Pink', value: '#ec4899' },
-      { name: 'White', value: '#ffffff' },
-      { name: 'Black', value: '#111111' }
+    "id": "6a437eb3345ade0885f68a51",
+    "name": "iPhone 17 Air",
+    "price": 149900,
+    "priceStr": "₹1,49,900",
+    "discountPercent": 0,
+    "discountPrice": 149900,
+    "displayImage": "/uploads/upload_1789649566679_280.jpeg",
+    "image": "/uploads/upload_1789649566679_280.jpeg",
+    "images": [
+      "/uploads/upload_1789649566679_280.jpeg",
+      "/uploads/upload_1786085545982_199.webp",
+      "/uploads/upload_1786085549981_493.webp"
     ],
-    rating: 4.9,
-    isSoldOut: false
+    "variants": [
+      {
+        "price": 149900
+      },
+      {
+        "price": 149900
+      },
+      {
+        "price": 149900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Space Black",
+        "value": "#1C1C1C",
+        "colorHex": "#1C1C1C",
+        "image": null
+      },
+      {
+        "name": "Cloud White",
+        "value": "#F5F5F5",
+        "colorHex": "#F5F5F5",
+        "image": null
+      },
+      {
+        "name": "Light Gold",
+        "value": "#EAD390",
+        "colorHex": "#EAD390",
+        "image": null
+      },
+      {
+        "name": "Sky Blue",
+        "value": "#87CEEB",
+        "colorHex": "#87CEEB",
+        "image": null
+      }
+    ],
+    "rating": 4.8,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a437eb3345ade0885f68a52",
+    "name": "iPhone 17",
+    "price": 82900,
+    "priceStr": "₹82,900",
+    "discountPercent": 0,
+    "discountPrice": 0,
+    "displayImage": "/uploads/upload_1789649102766_173.webp",
+    "image": "/uploads/upload_1789649102766_173.webp",
+    "images": [
+      "/uploads/upload_1783673757033_212.webp",
+      "/uploads/upload_1783673764139_243.webp",
+      "/uploads/upload_1783673772459_430.webp"
+    ],
+    "variants": [
+      {
+        "price": 82900
+      },
+      {
+        "price": 99900
+      },
+      {
+        "price": 99900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Lavender",
+        "value": "#E6E6FA",
+        "colorHex": "#E6E6FA",
+        "image": null
+      },
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF",
+        "image": null
+      },
+      {
+        "name": "Mist Blue",
+        "value": "#7EA4DA",
+        "colorHex": "#7EA4DA",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000",
+        "image": null
+      },
+      {
+        "name": "Sage",
+        "value": "#59264B",
+        "colorHex": "#59264B",
+        "image": null
+      }
+    ],
+    "rating": 4.7,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a437eb3345ade0885f68a53",
+    "name": "iPhone 17e",
+    "price": 79900,
+    "priceStr": "₹79,900",
+    "discountPercent": 0,
+    "discountPrice": 79900,
+    "displayImage": "/uploads/upload_1789649520156_202.jpeg",
+    "image": "/uploads/upload_1789649520156_202.jpeg",
+    "images": [
+      "/uploads/upload_1789649520156_202.jpeg",
+      "/uploads/upload_1783680874758_686.webp",
+      "/uploads/upload_1783680896755_284.webp"
+    ],
+    "variants": [
+      {
+        "price": 79900
+      },
+      {
+        "price": 79900
+      },
+      {
+        "price": 79900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Soft Pink",
+        "value": "#EEC3D2",
+        "colorHex": "#EEC3D2",
+        "image": null
+      },
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000",
+        "image": null
+      }
+    ],
+    "rating": 4.9,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a437eb3345ade0885f68a54",
+    "name": "iPhone 16",
+    "price": 79900,
+    "priceStr": "₹79,900",
+    "discountPercent": 0,
+    "discountPrice": 89900,
+    "displayImage": "/uploads/upload_1789649035753_253.webp",
+    "image": "/uploads/upload_1789649035753_253.webp",
+    "images": [
+      "/uploads/upload_1789649035753_253.webp",
+      "/uploads/upload_1783681346577_490.webp",
+      "/uploads/upload_1783681351077_847.webp"
+    ],
+    "variants": [
+      {
+        "price": 89900
+      },
+      {
+        "price": 89900
+      },
+      {
+        "price": 79900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Ultramarine",
+        "value": "#3F58A8",
+        "colorHex": "#3F58A8",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000",
+        "image": null
+      },
+      {
+        "name": "Pink",
+        "value": "#FFC0CB",
+        "colorHex": "#FFC0CB",
+        "image": null
+      },
+      {
+        "name": "Teal",
+        "value": "#008080",
+        "colorHex": "#008080",
+        "image": null
+      },
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF",
+        "image": null
+      }
+    ],
+    "rating": 4.6,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab7cb0a5e19e74322385964",
+    "name": "Iphone 16e",
+    "price": 59900,
+    "priceStr": "₹59,900",
+    "discountPercent": 0,
+    "discountPrice": 0,
+    "displayImage": "/uploads/upload_1790429952044_786.webp",
+    "image": "/uploads/upload_1790429952044_786.webp",
+    "images": [
+      "/uploads/upload_1790429952044_786.webp",
+      "/uploads/upload_1790429940121_970.avif",
+      "/uploads/upload_1790429945007_230.jpg"
+    ],
+    "variants": [
+      {
+        "price": 69900
+      },
+      {
+        "price": 59900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000",
+        "image": "/uploads/upload_1790429940121_970.avif"
+      },
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "colorHex": "#FFFFFF",
+        "image": "/uploads/upload_1790429945007_230.jpg"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": true
   }
 ];
+
+const getCachedIphoneProducts = () => {
+  try {
+    const cached = sessionStorage.getItem('iincept_cached_iphone_products');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_IPHONE_PRODUCTS;
+};
+
 
 // Default iPhone AppleCare rows fallback
 const DEFAULT_IPHONE_APPLECARE_ROWS = [
@@ -292,15 +656,15 @@ const DEFAULT_IPHONE_APPLECARE_ROWS = [
 ];
 
 const IPHONE_SUB_NAV_ITEMS = [
-  { name: 'iPhone 18 Pro', query: 'iPhone 18 Pro', image: '/iphone_nav/dropdown_iphone_18_pro.jpg', scale: 'scale-100' },
-  { name: 'iPhone Duo', query: 'iPhone Duo', image: '/iphone_nav/dropdown_iphone_duo.png', scale: 'scale-100' },
-  { name: 'iPhone 17 Pro', query: 'iPhone 17 Pro', image: '/iphone_nav/iphone_17_pro.png', scale: 'scale-100' },
-  { name: 'iPhone 17', query: 'iPhone 17', image: '/iphone_nav/iphone_17.png', scale: 'scale-100' },
-  { name: 'iPhone 17e', query: 'iPhone 17e', image: '/iphone_nav/iphone_17e.png', scale: 'scale-100' },
-  { name: 'iPhone 16', query: 'iPhone 16', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
-  { name: 'Accessories', path: '/accessories', image: '/iphone_nav/airtag.png', scale: 'scale-90' },
-  { name: 'Shop iPhone', path: '/iphone', query: '', image: '/iphone_nav/iphone_16_pro.png', scale: 'scale-100' },
-  { name: 'AppleCare', path: '/iphone?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' }
+  { name: 'Iphone Duo', query: 'New iPhone Model', path: '/iphone?search=iPhone duo', image: '/uploads/upload_1788981735583_391.png', scale: 'scale-100' },
+  { name: 'Iphone 18 pro', query: 'New iPhone Model', path: '/iphone?search=iPhone 18 Pro', image: '/uploads/upload_1788979019635_836.png', scale: 'scale-100' },
+  { name: 'iPhone 17 Pro', query: 'iPhone 17 Pro', path: '/iphone?search=iPhone 17 Pro', image: '/uploads/upload_1792411755785_45.png', scale: 'scale-100' },
+  { name: 'iPhone 17 Air', query: 'iPhone Air', path: '/iphone?search=iPhone 17 Air', image: '/iphone_nav/iphone_air.png', scale: 'scale-100' },
+  { name: 'iPhone 17', query: 'iPhone 17', path: '/iphone?search=iPhone 17', image: '/iphone_nav/iphone_17.png', scale: 'scale-100' },
+  { name: 'iPhone 17e', query: 'iPhone 17e', path: '/iphone?search=iPhone 17e', image: '/iphone_nav/iphone_17e.png', scale: 'scale-100' },
+  { name: 'iPhone 16', query: 'iPhone 16', path: '/iphone?search=iPhone 16', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
+  { name: 'Accessories', query: 'Accessories', path: '/accessories', image: '/iphone_nav/accessories.png', scale: 'scale-90' },
+  { name: 'AppleCare +', query: 'New iPhone Model', path: '/iphone?tab=applecare', image: '/uploads/upload_1792413047064_740.png', scale: 'scale-100' }
 ];
 
 const resolveSubItemPath = (item) => {
@@ -334,9 +698,9 @@ const ensureAppleCareInSubItems = (items = []) => {
   let careItem = items.find(item => (item.name || item.label || '').toLowerCase().includes('care'));
   if (!careItem) {
     careItem = {
-      name: 'AppleCare+',
+      name: 'AppleCare +',
       path: '/iphone?tab=applecare',
-      image: '/applecare_official_hero.png',
+      image: '/uploads/upload_1792413047064_740.png',
       scale: 'scale-100'
     };
   }
@@ -376,8 +740,16 @@ const resolveIconImage = (img, label) => {
     return clean;
   }
   const lblLower = (label || '').toLowerCase().trim();
-  if (lblLower.includes('care')) return '/applecare_official_hero.png';
-  const matched = IPHONE_SUB_NAV_ITEMS.find(m => m.name.toLowerCase().trim() === lblLower);
+  if (lblLower.includes('care')) return '/uploads/upload_1792413047064_740.png';
+  if (lblLower.includes('accessori')) return '/iphone_nav/accessories.png';
+  if (lblLower.includes('air')) return '/iphone_nav/iphone_air.png';
+  if (lblLower.includes('duo')) return '/uploads/upload_1788981735583_391.png';
+  if (lblLower.includes('18 pro')) return '/uploads/upload_1788979019635_836.png';
+  if (lblLower.includes('17 pro')) return '/uploads/upload_1792411755785_45.png';
+  if (lblLower.includes('17e')) return '/iphone_nav/iphone_17e.png';
+  if (lblLower.includes('17')) return '/iphone_nav/iphone_17.png';
+  if (lblLower.includes('16')) return '/iphone_nav/iphone_16.png';
+  const matched = IPHONE_SUB_NAV_ITEMS.find(m => (m.name || '').toLowerCase().trim() === lblLower);
   return matched?.image || '/iphone_nav/iphone_17.png';
 };
 
@@ -876,7 +1248,7 @@ export default function Iphone() {
         'ipad', 'watch', 'apple tv', 'homepod', 'airpod', 'headphone',
         'adapter', 'cable', 'charger', 'case', 'sleeve', 'cover', 'bag',
         'keyboard', 'mouse', 'pencil', 'strap', 'band', 'loop', 'magsafe',
-        'display', 'monitor', 'screen protector'
+        'display', 'monitor', 'screen protector', 'wallet', 'bumper', 'battery', 'folio', 'kickstand'
       ];
 
       if (nonIphoneKeywords.some(kw => pTitle.includes(kw))) {
@@ -945,28 +1317,49 @@ export default function Iphone() {
     if (dbIphones.length > 0) {
       const filtered = dbIphones.filter(p => {
         const name = (p.name || p.title || '').toLowerCase();
-        const nonIphoneKw = ['macbook', 'imac', 'ipad', 'watch', 'tv', 'homepod', 'airpod', 'headphone', 'adapter', 'cable', 'case', 'charger', 'display'];
+        const nonIphoneKw = ['macbook', 'imac', 'ipad', 'watch', 'tv', 'homepod', 'airpod', 'headphone', 'adapter', 'cable', 'case', 'charger', 'display', 'wallet', 'bumper', 'battery', 'folio', 'kickstand'];
         return !nonIphoneKw.some(kw => name.includes(kw));
       });
 
       return filtered;
     }
 
-    return DEFAULT_IPHONE_PRODUCTS;
+    return getCachedIphoneProducts();
+  }, [dbIphones]);
+
+  useEffect(() => {
+    if (dbIphones.length > 0) {
+      try {
+        const filtered = dbIphones.filter(p => {
+          const name = (p.name || p.title || '').toLowerCase();
+          const nonIphoneKw = ['macbook', 'imac', 'ipad', 'watch', 'tv', 'homepod', 'airpod', 'headphone', 'adapter', 'cable', 'case', 'charger', 'display', 'wallet', 'bumper', 'battery', 'folio', 'kickstand'];
+          return !nonIphoneKw.some(kw => name.includes(kw));
+        });
+        if (filtered.length > 0) {
+          sessionStorage.setItem('iincept_cached_iphone_products', JSON.stringify(filtered));
+        }
+      } catch (e) {}
+    }
   }, [dbIphones]);
 
   const getIphoneSequenceRank = (productName) => {
     const name = (productName || '').toLowerCase();
     if (name.includes('duo')) return 0;
-    if (name.includes('18 pro max') || name.includes('18 pro') || name.includes('18')) return 0.5;
-    if (name.includes('17 pro max') || name.includes('17 pro')) return 1;
-    if (name.includes('17')) return 2;
-    if (name.includes('16 pro max') || name.includes('16 pro')) return 3;
-    if (name.includes('16 plus')) return 4;
-    if (name.includes('16')) return 5;
-    if (name.includes('15')) return 6;
-    if (name.includes('se')) return 7;
-    return 8;
+    if (name.includes('18 pro max')) return 1;
+    if (name.includes('18 pro') || name.includes('18')) return 2;
+    if (name.includes('17 pro max')) return 3;
+    if (name.includes('17 pro')) return 4;
+    if (name.includes('17 air') || name.includes('air')) return 5;
+    if (name.includes('17e') || name.includes('17 e')) return 7;
+    if (name.includes('17')) return 6;
+    if (name.includes('16 pro max')) return 8;
+    if (name.includes('16 pro')) return 9;
+    if (name.includes('16 plus')) return 10;
+    if (name.includes('16e') || name.includes('16 e')) return 12;
+    if (name.includes('16')) return 11;
+    if (name.includes('15')) return 13;
+    if (name.includes('se')) return 14;
+    return 15;
   };
 
   const sortedProducts = useMemo(() => {
@@ -1000,7 +1393,7 @@ export default function Iphone() {
   // Fallback: If search query produced 0 items, keep filteredProducts as [] so search results are accurately displayed
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none relative">
 
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3">
@@ -1042,10 +1435,12 @@ export default function Iphone() {
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
+                      loading="eager"
+                      decoding="async"
                       onError={(e) => {
                         const lower = (item.name || '').toLowerCase();
                         if (lower.includes('care')) {
-                          e.currentTarget.src = '/applecare_official_hero.png';
+                          e.currentTarget.src = '/uploads/upload_1792413047064_740.png';
                         } else {
                           e.currentTarget.src = '/iphone_nav/iphone_17.png';
                         }
@@ -1073,7 +1468,7 @@ export default function Iphone() {
         const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
         if (isAppleCareActive) {
           return (
-            <div className="max-w-7xl mx-auto my-6 animate-in fade-in duration-300">
+            <div className="max-w-7xl mx-auto my-6">
               <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
                 {/* Header section */}
                 <div className="border-b border-zinc-100 pb-5 mb-6">

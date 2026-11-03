@@ -17,7 +17,7 @@ const DEFAULT_CATEGORY_STRIP = [
   { name: 'iPad', label: 'iPad', icon: '📱', image: '/ipad_category_uploaded.png', path: '/ipad', isActive: true },
   { name: 'Watch', label: 'Watch', icon: '⌚', image: '/watch_category_uploaded.png', path: '/watch', isActive: true },
   { name: 'AirPods', label: 'AirPods', icon: '🎧', image: '/airpods_category_uploaded.png', path: '/airpods', isActive: true },
-  { name: 'AirTag', label: 'AirTag', icon: '📍', image: '/airtag_category_uploaded.png', path: '/airtag', isActive: true },
+  { name: 'AirTag', label: 'AirTag', icon: '📍', image: '/airtag_category_uploaded.png', path: '/accessories', isActive: true },
   { name: 'Apple TV 4K', label: 'Apple TV 4K', icon: '📺', image: '/appletv_category_uploaded.png', path: '/tv-home', isActive: true },
   { name: 'HomePod', label: 'HomePod', icon: '🔊', image: '/homepod_category_uploaded.png', path: '/tv-home?search=HomePod', isActive: true },
   { name: 'Accessories', label: 'Accessories', icon: '🔌', image: '/accessories_category_uploaded.png', path: '/accessories', isActive: true },
@@ -475,7 +475,12 @@ export default function Home() {
       img = fallbackImg;
     }
 
-    return { ...item, image: img || fallbackImg };
+    let path = item.path;
+    if (key.toLowerCase().includes('airtag') || (path && path.toLowerCase() === '/airtag')) {
+      path = '/accessories';
+    }
+
+    return { ...item, image: img || fallbackImg, path: path || item.path };
   };
 
   // Category Strip Icons
@@ -3607,8 +3612,12 @@ export default function Home() {
               const item = sanitizeCategoryItem(rawItem);
               if (!item) return null;
               const hasImg = Boolean(item.image && item.image.trim());
+              let targetPath = (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? item.path : '/accessories';
+              if ((item.name || item.label || '').toLowerCase().includes('airtag') || targetPath === '/airtag') {
+                targetPath = '/accessories';
+              }
               return (
-                <Link key={idx} to={(item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? item.path : '/accessories'} className="strip-item">
+                <Link key={idx} to={targetPath} className="strip-item">
                   <div className="strip-icon">
                     {hasImg ? (
                       <img

@@ -13,8 +13,9 @@ const BENEFIT_CARDS = [
     boldText: 'Turn to us when accidents happen.',
     text: ' Stay protected through life’s ups, downs and even drops. Get quick, Apple-certified repairs — many issues can be resolved the same day.',
     footnote: '4',
-    img: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_01__bqd7po66snxy_large.jpg',
+    img: '/applecare_benefits_01.jpg',
     img2x: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_01__bqd7po66snxy_large_2x.jpg',
+    fallbackImg: '/applecare_benefits_01.jpg',
     alt: 'Dropped, cracked, broken, fixed'
   },
   {
@@ -22,7 +23,7 @@ const BENEFIT_CARDS = [
     boldText: 'Stay above water with liquid damage coverage.',
     text: ' Liquid damage is covered as part of accidental damage protection. So now you won’t have to stress over spills and splashes.',
     footnote: null,
-    img: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_05__c9x7v7q7m6eu_large_2x.jpg',
+    img: '/applecare_benefits_02.jpg',
     fallbackImg: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_02__dn7ujwq39r42_large_2x.jpg',
     alt: 'Stay above water with liquid damage coverage.'
   },
@@ -31,8 +32,9 @@ const BENEFIT_CARDS = [
     boldText: 'Extended coverage, built in.',
     text: ' AppleCare covers battery replacements at no extra charge if the capacity drops below 80%. Plans also include extended warranty coverage.',
     footnote: null,
-    img: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_03__cu95l2h1dqaa_large.jpg',
+    img: '/applecare_benefits_03.jpg',
     img2x: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_03__cu95l2h1dqaa_large_2x.jpg',
+    fallbackImg: '/applecare_benefits_03.jpg',
     alt: 'No charge for replacements - battery & coverage'
   },
   {
@@ -40,8 +42,8 @@ const BENEFIT_CARDS = [
     boldText: 'Connect with an expert at any time.',
     text: ' Get answers to your questions and support for all your hardware and software needs. Contact us via text, the Apple Support app, phone, online or in person at the Apple Store.',
     footnote: '7',
-    img: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_06__bh767x04cz42_large_2x.jpg',
-    fallbackImg: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_02__dn7ujwq39r42_large_2x.jpg',
+    img: '/applecare_benefits_04.jpg',
+    fallbackImg: 'https://www.apple.com/v/applecare/d/images/overview/benefits/benefits_06__bh767x04cz42_large_2x.jpg',
     alt: 'Connect with an expert at any time.'
   }
 ];
@@ -635,181 +637,708 @@ const PLAN_TILES = {
 
 const DEFAULT_PRICING_TABLES = [
   {
-    categoryKey: 'iphone',
-    image: '/iphone_category_v2.jpg',
-    headline: 'Cover your iPhone.',
-    subheadline: 'AppleCare+ for iPhone includes unlimited incidents of accidental damage protection.',
-    durationLabel: '2 years',
-    isActive: true,
-    rows: [
+    "categoryKey": "mac",
+    "image": "/macbook_category_v3.jpg",
+    "headline": "Cover your Mac.",
+    "subheadline": "AppleCare+ for Mac provides up to 3 years of expert support and hardware coverage.",
+    "durationLabel": "3 years",
+    "isActive": true,
+    "rows": [
       {
-        model: 'iPhone 17e',
-        title: 'AppleCare+ for iPhone 17e',
-        description: '2 Years Apple-certified coverage for iPhone 17e',
-        sku: 'SCYW3HN/A',
-        mrp: '₹14,900.00',
-        discount: '18%',
-        salePrice: '11,900.00',
-        monthly: '₹599.00',
-        yearly: '11,900.00',
-        planType: 'APPLE CARE+ • 2 YEAR PLAN',
-        duration: '2 Years',
-        image: '',
-        isActive: true
+        "model": "Mac Mini (M4)",
+        "title": "AppleCare+ for Mac mini (M4)",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SR1C2HN/A",
+        "mrp": "\u20b912900",
+        "discount": "24",
+        "salePrice": "\u20b99,804",
+        "monthly": "",
+        "yearly": "\u20b99,804",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/mac_mini.png",
+        "isActive": true
       },
       {
-        model: 'iPhone 17, iPhone 16',
-        title: 'AppleCare+ for iPhone 17',
-        description: '2 Years Apple-certified coverage for iPhone 17, iPhone 16',
-        sku: 'SX2V2HN/A',
-        mrp: '₹27,900.00',
-        discount: '18%',
-        salePrice: '22,900.00',
-        monthly: '₹749.00',
-        yearly: '14,900.00',
-        planType: 'APPLE CARE+ • 2 YEAR PLAN',
-        duration: '2 Years',
-        image: '',
-        isActive: true
+        "model": "Mac Studio (M4 Max/M3 Ultra)",
+        "title": "AppleCare+ for Mac Studio (M4 Max/M3 Ultra)",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "STKT2HN/A",
+        "mrp": "\u20b919900",
+        "discount": "24",
+        "salePrice": "\u20b915,124",
+        "monthly": "",
+        "yearly": "\u20b915,124",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/mac_studio.png",
+        "isActive": true
       },
       {
-        model: 'iPhone 16 Plus',
-        title: 'AppleCare+ for iPhone 16 Plus',
-        description: '2 Years Apple-certified coverage for iPhone 16 Plus',
-        sku: 'SX3V2HN/A',
-        mrp: '₹21,900.00',
-        discount: '18%',
-        salePrice: '17,900.00',
-        monthly: '₹899.00',
-        yearly: '17,900.00',
-        planType: 'APPLE CARE+ • 2 YEAR PLAN',
-        duration: '2 Years',
-        image: '',
-        isActive: true
+        "model": "iMac",
+        "title": "AppleCare+ for iMac (M4)",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SR1A2HN/A",
+        "mrp": "\u20b919900.00",
+        "discount": "24",
+        "salePrice": "\u20b915,124",
+        "monthly": "",
+        "yearly": "\u20b915,124",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/imac.png",
+        "isActive": true
       },
       {
-        model: 'iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max',
-        title: 'AppleCare+ for iPhone 17 Pro',
-        description: '2 Years Apple-certified coverage for iPhone Air, 17 Pro & 17 Pro Max',
-        sku: 'SX4V2HN/A',
-        mrp: '₹25,900.00',
-        discount: '19%',
-        salePrice: '20,900.00',
-        monthly: '₹1,049.00',
-        yearly: '20,900.00',
-        planType: 'APPLE CARE+ • 2 YEAR PLAN',
-        duration: '2 Years',
-        image: '',
-        isActive: true
+        "model": "Macbook Neo",
+        "title": "",
+        "description": "",
+        "sku": "",
+        "mrp": "16900",
+        "discount": "24",
+        "salePrice": "\u20b912,844",
+        "monthly": "\u20b9579.00",
+        "yearly": "\u20b912,844",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/macbook_neo.png",
+        "isActive": true
+      },
+      {
+        "model": " MacBook Air 13-inch ",
+        "title": "AppleCare+ for 13-inch MacBook Air (M5)",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SCW83HN/A",
+        "mrp": "\u20b922900",
+        "discount": "24",
+        "salePrice": "\u20b917,404",
+        "monthly": "",
+        "yearly": "\u20b917,404",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/macbook_air.png",
+        "isActive": true
+      },
+      {
+        "model": "MacBook Air 15-inch  ",
+        "title": "AppleCare+ for 15-inch MacBook Air (M5)",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SCW93HN/A",
+        "mrp": "\u20b924900",
+        "discount": "24",
+        "salePrice": "\u20b918,924",
+        "monthly": "",
+        "yearly": "\u20b918,924",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/macbook_air.png",
+        "isActive": true
+      },
+      {
+        "model": "MacBook Pro 14-inch ",
+        "title": "AppleCare+ for 14-inch MacBook Pro (M5)",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SXKH2HN/A",
+        "mrp": "\u20b929900",
+        "discount": "24",
+        "salePrice": "\u20b922,724",
+        "monthly": "",
+        "yearly": "\u20b922,724",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/macbook_pro.png",
+        "isActive": true
+      },
+      {
+        "model": "MacBook Pro 16-inch",
+        "title": "AppleCare+ for 16-in MacBook Pro (M5 Pro/M5 Max)",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SCXU3HN/A",
+        "mrp": "\u20b940900",
+        "discount": "24",
+        "salePrice": "\u20b931,084",
+        "monthly": "",
+        "yearly": "\u20b931,084",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/macbook_pro.png",
+        "isActive": true
+      },
+      {
+        "model": "Apple Studio Display ",
+        "title": "AppleCare+ for New Mac Model",
+        "description": "3 Years Apple-certified coverage",
+        "sku": "SD273HN/A",
+        "mrp": "14900",
+        "discount": "24",
+        "salePrice": "\u20b911,324",
+        "monthly": "\u20b9599.00",
+        "yearly": "\u20b911,324",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1790049450284_756.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "Studio Display XDR ",
+        "title": "AppleCare+ for New Mac Model",
+        "description": "3 Years Apple-certified coverage",
+        "sku": "SD263HN/A",
+        "mrp": "29900",
+        "discount": "24",
+        "salePrice": "\u20b922,724",
+        "monthly": "\u20b9599.00",
+        "yearly": "\u20b922,724",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1790049556385_582.jpeg",
+        "isActive": true
       }
     ]
   },
   {
-    categoryKey: 'mac',
-    image: '/macbook_category_v3.jpg',
-    headline: 'Cover your Mac.',
-    subheadline: 'AppleCare+ for Mac provides up to 3 years of expert support and hardware coverage.',
-    durationLabel: '3 years',
-    isActive: true,
-    rows: [
-      { model: 'Mac mini', title: 'AppleCare+ for Mac mini', description: '3 Years Apple-certified coverage for Mac mini', sku: 'AC-MAC-MINI', mrp: '₹14,900.00', discount: '13% OFF', salePrice: '₹12,900.00', monthly: '₹429.00', yearly: '₹12,900.00', isActive: true, image: 'https://www.apple.com/assets-www/en_WW/mac/04_chapternav/small/nav_mac_mini_f628f615d_2x.png' },
-      { model: 'Mac Studio', title: 'AppleCare+ for Mac Studio', description: '3 Years Apple-certified coverage for Mac Studio', sku: 'AC-MAC-STUDIO', mrp: '₹22,900.00', discount: '13% OFF', salePrice: '₹19,900.00', monthly: '₹679.00', yearly: '₹19,900.00', isActive: true, image: '/mac_nav/mac_studio.png' },
-      { model: 'iMac', title: 'AppleCare+ for iMac', description: '3 Years Apple-certified coverage for iMac', sku: 'AC-IMAC-24', mrp: '₹22,900.00', discount: '13% OFF', salePrice: '₹19,900.00', monthly: '₹679.00', yearly: '₹19,900.00', isActive: true, image: '/mac_nav/imac.png' },
-      { model: 'Macbook Neo', title: 'AppleCare+ for Macbook Neo', description: '3 Years Apple-certified coverage for Macbook Neo', sku: 'AC-MACBOOK-NEO', mrp: '₹18,900.00', discount: '11% OFF', salePrice: '₹16,900.00', monthly: '₹579.00', yearly: '₹16,900.00', isActive: true, image: '/mac_nav/macbook_neo.png' },
-      { model: 'MacBook Air 13″', title: 'AppleCare+ for MacBook Air 13″', description: '3 Years Apple-certified coverage for MacBook Air 13″', sku: 'AC-MBA-13', mrp: '₹25,900.00', discount: '12% OFF', salePrice: '₹22,900.00', monthly: '₹779.00', yearly: '₹22,900.00', isActive: true, image: '/mac_nav/macbook_air.png' },
-      { model: 'MacBook Air 15″', title: 'AppleCare+ for MacBook Air 15″', description: '3 Years Apple-certified coverage for MacBook Air 15″', sku: 'AC-MBA-15', mrp: '₹27,900.00', discount: '12% OFF', salePrice: '₹24,900.00', monthly: '₹849.00', yearly: '₹24,900.00', isActive: true, image: '/mac_nav/macbook_air.png' },
-      { model: 'MacBook Pro 14″', title: 'AppleCare+ for MacBook Pro 14″', description: '3 Years Apple-certified coverage for MacBook Pro 14″', sku: 'AC-MBP-14', mrp: '₹33,900.00', discount: '12% OFF', salePrice: '₹29,900.00', monthly: '₹999.00', yearly: '₹29,900.00', isActive: true, image: '/mac_nav/macbook_pro.png' },
-      { model: 'MacBook Pro 16″', title: 'AppleCare+ for MacBook Pro 16″', description: '3 Years Apple-certified coverage for MacBook Pro 16″', sku: 'AC-MBP-16', mrp: '₹45,900.00', discount: '11% OFF', salePrice: '₹40,900.00', monthly: '₹1,379.00', yearly: '₹40,900.00', isActive: true, image: '/mac_nav/macbook_pro.png' },
-      { model: 'Mac Pro', title: 'AppleCare+ for Mac Pro', description: '3 Years Apple-certified coverage for Mac Pro', sku: 'AC-MAC-PRO', mrp: '₹55,900.00', discount: '11% OFF', salePrice: '₹49,900.00', monthly: '₹1,699.00', yearly: '₹49,900.00', isActive: true, image: '/mac_nav/mac_studio.png' }
+    "categoryKey": "iphone",
+    "image": "/iphone_category_v2.jpg",
+    "headline": "Cover your iPhone.",
+    "subheadline": "AppleCare+ for iPhone includes coverage options for 1 Year and 2 Years with accidental damage protection.",
+    "durationLabel": "2 years",
+    "isActive": true,
+    "rows": [
+      {
+        "model": "iPhone 17e",
+        "title": "AppleCare+ for iPhone 17e",
+        "description": "2 Years Apple-certified coverage for iPhone 17e",
+        "sku": "SCYW3HN/A",
+        "mrp": "\u20b916,900",
+        "discount": "18",
+        "salePrice": "\u20b913,858",
+        "monthly": "\u20b9599.00",
+        "yearly": "\u20b913,858",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/uploads/upload_1789230677662_90.webp",
+        "isActive": true
+      },
+      {
+        "model": "iPhone 17",
+        "title": "AppleCare+ for iPhone 17",
+        "description": "2 Years Apple-certified coverage for iPhone 17, iPhone 16",
+        "sku": "SWXT2HN/A",
+        "mrp": "\u20b919,900",
+        "discount": "18",
+        "salePrice": "\u20b916,318",
+        "monthly": "\u20b9749.00",
+        "yearly": "\u20b916,318",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/uploads/upload_1789230839048_616.jpg",
+        "isActive": true
+      },
+      {
+        "model": "iPhone 16 ",
+        "title": "AppleCare+ for iPhone 16 ",
+        "description": "2 Years Apple-certified coverage for iPhone 16 Plus",
+        "sku": "SNHA2HN/A",
+        "mrp": "\u20b919,900",
+        "discount": "18",
+        "salePrice": "\u20b916,318",
+        "monthly": "\u20b9899.00",
+        "yearly": "\u20b916,318",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/uploads/upload_1789230931152_62.webp",
+        "isActive": true
+      },
+      {
+        "model": "iPhone 17 Pro",
+        "title": "AppleCare+ for iPhone 17  pro",
+        "description": "2 Years Apple-certified coverage for iPhone 17 Pro, iPhone 17 Pro Max",
+        "sku": "SWY42HN/A",
+        "mrp": "\u20b925,900",
+        "discount": "18",
+        "salePrice": "\u20b921,238",
+        "monthly": "\u20b91,049.00",
+        "yearly": "\u20b921,238",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/uploads/upload_1789231246638_726.webp",
+        "isActive": true
+      },
+      {
+        "model": "IPhone 17 pro Max",
+        "title": "AppleCare+ IPhone 17 pro Max",
+        "description": "2 Years Apple-certified coverage",
+        "sku": "SWY92HN/A",
+        "mrp": "\u20b925,900",
+        "discount": "18",
+        "salePrice": "\u20b921,238",
+        "monthly": "\u20b9799.00",
+        "yearly": "\u20b921,238",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/uploads/upload_1789231375820_773.webp",
+        "isActive": true
+      },
+      {
+        "model": "iPhone 18 Pro",
+        "title": "AppleCare+ for iPhone 18 Pro",
+        "description": "2 Years Apple-certified coverage",
+        "sku": "SHHL3HN/A",
+        "mrp": "25900",
+        "discount": "18",
+        "salePrice": "\u20b921,238",
+        "monthly": "\u20b9799.00",
+        "yearly": "\u20b921,238",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 years",
+        "image": "/uploads/upload_1789401429907_843.webp",
+        "isActive": true
+      },
+      {
+        "model": "iPhone 18 Pro Max",
+        "title": "AppleCare+ for iPhone 18 Pro Max",
+        "description": "2 Years Apple-certified coverage",
+        "sku": "SHJ83HN/A",
+        "mrp": "25900",
+        "discount": "18",
+        "salePrice": "\u20b921,238",
+        "monthly": "\u20b9799.00",
+        "yearly": "\u20b921,238",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 years",
+        "image": "/uploads/upload_1789401366287_53.png",
+        "isActive": true
+      },
+      {
+        "model": "iPhone Duo",
+        "title": "AppleCare+ for iPhone Duo",
+        "description": "2 Years Apple-certified coverage",
+        "sku": "SHJX3HN/A",
+        "mrp": "51900",
+        "discount": "18",
+        "salePrice": "\u20b942,558",
+        "monthly": "\u20b9799.00",
+        "yearly": "\u20b942,558",
+        "planType": "APPLE CARE+",
+        "duration": "2 years",
+        "image": "/uploads/upload_1790431187717_101.jpg",
+        "isActive": true
+      }
     ]
   },
   {
-    categoryKey: 'display',
-    image: 'https://www.apple.com/in/applecare/images/overview/plans/display_single__bcorwfyqszaq_large_2x.jpg',
-    headline: 'Cover your display.',
-    subheadline: 'AppleCare+ for Display provides up to 3 years of expert support and hardware coverage.',
-    durationLabel: '3 years',
-    isActive: true,
-    rows: [
-      { model: 'Studio Display', title: 'AppleCare+ for Studio Display', description: '3 Years Apple-certified coverage for Studio Display', sku: 'AC-STUDIO-DISPLAY', mrp: '₹14,900.00', discount: '13% OFF', salePrice: '12,900.00', monthly: '₹499.00', yearly: '12,900.00', isActive: true },
-      { model: 'Pro Display XDR', title: 'AppleCare+ for Pro Display XDR', description: '3 Years Apple-certified coverage for Pro Display XDR', sku: 'AC-PRO-DISPLAY-XDR', mrp: '₹49,900.00', discount: '10% OFF', salePrice: '44,900.00', monthly: '₹1,499.00', yearly: '44,900.00', isActive: true }
+    "categoryKey": "ipad",
+    "image": "/ipad_category_v2.jpg",
+    "headline": "Cover your iPad.",
+    "subheadline": "AppleCare+ for iPad covers your iPad, Apple Pencil, and Apple-branded keyboards with 1-Year and 2-Year plan options.",
+    "durationLabel": "2 years",
+    "isActive": true,
+    "rows": [
+      {
+        "model": "iPad Air 11",
+        "title": "AppleCare+ for iPad Pro 11-inch (M5) ",
+        "description": "2 Years Apple-certified coverage for iPad Air 11",
+        "sku": "SXT02HN/A",
+        "mrp": "\u20b917900",
+        "discount": "18% OFF",
+        "salePrice": "\u20b914,678",
+        "monthly": "\u20b9499.00",
+        "yearly": "\u20b914,678",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/uploads/upload_1789399908792_474.webp",
+        "isActive": true
+      },
+      {
+        "model": "iPad Air 13\u2033",
+        "title": "AppleCare+ for iPad Pro 13-inch (M5) ",
+        "description": "2 Years Apple-certified coverage for iPad Air 13\u2033",
+        "sku": "SXT12HN/A",
+        "mrp": "\u20b919900",
+        "discount": "18% OFF",
+        "salePrice": "\u20b916,318",
+        "monthly": "\u20b9599.00",
+        "yearly": "\u20b916,318",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/ipad_nav/ipad_air.png",
+        "isActive": true
+      },
+      {
+        "model": "iPad Pro 11\u2033",
+        "title": "AppleCare+ for iPad Pro 11-inch (M5) ",
+        "description": "2 Years Apple-certified coverage for iPad Pro 11\u2033",
+        "sku": "SXT02HN/A",
+        "mrp": "\u20b917,900",
+        "discount": "18% OFF",
+        "salePrice": "\u20b914,678",
+        "monthly": "\u20b9899.00",
+        "yearly": "\u20b914,678",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/ipad_nav/ipad_pro.png",
+        "isActive": true
+      },
+      {
+        "model": "iPad Pro 13\u2033",
+        "title": "AppleCare+ for iPad Pro 13-inch (M5) ",
+        "description": "2 Years Apple-certified coverage for iPad Pro 13\u2033",
+        "sku": "SXT12HN/A",
+        "mrp": "\u20b919,900",
+        "discount": "18% OFF",
+        "salePrice": "\u20b916,318",
+        "monthly": "\u20b9999.00",
+        "yearly": "\u20b916,318",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/ipad_nav/ipad_pro.png",
+        "isActive": true
+      },
+      {
+        "model": "Pad (A16)",
+        "title": "AppleCare+ for iPad (A16)",
+        "description": "2 Years Apple-certified coverage",
+        "sku": "SUYD2HN/A",
+        "mrp": "8900",
+        "discount": "18% OFF",
+        "salePrice": "\u20b97,298",
+        "monthly": "\u20b9599.00",
+        "yearly": "\u20b97,298",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/ipad_nav/ipad.png",
+        "isActive": true
+      },
+      {
+        "model": " iPad mini",
+        "title": "AppleCare+ for iPad mini (A17 Pro)",
+        "description": "2 Years Apple-certified coverage",
+        "sku": "SNGN2HN/A",
+        "mrp": "\u20b98900",
+        "discount": "18% OFF",
+        "salePrice": "\u20b97,298",
+        "monthly": "\u20b9599.00",
+        "yearly": "\u20b97,298",
+        "planType": "APPLE CARE+",
+        "duration": "2 years",
+        "image": "/uploads/upload_1790430407641_22.webp",
+        "isActive": true
+      }
     ]
   },
   {
-    categoryKey: 'ipad',
-    image: '/ipad_category_v3.png',
-    headline: 'Cover your iPad.',
-    subheadline: 'AppleCare+ for iPad covers your iPad, Apple Pencil, and Apple-branded keyboards.',
-    durationLabel: '2 years',
-    isActive: true,
-    rows: [
-      { model: 'iPad, iPad mini', title: 'AppleCare+ for iPad', description: '2 Years Apple-certified coverage for iPad', sku: 'AC-IPAD-STD', mrp: '₹9,900.00', discount: '10% OFF', salePrice: '₹8,900.00', monthly: '₹449.00', yearly: '₹8,900.00', isActive: true },
-      { model: 'iPad Air 11″', title: 'AppleCare+ for iPad Air 11″', description: '2 Years Apple-certified coverage for iPad Air 11″', sku: 'AC-IPAD-AIR11', mrp: '₹10,900.00', discount: '9% OFF', salePrice: '₹9,900.00', monthly: '₹499.00', yearly: '₹9,900.00', isActive: true },
-      { model: 'iPad Air 13″', title: 'AppleCare+ for iPad Air 13″', description: '2 Years Apple-certified coverage for iPad Air 13″', sku: 'AC-IPAD-AIR13', mrp: '₹12,900.00', discount: '8% OFF', salePrice: '₹11,900.00', monthly: '₹599.00', yearly: '₹11,900.00', isActive: true },
-      { model: 'iPad Pro 11″', title: 'AppleCare+ for iPad Pro 11″', description: '2 Years Apple-certified coverage for iPad Pro 11″', sku: 'AC-IPAD-PRO11', mrp: '₹19,900.00', discount: '10% OFF', salePrice: '₹17,900.00', monthly: '₹899.00', yearly: '₹17,900.00', isActive: true },
-      { model: 'iPad Pro 13″', title: 'AppleCare+ for iPad Pro 13″', description: '2 Years Apple-certified coverage for iPad Pro 13″', sku: 'AC-IPAD-PRO13', mrp: '₹21,900.00', discount: '9% OFF', salePrice: '₹19,900.00', monthly: '₹999.00', yearly: '₹19,900.00', isActive: true }
+    "categoryKey": "watch",
+    "image": "/watch_category.jpg",
+    "headline": "Cover your Apple Watch.",
+    "subheadline": "AppleCare+ for Apple Watch includes coverage options for 1 Year and 2 Years with accidental damage protection.",
+    "durationLabel": "2 years",
+    "isActive": true,
+    "rows": [
+      {
+        "model": "Apple Watch SE 3",
+        "title": "AppleCare+ for Apple Watch SE",
+        "description": "2 Years Apple-certified coverage for Apple Watch SE",
+        "sku": "SXHW2HN/A",
+        "mrp": "5590",
+        "discount": "18",
+        "salePrice": "\u20b94,584",
+        "monthly": "\u20b9249.00",
+        "yearly": "\u20b94,584",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789377186182_249.jpeg",
+        "isActive": true
+      },
+      {
+        "model": " Apple Watch Ultra 4",
+        "title": "AppleCare+ for  Apple Watch Ultra 4",
+        "description": "2 Years Apple-certified coverage for Apple Watch Series 11",
+        "sku": "SH1E3HN/A",
+        "mrp": "10990",
+        "discount": "18",
+        "salePrice": "\u20b99,012",
+        "monthly": "\u20b9399.00",
+        "yearly": "\u20b99,012",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789377193163_963.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "Apple Watch Series 12",
+        "title": "AppleCare+ for Apple Watch Series 12",
+        "description": "2 Years Apple-certified coverage for Apple Watch Ultra 3",
+        "sku": "SH0G3HN/A",
+        "mrp": "8990",
+        "discount": "18",
+        "salePrice": "\u20b97,372",
+        "monthly": "\u20b9499.00",
+        "yearly": "\u20b97,372",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789377199517_322.jpeg",
+        "isActive": true
+      }
     ]
   },
   {
-    categoryKey: 'watch',
-    image: '/watch_category.jpg',
-    headline: 'Cover your Apple Watch.',
-    subheadline: 'AppleCare+ for Apple Watch provides 2 years of accidental damage protection.',
-    durationLabel: '2 years',
-    isActive: true,
-    rows: [
-      { model: 'Apple Watch SE', title: 'AppleCare+ for Apple Watch SE', description: '2 Years Apple-certified coverage for Apple Watch SE', sku: 'AC-WATCH-SE', mrp: '₹5,900.00', discount: '17% OFF', salePrice: '₹4,900.00', monthly: '₹249.00', yearly: '₹4,900.00', isActive: true },
-      { model: 'Apple Watch Series 11', title: 'AppleCare+ for Apple Watch Series 11', description: '2 Years Apple-certified coverage for Apple Watch Series 11', sku: 'AC-WATCH-S11', mrp: '₹8,900.00', discount: '11% OFF', salePrice: '₹7,900.00', monthly: '₹399.00', yearly: '₹7,900.00', isActive: true },
-      { model: 'Apple Watch Ultra 3', title: 'AppleCare+ for Apple Watch Ultra 3', description: '2 Years Apple-certified coverage for Apple Watch Ultra 3', sku: 'AC-WATCH-ULTRA', mrp: '₹11,900.00', discount: '17% OFF', salePrice: '₹9,900.00', monthly: '₹499.00', yearly: '₹9,900.00', isActive: true }
+    "categoryKey": "airpods",
+    "image": "/airpods_category.jpg",
+    "headline": "Cover your headphones.",
+    "subheadline": "AppleCare+ for Headphones covers AirPods and Beats with coverage options for 1 Year and 2 Years.",
+    "durationLabel": "2 years",
+    "isActive": true,
+    "rows": [
+      {
+        "model": "AirPods 5",
+        "title": "AppleCare+ for AirPods 5",
+        "description": "2 Years Apple-certified coverage for AirPods 4, Beats",
+        "sku": "S9066HN/A",
+        "mrp": "3390",
+        "discount": "18",
+        "salePrice": "\u20b92,780",
+        "monthly": "\u20b9149.00",
+        "yearly": "\u20b92,780",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789366058920_902.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "AirPods Pro 3",
+        "title": "AppleCare+ for AirPods Pro 3",
+        "description": "2 Years Apple-certified coverage for AirPods Pro 3",
+        "sku": "SYLW2HN/A",
+        "mrp": "4890",
+        "discount": "18",
+        "salePrice": "\u20b94,010",
+        "monthly": "\u20b9249.00",
+        "yearly": "\u20b94,010",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789386462387_751.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "AirPods Max 2",
+        "title": "AppleCare+ for AirPods Max 2",
+        "description": "2 Years Apple-certified coverage for AirPods Max 2",
+        "sku": "S9086HN/A",
+        "mrp": "6890",
+        "discount": "18",
+        "salePrice": "\u20b95,650",
+        "monthly": "\u20b9349.00",
+        "yearly": "\u20b95,650",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789399972058_579.jpeg",
+        "isActive": true
+      }
     ]
   },
   {
-    categoryKey: 'airpods',
-    image: '/airpods_category.jpg',
-    headline: 'Cover your headphones.',
-    subheadline: 'AppleCare+ for Headphones covers AirPods Pro, AirPods Max and Beats.',
-    durationLabel: '2 years',
-    isActive: true,
-    rows: [
-      { model: 'AirPods 4, Beats', title: 'AppleCare+ for AirPods 4', description: '2 Years Apple-certified coverage for AirPods 4', sku: 'AC-AIRPODS-4', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '₹2,900.00', monthly: '₹149.00', yearly: '₹2,900.00', isActive: true },
-      { model: 'AirPods Pro 3', title: 'AppleCare+ for AirPods Pro 3', description: '2 Years Apple-certified coverage for AirPods Pro 3', sku: 'AC-AIRPODS-PRO', mrp: '₹5,900.00', discount: '17% OFF', salePrice: '₹4,900.00', monthly: '₹249.00', yearly: '₹4,900.00', isActive: true },
-      { model: 'AirPods Max 2', title: 'AppleCare+ for AirPods Max 2', description: '2 Years Apple-certified coverage for AirPods Max 2', sku: 'AC-AIRPODS-MAX', mrp: '₹7,900.00', discount: '13% OFF', salePrice: '₹6,900.00', monthly: '₹349.00', yearly: '₹6,900.00', isActive: true }
+    "categoryKey": "tv-home",
+    "image": "/applecare_official_hero.png",
+    "headline": "Cover your TV & Home products.",
+    "subheadline": "AppleCare+ for TV & Home provides expert technical support and hardware coverage.",
+    "durationLabel": "3 years",
+    "isActive": true,
+    "rows": [
+      {
+        "model": "Apple TV",
+        "title": "AppleCare+ for Apple TV",
+        "description": "Apple-certified coverage for Apple TV",
+        "sku": "S9634HN/A",
+        "mrp": "2,900.00",
+        "discount": "18",
+        "salePrice": "\u20b92,378",
+        "monthly": "\u20b999.00",
+        "yearly": "\u20b92,378",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438370600_868.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "HomePod mini",
+        "title": "AppleCare+ for HomePod mini",
+        "description": "2 Years Apple-certified coverage for HomePod mini.",
+        "sku": "DE6C2HN/A",
+        "mrp": "\u20b911600",
+        "discount": "18",
+        "salePrice": "\u20b99,512",
+        "monthly": "\u20b979.00",
+        "yearly": "\u20b99,512",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438361522_258.jpg",
+        "isActive": true
+      },
+      {
+        "model": "HomePod",
+        "title": "AppleCare+ for HomePod",
+        "description": "2 Years Apple-certified coverage for HomePod.",
+        "sku": "S6446HN/A",
+        "mrp": "3,900.00",
+        "discount": "18",
+        "salePrice": "\u20b93,198",
+        "monthly": "\u20b9199.00",
+        "yearly": "\u20b93,198",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438355569_951.jpeg",
+        "isActive": true
+      }
     ]
   },
   {
-    categoryKey: 'tv-home',
-    image: '/applecare_official_hero.png',
-    headline: 'Cover your TV & Home products.',
-    subheadline: 'AppleCare+ for TV & Home provides expert technical support and hardware coverage.',
-    durationLabel: '3 years',
-    isActive: true,
-    rows: [
-      { model: 'Apple TV 4K', title: 'AppleCare+ for Apple TV 4K', description: '3 Years Apple-certified coverage for Apple TV 4K', sku: 'AC-TV-4K', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '2,900.00', monthly: '₹99.00', yearly: '2,900.00', isActive: true },
-      { model: 'HomePod mini', title: 'AppleCare+ for HomePod mini', description: '2 Years Apple-certified coverage for HomePod mini', sku: 'AC-HOMEPOD-MINI', mrp: '₹1,990.00', discount: '20% OFF', salePrice: '1,600.00', monthly: '₹79.00', yearly: '1,600.00', isActive: true },
-      { model: 'HomePod', title: 'AppleCare+ for HomePod', description: '2 Years Apple-certified coverage for HomePod', sku: 'AC-HOMEPOD-STD', mrp: '₹4,900.00', discount: '20% OFF', salePrice: '3,900.00', monthly: '₹199.00', yearly: '3,900.00', isActive: true }
+    "categoryKey": "display",
+    "image": "https://www.apple.com/in/applecare/images/overview/plans/display_single__bcorwfyqszaq_large_2x.jpg",
+    "headline": "Cover your display.",
+    "subheadline": "AppleCare+ for Display provides up to 3 years of expert support and hardware coverage.",
+    "durationLabel": "3 Years",
+    "isActive": true,
+    "rows": [
+      {
+        "model": "Studio Display",
+        "title": "AppleCare+ for Studio Display",
+        "description": "3 Years Apple-certified coverage for Studio Display.",
+        "sku": "AC-STUDIO-DISPLAY",
+        "mrp": "\u20b914,900.00",
+        "discount": "18",
+        "salePrice": "\u20b912,218",
+        "monthly": "\u20b9499.00",
+        "yearly": "\u20b912,218",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/uploads/upload_1789377962854_793.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "Pro Display XDR",
+        "title": "AppleCare+ for Pro Display XDR",
+        "description": "3 Years Apple-certified coverage for Pro Display XDR.",
+        "sku": "AC-PRO-DISPLAY-XDR",
+        "mrp": "\u20b949,900.00",
+        "discount": "18",
+        "salePrice": "\u20b940,918",
+        "monthly": "\u20b91,499.00",
+        "yearly": "\u20b940,918",
+        "planType": "APPLE CARE+ \u2022 2 YEAR PLAN",
+        "duration": "2 Years",
+        "image": "/uploads/upload_1789378071176_856.jpeg",
+        "isActive": true
+      }
     ]
   },
   {
-    categoryKey: 'tv',
-    image: '/applecare_official_hero.png',
-    headline: 'Cover your Apple TV.',
-    subheadline: 'AppleCare+ for Apple TV includes 3 years of hardware support.',
-    durationLabel: '3 years',
-    isActive: true,
-    rows: [
-      { model: 'Apple TV 4K', title: 'AppleCare+ for Apple TV 4K', description: '3 Years Apple-certified coverage for Apple TV 4K', sku: 'AC-TV-4K', mrp: '₹3,490.00', discount: '17% OFF', salePrice: '2,900.00', monthly: '₹99.00', yearly: '2,900.00', isActive: true }
+    "categoryKey": "homepod",
+    "image": "/applecare_official_hero.png",
+    "headline": "Cover your TV & Home products.",
+    "subheadline": "AppleCare+ for TV & Home provides expert technical support and hardware coverage.",
+    "durationLabel": "3 years",
+    "isActive": true,
+    "rows": [
+      {
+        "model": "Apple TV",
+        "title": "AppleCare+ for Apple TV",
+        "description": "Apple-certified coverage for Apple TV",
+        "sku": "S9634HN/A",
+        "mrp": "2,900.00",
+        "discount": "18",
+        "salePrice": "\u20b92,378",
+        "monthly": "\u20b999.00",
+        "yearly": "\u20b92,378",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438370600_868.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "HomePod mini",
+        "title": "AppleCare+ for HomePod mini",
+        "description": "2 Years Apple-certified coverage for HomePod mini.",
+        "sku": "DE6C2HN/A",
+        "mrp": "\u20b911600",
+        "discount": "18",
+        "salePrice": "\u20b99,512",
+        "monthly": "\u20b979.00",
+        "yearly": "\u20b99,512",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438361522_258.jpg",
+        "isActive": true
+      },
+      {
+        "model": "HomePod",
+        "title": "AppleCare+ for HomePod",
+        "description": "2 Years Apple-certified coverage for HomePod.",
+        "sku": "S6446HN/A",
+        "mrp": "3,900.00",
+        "discount": "18",
+        "salePrice": "\u20b93,198",
+        "monthly": "\u20b9199.00",
+        "yearly": "\u20b93,198",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438355569_951.jpeg",
+        "isActive": true
+      }
     ]
   },
   {
-    categoryKey: 'homepod',
-    image: 'https://www.apple.com/in/applecare/images/overview/plans/homepod_single__ecv85j2jxzo2_large_2x.jpg',
-    headline: 'Cover your HomePod.',
-    subheadline: 'AppleCare+ for HomePod covers HomePod and HomePod mini.',
-    durationLabel: '2 years',
-    isActive: true,
-    rows: [
-      { model: 'HomePod mini', title: 'AppleCare+ for HomePod mini', description: '2 Years Apple-certified coverage for HomePod mini', sku: 'AC-HOMEPOD-MINI', mrp: '₹1,990.00', discount: '20% OFF', salePrice: '1,600.00', monthly: '₹79.00', yearly: '1,600.00', isActive: true },
-      { model: 'HomePod', title: 'AppleCare+ for HomePod', description: '2 Years Apple-certified coverage for HomePod', sku: 'AC-HOMEPOD-STD', mrp: '₹4,900.00', discount: '20% OFF', salePrice: '3,900.00', monthly: '₹199.00', yearly: '3,900.00', isActive: true }
+    "categoryKey": "tv",
+    "image": "/applecare_official_hero.png",
+    "headline": "Cover your TV & Home products.",
+    "subheadline": "AppleCare+ for TV & Home provides expert technical support and hardware coverage.",
+    "durationLabel": "3 years",
+    "isActive": true,
+    "rows": [
+      {
+        "model": "Apple TV",
+        "title": "AppleCare+ for Apple TV",
+        "description": "Apple-certified coverage for Apple TV",
+        "sku": "S9634HN/A",
+        "mrp": "2,900.00",
+        "discount": "18",
+        "salePrice": "\u20b92,378",
+        "monthly": "\u20b999.00",
+        "yearly": "\u20b92,378",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438370600_868.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "HomePod mini",
+        "title": "AppleCare+ for HomePod mini",
+        "description": "2 Years Apple-certified coverage for HomePod mini.",
+        "sku": "DE6C2HN/A",
+        "mrp": "\u20b911600",
+        "discount": "18",
+        "salePrice": "\u20b99,512",
+        "monthly": "\u20b979.00",
+        "yearly": "\u20b99,512",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438361522_258.jpg",
+        "isActive": true
+      },
+      {
+        "model": "HomePod",
+        "title": "AppleCare+ for HomePod",
+        "description": "2 Years Apple-certified coverage for HomePod.",
+        "sku": "S6446HN/A",
+        "mrp": "3,900.00",
+        "discount": "18",
+        "salePrice": "\u20b93,198",
+        "monthly": "\u20b9199.00",
+        "yearly": "\u20b93,198",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/uploads/upload_1789438355569_951.jpeg",
+        "isActive": true
+      }
     ]
   }
 ];
@@ -836,7 +1365,6 @@ export default function AppleCare() {
   const [selectedAppleCarePlan, setSelectedAppleCarePlan] = useState(null);
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [wishlistMap, setWishlistMap] = useState({});
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   useEffect(() => {
     if (catParam) {
@@ -858,13 +1386,21 @@ export default function AppleCare() {
 
   const [dbPlans, setDbPlans] = useState([]);
   const [dbCategoryIcons, setDbCategoryIcons] = useState([]);
-  const [pricingTables, setPricingTables] = useState(DEFAULT_PRICING_TABLES);
+  const [pricingTables, setPricingTables] = useState(() => {
+    try {
+      const cached = localStorage.getItem('iincept_applecare_tables');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_PRICING_TABLES;
+  });
   const scrollRef = useRef(null);
   const repairsScrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const fetchAppleCareSettings = () => {
-    setIsLoadingSettings(true);
     axiosClient.get('/settings')
       .then(res => {
         if (res.data?.appleCarePlans) {
@@ -902,10 +1438,12 @@ export default function AppleCare() {
           });
 
           setPricingTables(merged);
+          try {
+            localStorage.setItem('iincept_applecare_tables', JSON.stringify(merged));
+          } catch (e) {}
         }
       })
-      .catch(err => console.error('Error fetching AppleCare settings:', err))
-      .finally(() => setIsLoadingSettings(false));
+      .catch(err => console.error('Error fetching AppleCare settings:', err));
   };
 
   useEffect(() => {
@@ -1039,28 +1577,22 @@ export default function AppleCare() {
     window.open(`https://wa.me/918607222417?text=${text}`, '_blank');
   };
 
-  if (isLoadingSettings) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="w-10 h-10 text-[#FF2D55] animate-spin" />
-        <span className="text-base font-semibold text-[#1D1D1F]">Loading AppleCare+ Plans & Data...</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-white text-[#1d1d1f] font-sans animate-in fade-in duration-300">
+    <div className="min-h-screen bg-white text-[#1d1d1f] font-sans">
 
       {/* Official AppleCare Hero Section */}
-      <section className="section-hero bg-white !bg-white pt-16 sm:pt-20 md:pt-24 pb-16 px-6 sm:px-12 text-center border-b border-[#D2D2D7]/60 overflow-hidden w-full" style={{ backgroundColor: '#ffffff', background: '#ffffff' }}>
+      <section className="section-hero bg-white !bg-white pt-5 sm:pt-8 md:pt-10 pb-16 px-0 text-center border-b border-[#D2D2D7]/60 overflow-hidden w-full" style={{ backgroundColor: '#ffffff', background: '#ffffff' }}>
         <div className="section-content text-center max-w-6xl mx-auto px-6">
           <div className="select-none mb-2 sm:mb-3">
             <span className="sr-only">AppleCare</span>
             <picture id="overview-hero-logo-apple-care-1" className="overview-hero-logo-apple-care block mx-auto select-none">
-              <source srcSet="https://www.apple.com/v/applecare/d/images/overview/hero/logo_apple_care__ethb3t26w2ye_large_2x.png 2x" media="(min-width:0px)" />
+              <source srcSet="/logo_apple_care.png 2x" media="(min-width:0px)" />
               <img
-                src="https://www.apple.com/v/applecare/d/images/overview/hero/logo_apple_care__ethb3t26w2ye_large.png"
+                src="/logo_apple_care.png"
                 alt="AppleCare Logo"
+                width={87}
+                height={25}
+                loading="eager"
                 className="h-7 sm:h-8 md:h-9 w-auto mx-auto object-contain"
               />
             </picture>
@@ -1071,15 +1603,44 @@ export default function AppleCare() {
         </div>
 
         {/* Large Official AppleCare Device Lineup Banner Image */}
-        <div className="w-full max-w-6xl md:max-w-7xl mx-auto mt-4 sm:mt-6 md:mt-8 py-4 sm:py-10 md:py-12 bg-white flex flex-col items-center justify-center text-center px-0 sm:px-4 overflow-hidden sm:overflow-visible">
-          <img
-            src="https://www.apple.com/in/applecare/images/overview/hero/hero__d4bput78wzu6_xlarge.jpg"
-            alt="Various Apple products, including MacBook, Apple Watch, iPhone, AirPods Pro, AirPods Max"
-            className="w-full h-auto object-contain object-center max-w-full mx-auto block origin-center text-center transition-transform duration-300 transform-gpu scale-130 sm:scale-120 md:scale-125 lg:scale-135 my-6 sm:my-6 md:my-8"
-          />
+        <div className="w-full mx-auto mt-2 sm:mt-4 py-1 sm:py-4 bg-white flex flex-col items-center justify-center text-center px-0 overflow-hidden">
+          {/* Mobile View Hero Image (< 640px) */}
+          <div className="block sm:hidden w-full mx-auto px-0 aspect-[800/590] overflow-hidden">
+            <picture className="w-full h-full block">
+              <source srcSet="/applecare_hero_mobile.webp" type="image/webp" />
+              <img
+                src="/applecare_hero_mobile.png"
+                alt="AppleCare devices: MacBook, iPhone, Apple Pencil, and iPad"
+                width={800}
+                height={590}
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
+                className="w-full h-full object-contain object-center block"
+              />
+            </picture>
+          </div>
+
+          {/* Desktop / Tablet View Hero Image (>= 640px) */}
+          <div className="hidden sm:flex w-full mx-auto items-center justify-center px-0 aspect-[1024/345] overflow-hidden">
+            <picture className="w-full h-full block">
+              <source srcSet="/applecare_hero_desktop@2x.webp 2x, /applecare_hero_desktop.webp 1x" type="image/webp" />
+              <source srcSet="/applecare_hero_desktop@2x.png 2x, /applecare_hero_desktop.png 1x" type="image/png" />
+              <img
+                src="/applecare_hero_desktop.png"
+                alt="AppleCare lineup: MacBook, Apple Watch, iPhone, AirPods Pro, AirPods Max"
+                width={1024}
+                height={345}
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
+                className="w-full h-full object-contain object-center block"
+              />
+            </picture>
+          </div>
         </div>
 
-        <div className="content max-w-3xl mx-auto flex flex-col items-center justify-center text-center space-y-6 mt-8 sm:mt-12 md:mt-16 pt-0 px-6 relative z-10">
+        <div className="content max-w-3xl mx-auto flex flex-col items-center justify-center text-center space-y-6 mt-4 sm:mt-6 md:mt-8 pt-0 px-6 relative z-10">
           <p className="section-copy typography-eyebrow-reduced font-semibold text-[#1D1D1F] text-base sm:text-lg md:text-xl leading-relaxed text-center max-w-2xl sm:max-w-3xl mx-auto">
             AppleCare offers one-stop support and service for all of your Apple products — from the people who know them best. Get easy, fast repairs for accidents like drops and spills. A replacement battery when yours drops below 80% capacity. And priority care with just a&nbsp;chat, call or&nbsp;tap.
           </p>

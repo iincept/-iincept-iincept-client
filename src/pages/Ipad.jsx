@@ -137,10 +137,10 @@ const IPAD_SUB_NAV_ITEMS = [
   { name: 'iPad Air', query: 'iPad Air', image: '/ipad_nav/ipad_air.png', scale: 'scale-100' },
   { name: 'iPad', query: 'iPad', image: '/ipad_nav/ipad.png', scale: 'scale-100' },
   { name: 'iPad mini', query: 'iPad mini', image: '/ipad_nav/ipad_mini.png', scale: 'scale-95' },
-  { name: 'AppleCare+', path: '/ipad?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' },
   { name: 'Apple Pencil', query: 'Pencil', image: '/ipad_nav/apple_pencil.png', scale: 'scale-95' },
   { name: 'Keyboards', query: 'Keyboard', image: '/ipad_nav/keyboards.png', scale: 'scale-95' },
-  { name: 'Compare', path: '/compare', image: '/ipad_nav/ipad_compare.png', scale: 'scale-100' }
+  { name: 'Accessories', path: '/accessories', image: '/ipad_nav/accessories.png', scale: 'scale-95' },
+  { name: 'AppleCare+', path: '/ipad?tab=applecare', image: '/uploads/upload_1792413070647_667.png', scale: 'scale-100' }
 ];
 
 const resolveSubItemPath = (item) => {
@@ -173,7 +173,7 @@ const ensureAppleCareInSubItems = (items = []) => {
     careItem = {
       name: 'AppleCare+',
       path: '/ipad?tab=applecare',
-      image: '/applecare_official_hero.png',
+      image: '/uploads/upload_1792413070647_667.png',
       scale: 'scale-100'
     };
   }
@@ -213,7 +213,13 @@ const resolveIconImage = (img, label) => {
     return clean;
   }
   const lblLower = (label || '').toLowerCase().trim();
-  if (lblLower.includes('care')) return '/applecare_official_hero.png';
+  if (lblLower.includes('care')) return '/uploads/upload_1792413070647_667.png';
+  if (lblLower.includes('accessori')) return '/ipad_nav/accessories.png';
+  if (lblLower.includes('pencil')) return '/ipad_nav/apple_pencil.png';
+  if (lblLower.includes('keyboard')) return '/ipad_nav/keyboards.png';
+  if (lblLower.includes('mini')) return '/ipad_nav/ipad_mini.png';
+  if (lblLower.includes('air')) return '/ipad_nav/ipad_air.png';
+  if (lblLower.includes('pro')) return '/ipad_nav/ipad_pro.png';
   const matched = IPAD_SUB_NAV_ITEMS.find(m => m.name.toLowerCase().trim() === lblLower);
   return matched?.image || '/ipad_nav/ipad.png';
 };
@@ -268,6 +274,800 @@ const resolve2YrDetails = (row) => {
   const description = row.description2yr || row.description || defaultRow.description2yr || defaultRow.description || `2 Years Apple-certified coverage for ${row.model || 'iPad'}.`;
 
   return { mrp, discount, salePrice, sku, description };
+};
+
+const DEFAULT_IPAD_PRODUCTS = [
+  {
+    "id": "6ac72db5e6725b5af53d6bb4",
+    "name": "Smart Folio for iPad Air 13\" (M4)",
+    "price": 10900,
+    "priceStr": "\u20b910,900",
+    "discountPercent": 15,
+    "discountPrice": 9265,
+    "displayImage": "/uploads/upload_1791438106786_570.png",
+    "image": "/uploads/upload_1791438106786_570.png",
+    "images": [
+      "/uploads/upload_1791438106786_570.png",
+      "/uploads/upload_1791438106791_530.png"
+    ],
+    "variants": [
+      {
+        "price": 10900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Charcoal Gray",
+        "value": "#858C93",
+        "image": null
+      },
+      {
+        "name": "Denim",
+        "value": "#2D2154",
+        "image": null
+      },
+      {
+        "name": "Sage",
+        "value": "#59264B",
+        "image": null
+      },
+      {
+        "name": "Light Violet",
+        "value": "#BD95E4",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ac72b97e6725b5af53d6965",
+    "name": "Smart Folio for iPad Air 11\" (M4)",
+    "price": 8500,
+    "priceStr": "\u20b98,500",
+    "discountPercent": 15,
+    "discountPrice": 7225,
+    "displayImage": "/uploads/upload_1791437452699_228.png",
+    "image": "/uploads/upload_1791437452699_228.png",
+    "images": [
+      "/uploads/upload_1791437452699_228.png",
+      "/uploads/upload_1791437452703_118.png"
+    ],
+    "variants": [
+      {
+        "price": 8500
+      }
+    ],
+    "colors": [
+      {
+        "name": "Charcoal Gray",
+        "value": "#858C93",
+        "image": null
+      },
+      {
+        "name": "Denim",
+        "value": "#2D2154",
+        "image": null
+      },
+      {
+        "name": "Sage",
+        "value": "#59264B",
+        "image": null
+      },
+      {
+        "name": "Light Violet",
+        "value": "#BD95E4",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ac72927e6725b5af53d35c5",
+    "name": "Smart Folio for iPad Pro 13\" (M5)",
+    "price": 10900,
+    "priceStr": "\u20b910,900",
+    "discountPercent": 15,
+    "discountPrice": 9265,
+    "displayImage": "/uploads/upload_1791436878895_564.png",
+    "image": "/uploads/upload_1791436878895_564.png",
+    "images": [
+      "/uploads/upload_1791436878895_564.png",
+      "/uploads/upload_1791436882210_502.png"
+    ],
+    "variants": [
+      {
+        "price": 10900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "image": null
+      },
+      {
+        "name": "Denim",
+        "value": "#2D2154",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ac7275fe6725b5af53d337e",
+    "name": "Smart Folio for iPad Pro 11-inch (M5)",
+    "price": 8500,
+    "priceStr": "\u20b98,500",
+    "discountPercent": 15,
+    "discountPrice": 7225,
+    "displayImage": "/uploads/upload_1791436491786_91.png",
+    "image": "/uploads/upload_1791436491786_91.png",
+    "images": [
+      "/uploads/upload_1791436491786_91.png",
+      "/uploads/upload_1791436491791_447.png"
+    ],
+    "variants": [
+      {
+        "price": 8500
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "image": null
+      },
+      {
+        "name": "Denim",
+        "value": "#2D2154",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ac71ee1e6725b5af53b6083",
+    "name": "Magic Keyboard Folio for iPad (A16) - US English",
+    "price": 24900,
+    "priceStr": "\u20b924,900",
+    "discountPercent": 15,
+    "discountPrice": 21165,
+    "displayImage": "/uploads/upload_1791434436211_431.png",
+    "image": "/uploads/upload_1791434436211_431.png",
+    "images": [
+      "/uploads/upload_1791434436211_431.png",
+      "/uploads/upload_1791434457284_222.png"
+    ],
+    "variants": [
+      {
+        "price": 24900
+      }
+    ],
+    "colors": [],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ac71acee6725b5af53b3380",
+    "name": "Magic Keyboard for iPad Air 13-inch (M4) - US English",
+    "price": 29900,
+    "priceStr": "\u20b929,900",
+    "discountPercent": 15,
+    "discountPrice": 25415,
+    "displayImage": "/uploads/upload_1791433413631_22.png",
+    "image": "/uploads/upload_1791433413631_22.png",
+    "images": [
+      "/uploads/upload_1791433413631_22.png",
+      "/uploads/upload_1791433418643_399.png"
+    ],
+    "variants": [
+      {
+        "price": 29900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "value": "#000000",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": true
+  },
+  {
+    "id": "6ac71a26e6725b5af53b3147",
+    "name": "Magic Keyboard for iPad Air 11-inch (M4) - US English",
+    "price": 26900,
+    "priceStr": "\u20b926,900",
+    "discountPercent": 15,
+    "discountPrice": 22865,
+    "displayImage": "/uploads/upload_1791433245933_838.png",
+    "image": "/uploads/upload_1791433245933_838.png",
+    "images": [
+      "/uploads/upload_1791433245933_838.png",
+      "/uploads/upload_1791433245940_972.png"
+    ],
+    "variants": [
+      {
+        "price": 26900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "value": "#000000",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": true
+  },
+  {
+    "id": "6ac62f54ac290e1aa9f86c5f",
+    "name": "Magic Keyboard for iPad Air 13-inch (M4)",
+    "price": 29900,
+    "priceStr": "\u20b929,900",
+    "discountPercent": 15,
+    "discountPrice": 25415,
+    "displayImage": "/uploads/upload_1791373138227_666.png",
+    "image": "/uploads/upload_1791373138227_666.png",
+    "images": [
+      "/uploads/upload_1791373138227_666.png",
+      "/uploads/upload_1791373138232_274.png"
+    ],
+    "variants": [
+      {
+        "price": 29900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ac62edaac290e1aa9f86a32",
+    "name": "Magic Keyboard for iPad Air 11-inch (M4)",
+    "price": 26900,
+    "priceStr": "\u20b926,900",
+    "discountPercent": 15,
+    "discountPrice": 22865,
+    "displayImage": "/uploads/upload_1791372894906_196.png",
+    "image": "/uploads/upload_1791372894906_196.png",
+    "images": [
+      "/uploads/upload_1791372894906_196.png",
+      "/uploads/upload_1791372894916_414.png"
+    ],
+    "variants": [
+      {
+        "price": 26900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ac62048ac290e1aa9f7e6cf",
+    "name": "Smart Folio for iPad (A16)",
+    "price": 8500,
+    "priceStr": "\u20b98,500",
+    "discountPercent": 15,
+    "discountPrice": 7225,
+    "displayImage": "/uploads/upload_1791369200450_860.png",
+    "image": "/uploads/upload_1791369200450_860.png",
+    "images": [
+      "/uploads/upload_1791369200450_860.png",
+      "/uploads/upload_1791369200455_365.png"
+    ],
+    "variants": [
+      {
+        "price": 8500
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "image": null
+      },
+      {
+        "name": "Lemonade",
+        "value": "#C7293E",
+        "image": null
+      },
+      {
+        "name": "Watermelon",
+        "value": "#504266",
+        "image": null
+      },
+      {
+        "name": " Sky",
+        "value": "#5EBEED",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ac61e93ac290e1aa9f7bf6b",
+    "name": "Smart Folio for iPad mini (A17 Pro)",
+    "price": 6500,
+    "priceStr": "\u20b96,500",
+    "discountPercent": 15,
+    "discountPrice": 5525,
+    "displayImage": "/uploads/upload_1791368717924_796.png",
+    "image": "/uploads/upload_1791368717924_796.png",
+    "images": [
+      "/uploads/upload_1791368717924_796.png",
+      "/uploads/upload_1791368717932_399.png"
+    ],
+    "variants": [
+      {
+        "price": 6500
+      }
+    ],
+    "colors": [
+      {
+        "name": "Charcoal Gray",
+        "value": "#858C93",
+        "image": null
+      },
+      {
+        "name": "Light Violet",
+        "value": "#BD95E4",
+        "image": null
+      },
+      {
+        "name": "Denim",
+        "value": "#2D2154",
+        "image": null
+      },
+      {
+        "name": "Sage",
+        "value": "#59264B",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6aa6595c80217e93f1c7ecfa",
+    "name": "Ipad Mini",
+    "price": 49900,
+    "priceStr": "\u20b949,900",
+    "discountPercent": 0,
+    "discountPrice": 46407,
+    "displayImage": "/uploads/upload_1789705505257_689.webp",
+    "image": "/uploads/upload_1789705505257_689.webp",
+    "images": [
+      "/uploads/upload_1789705505257_689.webp",
+      "/uploads/upload_1789286582700_666.png"
+    ],
+    "variants": [
+      {
+        "price": 49900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Space Grey",
+        "value": "#535150",
+        "image": null
+      },
+      {
+        "name": "Blue",
+        "value": "#0000FF",
+        "image": null
+      },
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "image": null
+      },
+      {
+        "name": "Purple",
+        "value": "#800080",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a82af32a360c3b1628cc89b",
+    "name": "Magic Keyboard for iPad Pro 13\u2011inch (M4) - US English",
+    "price": 33900,
+    "priceStr": "\u20b933,900",
+    "discountPercent": null,
+    "discountPrice": 28815,
+    "displayImage": "/uploads/upload_1786949363009_114.jpeg",
+    "image": "/uploads/upload_1786949363009_114.jpeg",
+    "images": [
+      "/uploads/upload_1786949363009_114.jpeg",
+      "/uploads/upload_1786949367522_432.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 33900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": true
+  },
+  {
+    "id": "6a82ae14a360c3b1628cb2ea",
+    "name": "Magic Keyboard for iPad Pro 11\u2011inch (M4) - US English",
+    "price": 29900,
+    "priceStr": "\u20b929,900",
+    "discountPercent": null,
+    "discountPrice": 25415,
+    "displayImage": "/uploads/upload_1786949083968_258.jpeg",
+    "image": "/uploads/upload_1786949083968_258.jpeg",
+    "images": [
+      "/uploads/upload_1786949083968_258.jpeg",
+      "/uploads/upload_1786949087798_144.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 29900
+      }
+    ],
+    "colors": [
+      {
+        "name": "White",
+        "value": "#FFFFFF",
+        "image": null
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a82ab83a360c3b1628ca41c",
+    "name": "Magic Keyboard for iPad Air 13-inch (M3) - US English - White",
+    "price": 29900,
+    "priceStr": "\u20b929,900",
+    "discountPercent": null,
+    "discountPrice": 0,
+    "displayImage": "/uploads/upload_1786948442338_430.jpeg",
+    "image": "/uploads/upload_1786948442338_430.jpeg",
+    "images": [
+      "/uploads/upload_1786948442338_430.jpeg",
+      "/uploads/upload_1786948446343_833.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 29900
+      }
+    ],
+    "colors": [],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a82aae4a360c3b1628c9ab4",
+    "name": "Magic Keyboard for iPad Air 13-inch (M3) - US English - White",
+    "price": 29900,
+    "priceStr": "\u20b929,900",
+    "discountPercent": null,
+    "discountPrice": 15,
+    "displayImage": "/uploads/upload_1786948442338_430.jpeg",
+    "image": "/uploads/upload_1786948442338_430.jpeg",
+    "images": [
+      "/uploads/upload_1786948442338_430.jpeg",
+      "/uploads/upload_1786948446343_833.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 29900
+      }
+    ],
+    "colors": [],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a82a846a360c3b1628c9409",
+    "name": "Magic Keyboard Folio for iPad (A16) - US English",
+    "price": 24900,
+    "priceStr": "\u20b924,900",
+    "discountPercent": null,
+    "discountPrice": 0,
+    "displayImage": "/uploads/upload_1786947635976_475.jpeg",
+    "image": "/uploads/upload_1786947635976_475.jpeg",
+    "images": [
+      "/uploads/upload_1786947635976_475.jpeg",
+      "/uploads/upload_1786947639446_911.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 24900
+      }
+    ],
+    "colors": [],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a50e1e85e18f9afadeeb819",
+    "name": "13-inch iPad Air",
+    "price": 119900,
+    "priceStr": "\u20b9119,900",
+    "discountPercent": 0,
+    "discountPrice": 111507,
+    "displayImage": "/uploads/upload_1789656924909_404.webp",
+    "image": "/uploads/upload_1789656924909_404.webp",
+    "images": [
+      "/uploads/upload_1789656924909_404.webp",
+      "/uploads/upload_1783685158502_161.webp"
+    ],
+    "variants": [
+      {
+        "price": 119900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Space Gray",
+        "value": "#535150",
+        "image": null
+      },
+      {
+        "name": "Blue",
+        "value": "#0000FF",
+        "image": null
+      },
+      {
+        "name": "Purple",
+        "value": "#800080",
+        "image": null
+      },
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a50da9f5e18f9afadeeb159",
+    "name": "11-inch iPad Pro",
+    "price": 139900,
+    "priceStr": "\u20b9139,900",
+    "discountPercent": 0,
+    "discountPrice": 130107,
+    "displayImage": "/uploads/upload_1789797957146_82.webp",
+    "image": "/uploads/upload_1789797957146_82.webp",
+    "images": [
+      "/uploads/upload_1789237669136_362.png",
+      "/uploads/upload_1789237712323_215.png"
+    ],
+    "variants": [
+      {
+        "price": 139900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Space Black",
+        "value": "#1C1C1C",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a47c5c61c391419c19b4c0f",
+    "name": "Magic Keyboard for iPad Pro 11\u2011inch (M5)",
+    "price": 12000,
+    "priceStr": "\u20b912,000",
+    "discountPercent": null,
+    "discountPrice": 0,
+    "displayImage": "/uploads/upload_1783088556328_8.jpeg",
+    "image": "/uploads/upload_1783088556328_8.jpeg",
+    "images": [
+      "/uploads/upload_1783088556328_8.jpeg",
+      "/uploads/upload_1783088561332_514.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 12000
+      }
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "value": "#000000",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44ee3d4a9f2d3d8e71110d",
+    "name": "11-inch iPad",
+    "price": 49900,
+    "priceStr": "\u20b949,900",
+    "discountPercent": 0,
+    "discountPrice": 46407,
+    "displayImage": "/uploads/upload_1789705461263_222.webp",
+    "image": "/uploads/upload_1789705461263_222.webp",
+    "images": [
+      "/uploads/upload_1783685974401_367.webp",
+      "/uploads/upload_1783685982131_622.webp"
+    ],
+    "variants": [
+      {
+        "price": 49900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Blue",
+        "value": "#0000FF",
+        "image": null
+      },
+      {
+        "name": "Pink",
+        "value": "#FFC0CB",
+        "image": null
+      },
+      {
+        "name": "Yellow",
+        "value": "#FFFF00",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44ed2e4a9f2d3d8e71110c",
+    "name": "11-inch iPad Air",
+    "price": 89900,
+    "priceStr": "\u20b989,900",
+    "discountPercent": 0,
+    "discountPrice": 83607,
+    "displayImage": "/uploads/upload_1789656955665_293.webp",
+    "image": "/uploads/upload_1789656955665_293.webp",
+    "images": [
+      "/uploads/upload_1783684522941_123.webp",
+      "/uploads/upload_1783684527643_785.webp"
+    ],
+    "variants": [
+      {
+        "price": 89900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Space Gray",
+        "value": "#535150",
+        "image": null
+      },
+      {
+        "name": "Blue",
+        "value": "#0000FF",
+        "image": null
+      },
+      {
+        "name": "Purple",
+        "value": "#800080",
+        "image": null
+      },
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "image": null
+      }
+    ],
+    "rating": 0,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a437eb3345ade0885f68a58",
+    "name": "13-inch iPad Pro",
+    "price": 199900,
+    "priceStr": "\u20b9199,900",
+    "discountPercent": 0,
+    "discountPrice": 185907,
+    "displayImage": "/uploads/upload_1789797931512_836.webp",
+    "image": "/uploads/upload_1789797931512_836.webp",
+    "images": [
+      "/uploads/upload_1783683288480_510.webp",
+      "/uploads/upload_1783683292438_111.webp"
+    ],
+    "variants": [
+      {
+        "price": 199900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Space Black",
+        "value": "#1C1C1C",
+        "image": null
+      },
+      {
+        "name": "Silver",
+        "value": "#C0C0C0",
+        "image": null
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  }
+];
+
+const getCachedIpadProducts = () => {
+  try {
+    const cached = sessionStorage.getItem('iincept_cached_ipad_products');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_IPAD_PRODUCTS;
 };
 
 export default function Ipad() {
@@ -728,7 +1528,15 @@ export default function Ipad() {
     };
   });
 
-  const combinedProducts = dbIpads;
+  const combinedProducts = dbIpads.length > 0 ? dbIpads : getCachedIpadProducts();
+
+  useEffect(() => {
+    if (dbIpads.length > 0) {
+      try {
+        sessionStorage.setItem('iincept_cached_ipad_products', JSON.stringify(dbIpads));
+      } catch (e) {}
+    }
+  }, [dbIpads]);
 
   const getIpadSequenceRank = (productName) => {
     const name = (productName || '').toLowerCase();
@@ -785,7 +1593,7 @@ export default function Ipad() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none relative">
 
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3">
@@ -817,10 +1625,12 @@ export default function Ipad() {
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
+                      loading="eager"
+                      decoding="async"
                       onError={(e) => {
                         const lower = (item.name || '').toLowerCase();
                         if (lower.includes('care')) {
-                          e.currentTarget.src = '/applecare_official_hero.png';
+                          e.currentTarget.src = '/uploads/upload_1792413070647_667.png';
                         } else {
                           e.currentTarget.src = '/ipad_nav/ipad.png';
                         }
@@ -849,7 +1659,7 @@ export default function Ipad() {
 
         if (isAppleCareActive) {
           return (
-            <div className="max-w-7xl mx-auto my-6 animate-in fade-in duration-300">
+            <div className="max-w-7xl mx-auto my-6">
               <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
                 {/* Header section */}
                 <div className="border-b border-zinc-100 pb-5 mb-6">

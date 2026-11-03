@@ -1223,7 +1223,6 @@ export default function Navbar() {
   };
 
   const defaultMenuItems = [
-    { label: 'New Arrivals', path: '/accessories' },
     { label: 'Mac', path: '/macbook' },
     { label: 'iPad', path: '/ipad' },
     { label: 'iPhone', path: '/iphone' },

@@ -6,9 +6,10 @@ export const adminLoginUser = createAsyncThunk(
   'adminAuth/loginUser',
   async ({ email, password }, thunkAPI) => {
     try {
+      const ident = (email || '').trim();
       const response = await axiosClient.post(
         '/auth/login',
-        { email, password },
+        { email: ident, username: ident, password },
         { useAdminAuth: true }
       );
       const data = response.data;

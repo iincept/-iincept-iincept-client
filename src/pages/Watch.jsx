@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ChevronLeft, ChevronRight, ShieldCheck, Wrench, Headphones, Check } from 'lucide-react';
@@ -17,105 +17,81 @@ import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 // Default Watch AppleCare rows fallback
 const DEFAULT_WATCH_APPLECARE_ROWS = [
   { 
-    model: 'Apple Watch SE', 
-    title: 'AppleCare+ for Apple Watch SE', 
-    description: 'Apple-certified coverage for Apple Watch SE with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for Apple Watch SE with accidental damage protection.',
-    description2yr: '2 Years Apple-certified coverage for Apple Watch SE with accidental damage protection.',
-    sku: 'AC-WATCH-SE', 
-    sku1yr: 'AC-WATCH-SE-1YR',
-    sku2yr: 'AC-WATCH-SE-2YR',
-    mrp: '₹5,900.00', 
-    mrp1yr: '₹3,900.00',
-    mrp2yr: '₹5,900.00',
-    discount: '16% OFF', 
-    discount1yr: '10% OFF',
-    discount2yr: '16% OFF',
-    salePrice: '₹4,900.00', 
-    salePrice1yr: '₹3,510.00',
-    salePrice2yr: '₹4,900.00',
-    monthly: '₹249.00', 
-    yearly: '₹4,900.00', 
-    image: '/watch_nav/apple_watch_se.png', 
-    isActive: true 
-  },
-  { 
     model: 'Apple Watch SE 3', 
-    title: 'AppleCare+ for Apple Watch SE 3 (40mm & 44mm)', 
-    description: 'Apple-certified coverage for Apple Watch SE 3 with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for Apple Watch SE 3 with accidental damage protection.',
-    description2yr: '2 Years Apple-certified coverage for Apple Watch SE 3 with accidental damage protection.',
-    sku: 'AC-WATCH-SE3', 
-    sku1yr: 'AC-WATCH-SE3-1YR',
-    sku2yr: 'AC-WATCH-SE3-2YR',
-    mrp: '₹5,900.00', 
-    mrp1yr: '₹3,900.00',
-    mrp2yr: '₹5,900.00',
-    discount: '16% OFF', 
-    discount1yr: '10% OFF',
-    discount2yr: '16% OFF',
-    salePrice: '₹4,900.00', 
-    salePrice1yr: '₹3,510.00',
-    salePrice2yr: '₹4,900.00',
+    title: 'AppleCare+ for Apple Watch SE 3', 
+    description: '2 Years Apple-certified coverage for Apple Watch SE', 
+    description1yr: '1 Year Apple-certified coverage for Apple Watch SE 3',
+    description2yr: '2 Years Apple-certified coverage for Apple Watch SE',
+    sku: 'SXHW2HN/A', 
+    sku1yr: 'DFLL2HN/A',
+    sku2yr: 'SXHW2HN/A',
+    mrp: '₹5,590.00', 
+    mrp1yr: '₹2,799.00',
+    mrp2yr: '₹5,590.00',
+    discount: '18% OFF', 
+    discount1yr: '18% OFF',
+    discount2yr: '18% OFF',
+    salePrice: '₹4,584.00', 
+    salePrice1yr: '₹2,295.00',
+    salePrice2yr: '₹4,584.00',
     monthly: '₹249.00', 
-    yearly: '₹4,900.00', 
-    image: '/watch_nav/apple_watch_se.png', 
+    yearly: '₹4,584.00', 
+    image: '/uploads/upload_1789377186182_249.jpeg', 
     isActive: true 
   },
   { 
-    model: 'Apple Watch Series 10', 
-    title: 'AppleCare+ for Apple Watch Series 10', 
-    description: 'Apple-certified coverage for Apple Watch Series 10 with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for Apple Watch Series 10 with accidental damage protection.',
-    description2yr: '2 Years Apple-certified coverage for Apple Watch Series 10 with accidental damage protection.',
-    sku: 'AC-WATCH-S10', 
-    sku1yr: 'AC-WATCH-S10-1YR',
-    sku2yr: 'AC-WATCH-S10-2YR',
-    mrp: '₹8,900.00', 
-    mrp1yr: '₹5,900.00',
-    mrp2yr: '₹8,900.00',
-    discount: '12% OFF', 
-    discount1yr: '10% OFF',
-    discount2yr: '12% OFF',
-    salePrice: '₹7,900.00', 
-    salePrice1yr: '₹5,310.00',
-    salePrice2yr: '₹7,900.00',
+    model: 'Apple Watch Ultra 4', 
+    title: 'AppleCare+ for Apple Watch Ultra 4', 
+    description: '2 Years Apple-certified coverage for Apple Watch Ultra 4', 
+    description1yr: '1 Year Apple-certified coverage for Apple Watch Ultra 4',
+    description2yr: '2 Years Apple-certified coverage for Apple Watch Ultra 4',
+    sku: 'SH1E3HN/A', 
+    sku1yr: 'DHGL2HN/A',
+    sku2yr: 'SH1E3HN/A',
+    mrp: '₹10,990.00', 
+    mrp1yr: '₹5,499.00',
+    mrp2yr: '₹10,990.00',
+    discount: '18% OFF', 
+    discount1yr: '18% OFF',
+    discount2yr: '18% OFF',
+    salePrice: '₹9,012.00', 
+    salePrice1yr: '₹4,509.00',
+    salePrice2yr: '₹9,012.00',
     monthly: '₹399.00', 
-    yearly: '₹7,900.00', 
-    image: '/watch_nav/apple_watch_s10.png', 
+    yearly: '₹9,012.00', 
+    image: '/uploads/upload_1789377193163_963.jpeg', 
     isActive: true 
   },
   { 
-    model: 'Apple Watch Ultra 2', 
-    title: 'AppleCare+ for Apple Watch Ultra 2', 
-    description: 'Apple-certified coverage for Apple Watch Ultra 2 with accidental damage protection.', 
-    description1yr: '1 Year Apple-certified coverage for Apple Watch Ultra 2 with accidental damage protection.',
-    description2yr: '2 Years Apple-certified coverage for Apple Watch Ultra 2 with accidental damage protection.',
-    sku: 'AC-WATCH-ULTRA', 
-    sku1yr: 'AC-WATCH-ULTRA-1YR',
-    sku2yr: 'AC-WATCH-ULTRA-2YR',
-    mrp: '₹11,900.00', 
-    mrp1yr: '₹7,900.00',
-    mrp2yr: '₹11,900.00',
-    discount: '16% OFF', 
-    discount1yr: '10% OFF',
-    discount2yr: '16% OFF',
-    salePrice: '₹9,900.00', 
-    salePrice1yr: '₹7,110.00',
-    salePrice2yr: '₹9,900.00',
+    model: 'Apple Watch Series 12', 
+    title: 'AppleCare+ for Apple Watch Series 12', 
+    description: '2 Years Apple-certified coverage for Apple Watch Series 12', 
+    description1yr: '1 Year Apple-certified coverage for Apple Watch Series 12',
+    description2yr: '2 Years Apple-certified coverage for Apple Watch Series 12',
+    sku: 'SH0G3HN/A', 
+    sku1yr: 'DHGJ2HN/A',
+    sku2yr: 'SH0G3HN/A',
+    mrp: '₹8,990.00', 
+    mrp1yr: '₹4,499.00',
+    mrp2yr: '₹8,990.00',
+    discount: '18% OFF', 
+    discount1yr: '18% OFF',
+    discount2yr: '18% OFF',
+    salePrice: '₹7,372.00', 
+    salePrice1yr: '₹3,689.00',
+    salePrice2yr: '₹7,372.00',
     monthly: '₹499.00', 
-    yearly: '₹9,900.00', 
-    image: '/watch_nav/apple_watch_ultra.png', 
+    yearly: '₹7,372.00', 
+    image: '/uploads/upload_1789377199517_322.jpeg', 
     isActive: true 
   }
 ];
 
 const WATCH_SUB_NAV_ITEMS = [
-  { name: 'Apple Watch Series 11', query: 'Series', image: '/watch_nav/watch_series_10.png', scale: 'scale-100' },
-  { name: 'Apple Watch Ultra 3', query: 'Ultra', image: '/watch_nav/watch_ultra_2.png', scale: 'scale-100' },
-  { name: 'Apple Watch SE 3', query: 'SE', image: '/watch_nav/watch_se.png', scale: 'scale-95' },
-  { name: 'AppleCare+', path: '/watch?tab=applecare', image: '/applecare_official_hero.png', scale: 'scale-100' },
-  { name: 'Compare', path: '/compare?category=watch', image: '/watch_nav/watch_compare.png', scale: 'scale-100' }
+  { name: 'Apple Watch Series 12', query: 'New Watch Model', path: '/watch?search=Apple Watch Series 12', image: '/watch_nav/nav_s12.png', scale: 'scale-100' },
+  { name: 'Apple Watch Ultra 4', query: 'New Watch Model', path: '/watch?search= Apple Watch Ultra 4', image: '/watch_nav/nav_ultra4.png', scale: 'scale-100' },
+  { name: 'Apple Watch SE 3', query: 'New Watch Model', path: '/watch?search=Apple Watch SE 3', image: '/watch_nav/nav_se3.png', scale: 'scale-95' },
+  { name: 'AppleCare +', query: 'New Watch Model', path: '/watch?tab=applecare', image: '/uploads/upload_1792413080706_797.png', scale: 'scale-100' }
 ];
 
 const resolveSubItemPath = (item) => {
@@ -146,9 +122,9 @@ const ensureAppleCareInSubItems = (items = []) => {
   let careItem = items.find(item => (item.name || item.label || '').toLowerCase().includes('care'));
   if (!careItem) {
     careItem = {
-      name: 'AppleCare+',
+      name: 'AppleCare +',
       path: '/watch?tab=applecare',
-      image: '/applecare_official_hero.png',
+      image: '/uploads/upload_1792413080706_797.png',
       scale: 'scale-100'
     };
   }
@@ -188,9 +164,12 @@ const resolveIconImage = (img, label) => {
     return clean;
   }
   const lblLower = (label || '').toLowerCase().trim();
-  if (lblLower.includes('care')) return '/applecare_official_hero.png';
-  const matched = WATCH_SUB_NAV_ITEMS.find(m => m.name.toLowerCase().trim() === lblLower);
-  return matched?.image || '/watch_nav/watch_series_10.png';
+  if (lblLower.includes('care')) return '/uploads/upload_1792413080706_797.png';
+  if (lblLower.includes('ultra')) return '/watch_nav/nav_ultra4.png';
+  if (lblLower.includes('se')) return '/watch_nav/nav_se3.png';
+  if (lblLower.includes('series') || lblLower.includes('12') || lblLower.includes('11') || lblLower.includes('10')) return '/watch_nav/nav_s12.png';
+  const matched = WATCH_SUB_NAV_ITEMS.find(m => (m.name || '').toLowerCase().trim() === lblLower);
+  return matched?.image || '/watch_nav/nav_s12.png';
 };
 
 const getModelImageByName = (modelName = '') => {
@@ -340,6 +319,512 @@ const WatchAppleCareSkeleton = () => {
       </div>
     </div>
   );
+};
+
+const DEFAULT_WATCH_PRODUCTS = [
+  {
+    "id": "6ab3cda98305b630943d282e",
+    "name": "Apple Watch Ultra 4 (Black Titanium )",
+    "price": 124900,
+    "priceStr": "₹1,24,900",
+    "discountPercent": 0,
+    "discountPrice": 118655,
+    "displayImage": "/uploads/upload_1790168315027_392.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790168315027_392.jpeg",
+    "images": [
+      "/uploads/upload_1790168315027_392.jpeg",
+      "/uploads/upload_1790168319147_609.jpeg",
+      "/uploads/upload_1790168382440_450.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 124900
+      },
+      {
+        "price": 124900
+      },
+      {
+        "price": 124900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab3d0468305b630943d7977",
+    "name": "Apple Watch Ultra 4 (Burgundy )",
+    "price": 109900,
+    "priceStr": "₹1,09,900",
+    "discountPercent": 0,
+    "discountPrice": 104405,
+    "displayImage": "/uploads/upload_1790168807358_847.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790168807358_847.jpeg",
+    "images": [
+      "/uploads/upload_1790168807358_847.jpeg",
+      "/uploads/upload_1790168904423_746.jpeg",
+      "/uploads/upload_1790168904433_124.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 109900
+      },
+      {
+        "price": 109900
+      },
+      {
+        "price": 109900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Black Titanium Case Burgundy",
+        "value": "#761930",
+        "colorHex": "#761930"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6aa6a5aea5526916893be006",
+    "name": "Apple Watch Ultra 4 (Natural Titanium )",
+    "price": 109900,
+    "priceStr": "₹1,09,900",
+    "discountPercent": 0,
+    "discountPrice": 118655,
+    "displayImage": "/uploads/upload_1789705670469_516.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1789705670469_516.jpeg",
+    "images": [
+      "/uploads/upload_1789705670469_516.jpeg",
+      "/uploads/upload_1790079080696_44.png",
+      "/uploads/upload_1790079110704_735.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 124900
+      },
+      {
+        "price": 124900
+      },
+      {
+        "price": 124900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000"
+      },
+      {
+        "name": "Natural",
+        "value": "#613989",
+        "colorHex": "#613989"
+      },
+      {
+        "name": "Natural(Desert)",
+        "value": "#A86338",
+        "colorHex": "#A86338"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab3b6028305b630943c3d54",
+    "name": "Apple Watch Series 12 (Ceramic)",
+    "price": 124900,
+    "priceStr": "₹1,24,900",
+    "discountPercent": 0,
+    "discountPrice": 118655,
+    "displayImage": "/uploads/upload_1790169215903_227.png",
+    "colorImages": {},
+    "image": "/uploads/upload_1790169215903_227.png",
+    "images": [
+      "/uploads/upload_1790169215903_227.png",
+      "/uploads/upload_1790161840977_356.jpeg",
+      "/uploads/upload_1790162167973_471.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 124900
+      },
+      {
+        "price": 124900
+      },
+      {
+        "price": 124900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Pearl White",
+        "value": "#F5F5F5",
+        "colorHex": "#F5F5F5"
+      },
+      {
+        "name": "Night Blue",
+        "value": "#1D73ED",
+        "colorHex": "#1D73ED"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab3b2928305b630943bf6ee",
+    "name": "Apple Watch Series 12 (  Titanium )",
+    "price": 99900,
+    "priceStr": "₹99,900",
+    "discountPercent": 0,
+    "discountPrice": 94905,
+    "displayImage": "/uploads/upload_1790169285337_311.webp",
+    "colorImages": {},
+    "image": "/uploads/upload_1790169285337_311.webp",
+    "images": [
+      "/uploads/upload_1790169285337_311.webp",
+      "/uploads/upload_1790159749641_902.jpeg",
+      "/uploads/upload_1790160064062_128.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 99900
+      },
+      {
+        "price": 99900
+      },
+      {
+        "price": 104900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Natural",
+        "value": "#613989",
+        "colorHex": "#613989"
+      },
+      {
+        "name": "Radiant Gold",
+        "value": "#EEBD2B",
+        "colorHex": "#EEBD2B"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab9feb1593852438850ecd0",
+    "name": "Apple Watch Series 12 (Dark Bronze Aluminium )",
+    "price": 73900,
+    "priceStr": "₹73,900",
+    "discountPercent": 5,
+    "discountPrice": 70205,
+    "displayImage": "/uploads/upload_1790574100817_837.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790574100817_837.jpeg",
+    "images": [
+      "/uploads/upload_1790574100817_837.jpeg",
+      "/uploads/upload_1790574242876_218.jpeg",
+      "/uploads/upload_1790574242883_746.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 79900
+      },
+      {
+        "price": 79900
+      },
+      {
+        "price": 73900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Dark Bronze Aluminium",
+        "value": "#6F4C1B",
+        "colorHex": "#6F4C1B"
+      },
+      {
+        "name": "Dark Bronze Aluminium",
+        "value": "#6F4C1B",
+        "colorHex": "#6F4C1B"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab9fe07593852438850eaaf",
+    "name": "Apple Watch Series 12 (Dark Bronze Aluminium )",
+    "price": 67900,
+    "priceStr": "₹67,900",
+    "discountPercent": 5,
+    "discountPrice": 64505,
+    "displayImage": "/uploads/upload_1790574040965_527.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790574040965_527.jpeg",
+    "images": [
+      "/uploads/upload_1790574040965_527.jpeg",
+      "/uploads/upload_1790574040970_640.jpeg",
+      "/uploads/upload_1790574040980_768.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 67900
+      },
+      {
+        "price": 67900
+      },
+      {
+        "price": 73900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Dark Bronze",
+        "value": "#6F4C1B",
+        "colorHex": "#6F4C1B"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab37d0a04c4572f8814616f",
+    "name": "Apple Watch Series 12 (Aluminium)",
+    "price": 56900,
+    "priceStr": "₹56,900",
+    "discountPercent": 0,
+    "discountPrice": 54055,
+    "displayImage": "/uploads/upload_1790147769186_399.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790147769186_399.jpeg",
+    "images": [
+      "/uploads/upload_1790147769186_399.jpeg",
+      "/uploads/upload_1790147845380_75.jpeg",
+      "/uploads/upload_1790148708260_598.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 56900
+      },
+      {
+        "price": 56900
+      },
+      {
+        "price": 56900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Space Grey",
+        "value": "#535150",
+        "colorHex": "#535150"
+      },
+      {
+        "name": "Black",
+        "value": "#000000",
+        "colorHex": "#000000"
+      },
+      {
+        "name": "Light Gold",
+        "value": "#EAD390",
+        "colorHex": "#EAD390"
+      },
+      {
+        "name": "Dark Bronze",
+        "value": "#6F4C1B",
+        "colorHex": "#6F4C1B"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab9406d5e19e743223ce49f",
+    "name": "Apple Watch SE 3",
+    "price": 39900,
+    "priceStr": "₹39,900",
+    "discountPercent": 5,
+    "discountPrice": 37905,
+    "displayImage": "/uploads/upload_1790525257575_167.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790525257575_167.jpeg",
+    "images": [
+      "/uploads/upload_1790525257575_167.jpeg",
+      "/uploads/upload_1790525513603_300.jpeg",
+      "/uploads/upload_1790525513605_474.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 39900
+      },
+      {
+        "price": 39900
+      },
+      {
+        "price": 39900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "colorHex": "#F5F5F4"
+      },
+      {
+        "name": "Midnight",
+        "value": "#191F26",
+        "colorHex": "#191F26"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab93f1a5e19e743223cb915",
+    "name": "Apple Watch SE 3",
+    "price": 35900,
+    "priceStr": "₹35,900",
+    "discountPercent": 5,
+    "discountPrice": 34105,
+    "displayImage": "/uploads/upload_1790525172014_649.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790525172014_649.jpeg",
+    "images": [
+      "/uploads/upload_1790525172014_649.jpeg",
+      "/uploads/upload_1790525172016_265.jpeg",
+      "/uploads/upload_1790525179437_587.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 35900
+      },
+      {
+        "price": 35900
+      },
+      {
+        "price": 35900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "colorHex": "#F5F5F4"
+      },
+      {
+        "name": "Midnight",
+        "value": "#191F26",
+        "colorHex": "#191F26"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6ab93dd25e19e743223c7f5f",
+    "name": "Apple Watch SE 3",
+    "price": 33900,
+    "priceStr": "₹33,900",
+    "discountPercent": 5,
+    "discountPrice": 32205,
+    "displayImage": "/uploads/upload_1790524804321_809.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1790524804321_809.jpeg",
+    "images": [
+      "/uploads/upload_1790524804321_809.jpeg",
+      "/uploads/upload_1790524807088_380.jpeg",
+      "/uploads/upload_1790524810750_371.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 33900
+      },
+      {
+        "price": 33900
+      },
+      {
+        "price": 33900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "colorHex": "#F5F5F4"
+      },
+      {
+        "name": "Midnight",
+        "value": "#191F26",
+        "colorHex": "#191F26"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  },
+  {
+    "id": "6a44fd914a9f2d3d8e711110",
+    "name": "Apple Watch SE 3",
+    "price": 29900,
+    "priceStr": "₹29,900",
+    "discountPercent": 0,
+    "discountPrice": 28405,
+    "displayImage": "/uploads/upload_1789705760290_329.jpeg",
+    "colorImages": {},
+    "image": "/uploads/upload_1789705760290_329.jpeg",
+    "images": [
+      "/uploads/upload_1789705760290_329.jpeg",
+      "/uploads/upload_1787124361054_200.png",
+      "/uploads/upload_1787124427198_359.jpeg"
+    ],
+    "variants": [
+      {
+        "price": 29900
+      },
+      {
+        "price": 29900
+      },
+      {
+        "price": 29900
+      }
+    ],
+    "colors": [
+      {
+        "name": "Midnight",
+        "value": "#191F26",
+        "colorHex": "#191F26"
+      },
+      {
+        "name": "Starlight",
+        "value": "#F5F5F4",
+        "colorHex": "#F5F5F4"
+      }
+    ],
+    "rating": 5,
+    "isSoldOut": false
+  }
+];
+
+const getCachedWatchProducts = () => {
+  try {
+    const cached = sessionStorage.getItem('iincept_cached_watch_products');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_WATCH_PRODUCTS;
 };
 
 export default function Watch() {
@@ -715,55 +1200,86 @@ export default function Watch() {
     return null;
   };
 
-  const dbWatches = products.filter(p => {
-    const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
-    const catSlug = (p.category?.slug || '').toLowerCase();
-    const pTitle = (p.title || p.name || '').toLowerCase();
+  const dbWatches = useMemo(() => {
+    return products.filter(p => {
+      const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
+      const catSlug = (p.category?.slug || '').toLowerCase();
+      const pTitle = (p.title || p.name || '').toLowerCase();
 
-    // Exclude non-watch products and standalone cables/adapters
-    const nonWatchKeywords = ['macbook', 'imac', 'mac mini', 'mac studio', 'ipad', 'iphone', 'airpod', 'headphone', 'cable', 'charger', 'adapter'];
-    if (nonWatchKeywords.some(kw => pTitle.includes(kw))) {
-      return false;
+      // Exclude non-watch products and standalone cables/adapters
+      const nonWatchKeywords = [
+        'macbook', 'imac', 'mac mini', 'mac studio', 'mac pro',
+        'ipad', 'iphone', 'airpod', 'headphone', 'cable', 'charger',
+        'adapter', 'beats', 'cushion', 'ear cup'
+      ];
+      if (nonWatchKeywords.some(kw => pTitle.includes(kw))) {
+        return false;
+      }
+
+      const isCategoryMatch = catName === 'watch' || catName === 'watches' || catSlug === 'watch' || catSlug === 'watches' || catName.includes('watch') || catName.includes('wearable');
+      const isTitleMatch = pTitle.includes('watch') || /^apple\s*watch/i.test(pTitle);
+
+      return isCategoryMatch || isTitleMatch;
+    }).map(p => {
+      const firstImg = extractFirstValidImage(p);
+      const primaryImg = p.displayImage || (p.images && p.images[0]) || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : '/watch_category.jpg');
+      return {
+        id: p._id || p.id,
+        name: p.title || p.name,
+        price: p.price,
+        priceStr: `₹${p.price.toLocaleString('en-IN')}`,
+        discountPercent: p.discountPercent || 0,
+        discountPrice: p.discountPrice || 0,
+        displayImage: primaryImg,
+        colorImages: p.colorImages || {},
+        image: primaryImg,
+        images: (p.images && p.images.length > 0) ? p.images : [primaryImg],
+        variants: p.variants || [],
+        colors: Array.isArray(p.colors) ? p.colors.map(c => {
+          const name = typeof c === 'string' ? c : (c.name || '');
+          const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
+          const resolved = resolveColorValue(val);
+          return { name, value: resolved, colorHex: resolved };
+        }) : [],
+        rating: p.rating || 5.0,
+        isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false
+      };
+    });
+  }, [products]);
+
+  const combinedProducts = useMemo(() => {
+    if (dbWatches.length > 0) return dbWatches;
+    return getCachedWatchProducts();
+  }, [dbWatches]);
+
+  useEffect(() => {
+    if (dbWatches.length > 0) {
+      try {
+        sessionStorage.setItem('iincept_cached_watch_products', JSON.stringify(dbWatches));
+      } catch (e) {}
     }
+  }, [dbWatches]);
 
-    const isCategoryMatch = catName === 'watch' || catName === 'watches' || catSlug === 'watch' || catSlug === 'watches' || catName.includes('watch') || catName.includes('wearable');
-    const isTitleMatch = pTitle.includes('watch') || pTitle.includes('series') || pTitle.includes('ultra');
+  const getWatchSequenceRank = (productName) => {
+    const name = (productName || '').toLowerCase();
+    if (name.includes('ultra')) return 0;
+    if (name.includes('series 12') || name.includes('series')) return 1;
+    if (name.includes('se 3') || name.includes('se')) return 2;
+    return 3;
+  };
 
-    return isCategoryMatch || isTitleMatch;
-  }).map(p => {
-    const firstImg = extractFirstValidImage(p);
-    const isValidImg = !!firstImg;
-    return {
-      id: p._id || p.id,
-      name: p.title || p.name,
-      price: p.price,
-      priceStr: `₹${p.price.toLocaleString('en-IN')}`,
-      discountPercent: p.discountPercent,
-      discountPrice: p.discountPrice,
-      displayImage: p.displayImage || '',
-      colorImages: p.colorImages || {},
-      image: p.displayImage || (isValidImg ? firstImg : '/watch_category.jpg'),
-      images: p.images || [],
-      variants: p.variants || [],
-      colors: Array.isArray(p.colors) ? p.colors.map(c => {
-        const name = typeof c === 'string' ? c : (c.name || '');
-        const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
-        const resolved = resolveColorValue(val);
-        return { name, value: resolved, colorHex: resolved };
-      }) : [],
-      rating: p.rating || 5.0,
-      isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false
-    };
-  });
+  const sortedProducts = useMemo(() => {
+    return [...combinedProducts].sort((a, b) => {
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'rating') return b.rating - a.rating;
 
-  const combinedProducts = dbWatches;
-
-  const sortedProducts = [...combinedProducts].sort((a, b) => {
-    if (sortBy === 'price-asc') return a.price - b.price;
-    if (sortBy === 'price-desc') return b.price - a.price;
-    if (sortBy === 'rating') return b.rating - a.rating;
-    return 0;
-  });
+      const rA = getWatchSequenceRank(a.name || a.title);
+      const rB = getWatchSequenceRank(b.name || b.title);
+      if (rA !== rB) return rA - rB;
+      return b.price - a.price;
+    });
+  }, [combinedProducts, sortBy]);
 
   const filteredProducts = sortedProducts.filter((prod) => {
     const search = searchParams.get('search') || '';
@@ -777,7 +1293,7 @@ export default function Watch() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none animate-in fade-in duration-300 relative">
+    <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 select-none relative">
       
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3">
@@ -809,12 +1325,14 @@ export default function Watch() {
                     <img
                       src={resolveIconImage(item.image, item.name)}
                       alt={item.name}
+                      loading="eager"
+                      decoding="async"
                       onError={(e) => {
                         const lower = (item.name || '').toLowerCase();
                         if (lower.includes('care')) {
-                          e.currentTarget.src = '/applecare_official_hero.png';
+                          e.currentTarget.src = '/uploads/upload_1792413080706_797.png';
                         } else {
-                          e.currentTarget.src = '/watch_nav/watch_series_10.png';
+                          e.currentTarget.src = '/watch_nav/nav_s12.png';
                         }
                       }}
                       className={`max-h-full max-w-full object-contain transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1 ${
@@ -845,7 +1363,7 @@ export default function Watch() {
           }
 
           return (
-            <div className="max-w-7xl mx-auto my-6 animate-in fade-in duration-300">
+            <div className="max-w-7xl mx-auto my-6">
               <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-zinc-200/60 overflow-hidden shadow-xs p-6 sm:p-10 text-left">
                 {/* Header section with Global Duration Selector */}
                 <div className="border-b border-zinc-100 pb-4 mb-4 text-center">
