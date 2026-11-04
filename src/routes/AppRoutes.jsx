@@ -63,6 +63,13 @@ const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('../pages/TermsOfService'));
 const BulkOrders = lazy(() => import('../pages/BulkOrders'));
 const Compare = lazy(() => import('../pages/Compare'));
+const Orders = lazy(() => import('../pages/Orders'));
+const OrderDetails = lazy(() => import('../pages/OrderDetails'));
+const Profile = lazy(() => import('../pages/Profile'));
+const ResetPassword = lazy(() => import('../pages/ResetPassword'));
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
+const Login = lazy(() => import('../pages/Login'));
+const Signup = lazy(() => import('../pages/Signup'));
 
 const SuspenseWrapper = ({ children, message = 'Loading content...' }) => (
   <Suspense fallback={<Loader fullscreen={false} message={message} />}>
@@ -98,9 +105,68 @@ const router = createBrowserRouter([
       { path: 'product/:id', element: <ProductDetails /> },
       { path: 'cart', element: <Cart /> },
       { path: 'checkout', element: <Checkout /> },
-      { path: 'profile', element: <Navigate to="/" replace /> },
-      { path: 'orders', element: <Navigate to="/" replace /> },
-      { path: 'orders/:id', element: <Navigate to="/" replace /> },
+      {
+        path: 'profile',
+        element: (
+          <ProtectedRoute>
+            <SuspenseWrapper message="Loading Profile...">
+              <Profile />
+            </SuspenseWrapper>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'orders',
+        element: (
+          <ProtectedRoute>
+            <SuspenseWrapper message="Loading Orders...">
+              <Orders />
+            </SuspenseWrapper>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'orders/:id',
+        element: (
+          <ProtectedRoute>
+            <SuspenseWrapper message="Loading Order Details...">
+              <OrderDetails />
+            </SuspenseWrapper>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'reset-password',
+        element: (
+          <SuspenseWrapper message="Loading Password Reset...">
+            <ResetPassword />
+          </SuspenseWrapper>
+        )
+      },
+      {
+        path: 'forgot-password',
+        element: (
+          <SuspenseWrapper message="Loading Forgot Password...">
+            <ForgotPassword />
+          </SuspenseWrapper>
+        )
+      },
+      {
+        path: 'login',
+        element: (
+          <SuspenseWrapper message="Loading Sign In...">
+            <Login />
+          </SuspenseWrapper>
+        )
+      },
+      {
+        path: 'signup',
+        element: (
+          <SuspenseWrapper message="Loading Sign Up...">
+            <Signup />
+          </SuspenseWrapper>
+        )
+      },
       { path: 'addresses', element: <Navigate to="/checkout" replace /> },
       {
         path: 'wishlist',
@@ -173,10 +239,6 @@ const router = createBrowserRouter([
       { path: 'sales-report', element: <SuspenseWrapper><AdminSalesReport /></SuspenseWrapper> }
     ]
   },
-  { path: '/login', element: <Navigate to="/" replace /> },
-  { path: '/signup', element: <Navigate to="/" replace /> },
-  { path: '/forgot-password', element: <Navigate to="/" replace /> },
-  { path: '/reset-password', element: <Navigate to="/" replace /> },
   { path: '*', element: <NotFound /> }
 ]);
 

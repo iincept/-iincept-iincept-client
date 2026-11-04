@@ -98,7 +98,7 @@ export default function ReturnsRefundPolicy() {
             </h2>
             <ol className="list-decimal pl-5 space-y-2 text-zinc-600 text-xs sm:text-sm">
               <li>
-                <strong>Submit Request:</strong> Contact our dedicated desk via WhatsApp at <a href="https://wa.me/918607222417" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline">+91 86072 22417</a> or email support with your Order ID and photo/video proof.
+                <strong>Submit Request:</strong> Contact our dedicated desk via WhatsApp at <a href="https://wa.me/919971002348" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline">+91 99710 02348</a> or email support with your Order ID and photo/video proof.
               </li>
               <li>
                 <strong>Reverse Pickup:</strong> Upon ticket approval, our logistics team will arrange a reverse pickup from your registered address at zero cost.
@@ -131,7 +131,7 @@ export default function ReturnsRefundPolicy() {
             <p className="text-xs text-zinc-400">Reach out to our customer resolution desk directly on WhatsApp.</p>
           </div>
           <a
-            href="https://wa.me/918607222417?text=Hi%20iincept,%20I%20want%20to%20request%20a%20return/replacement."
+            href="https://wa.me/919971002348?text=Hi%20iincept,%20I%20want%20to%20request%20a%20return/replacement."
             target="_blank"
             rel="noopener noreferrer"
             className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all shrink-0"

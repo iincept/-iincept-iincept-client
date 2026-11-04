@@ -1596,6 +1596,21 @@ export default function Navbar() {
                 <Search className="h-5 w-5 stroke-[2]" />
               </button>
 
+              {/* Account / Profile Link */}
+              <Link
+                to={isAuthenticated || user ? "/profile" : "/login"}
+                onClick={closeAllDropdowns}
+                onMouseEnter={() => {
+                  clearAllTimeouts();
+                  closeAllDropdowns();
+                }}
+                className="p-1.5 rounded-full transition-colors cursor-pointer bg-transparent border-0 hover:text-black hover:bg-zinc-100 text-zinc-800"
+                aria-label={isAuthenticated || user ? "My Account" : "Sign In"}
+                title={isAuthenticated || user ? `Account (${user?.name || 'Customer'})` : "Sign In"}
+              >
+                <User className="h-5 w-5 stroke-[2]" />
+              </Link>
+
               {/* Cart Icon with Always-Visible Red Count Badge (Matching Image 2 / iTech style) */}
               <button
                 onClick={() => {
@@ -2060,6 +2075,27 @@ export default function Navbar() {
                     </Link>
                   );
                 })}
+
+                <div className="pt-4 mt-4 border-t border-zinc-200">
+                  <Link
+                    to={isAuthenticated || user ? "/profile" : "/login"}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 text-[18px] font-semibold text-zinc-900 hover:text-blue-600 transition-colors py-2"
+                  >
+                    <User className="h-5 w-5" />
+                    <span>{isAuthenticated || user ? (user?.name ? `Account (${user.name})` : "My Account") : "Sign In / Register"}</span>
+                  </Link>
+                  {isAuthenticated || user ? (
+                    <Link
+                      to="/orders"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 text-[16px] font-medium text-zinc-600 hover:text-blue-600 transition-colors py-2 pl-8"
+                    >
+                      <Package className="h-4 w-4" />
+                      <span>My Orders</span>
+                    </Link>
+                  ) : null}
+                </div>
               </nav>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { placeNewOrder } from '../redux/orderSlice';
 import { clearCart } from '../redux/cartSlice';
 import axiosClient from '../services/axiosClient';
 import Loader from '../components/Loader';
+import { generateSecureRandomPassword } from '../utils/cryptoUtils';
 
 export default function Checkout() {
   const dispatch = useDispatch();
@@ -199,33 +200,35 @@ export default function Checkout() {
     return message;
   };
 
+  const ensureUserAuthenticated = async (addressData) => {
+    let token = localStorage.getItem('token');
+    if (!token && addressData?.email) {
+      const guestEmail = addressData.email.toLowerCase().trim();
+      const guestName = addressData.fullName || 'Guest Customer';
+      const guestPassword = generateSecureRandomPassword(32);
+      try {
+        const regRes = await axiosClient.post('/auth/register', {
+          name: guestName,
+          email: guestEmail,
+          password: guestPassword
+        });
+        if (regRes.data?.token) {
+          token = regRes.data.token;
+          localStorage.setItem('token', token);
+          localStorage.setItem('user', JSON.stringify(regRes.data));
+          dispatch({ type: 'auth/registerUser/fulfilled', payload: regRes.data });
+        }
+      } catch (_) {
+        // If account registration fails (e.g. user already exists), do not attempt password guessing
+        // or predictable password derivation. Never log or expose credentials.
+      }
+    }
+    return token;
+  };
+
   const executeBackendOrderSync = async (addressData, items, pMethod, finalTotal) => {
     try {
-      let token = localStorage.getItem('token');
-      if (!token && addressData.email) {
-        const guestEmail = addressData.email.toLowerCase().trim();
-        const guestName = addressData.fullName || 'Guest Customer';
-        const guestPassword = 'GuestPass_' + guestEmail.replace(/[^a-zA-Z0-9]/g, '');
-        try {
-          const regRes = await axiosClient.post('/auth/register', { name: guestName, email: guestEmail, password: guestPassword });
-          if (regRes.data?.token) {
-            token = regRes.data.token;
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(regRes.data));
-            dispatch({ type: 'auth/registerUser/fulfilled', payload: regRes.data });
-          }
-        } catch (_) {
-          try {
-            const loginRes = await axiosClient.post('/auth/login', { email: guestEmail, password: guestPassword });
-            if (loginRes.data?.token) {
-              token = loginRes.data.token;
-              localStorage.setItem('token', token);
-              localStorage.setItem('user', JSON.stringify(loginRes.data));
-              dispatch({ type: 'auth/loginUser/fulfilled', payload: loginRes.data });
-            }
-          } catch (__) { }
-        }
-      }
+      const token = await ensureUserAuthenticated(addressData);
 
       if (token) {
         const addrRes = await axiosClient.post('/address', addressData);
@@ -258,7 +261,7 @@ export default function Checkout() {
         paymentMethod: pMethod
       });
       const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/918607222417?text=${encodedMessage}`;
+      const whatsappUrl = `https://wa.me/919971002348?text=${encodedMessage}`;
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
       return whatsappUrl;
     } catch (err) {
@@ -287,7 +290,7 @@ export default function Checkout() {
     });
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/918607222417?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/919971002348?text=${encodedMessage}`;
 
     // 1. Instantly open WhatsApp (synchronously triggered on submit)
     try {

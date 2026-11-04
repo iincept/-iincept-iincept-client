@@ -576,7 +576,7 @@ export default function Profile() {
                                 message += `Thank you for shopping with iiNCEPT!`;
 
                                 const encodedMessage = encodeURIComponent(message);
-                                const targetPhone = custPhone ? `91${custPhone.replace(/[^0-9]/g, '')}` : '918607222417';
+                                const targetPhone = custPhone ? `91${custPhone.replace(/[^0-9]/g, '')}` : '919971002348';
                                 const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodedMessage}`;
                                 window.open(whatsappUrl, '_blank');
                               }}

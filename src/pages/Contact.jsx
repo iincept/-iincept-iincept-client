@@ -39,7 +39,7 @@ export default function Contact() {
 
     // Format WhatsApp message payload
     const whatsappText = `Hi iincept Support Team,\n\nI am sending an enquiry via website Contact Form:\n• *Full Name:* ${fullname}\n• *Email:* ${email}\n• *Phone:* ${phone || 'N/A'}\n• *Company:* ${company || 'N/A'}\n• *Message:* ${message}`;
-    const whatsappUrl = `https://wa.me/918607222417?text=${encodeURIComponent(whatsappText)}`;
+    const whatsappUrl = `https://wa.me/919971002348?text=${encodeURIComponent(whatsappText)}`;
 
     // Open WhatsApp in new window
     window.open(whatsappUrl, '_blank');
@@ -351,7 +351,7 @@ export default function Contact() {
             </span>
             <div>
               <p className="info-label">Call us</p>
-              <p className="info-line">+91 86072 22417</p>
+              <p className="info-line">+91 99710 02348</p>
               <p className="info-sub">Mon–Sat · 10:00AM – 6:00PM IST</p>
             </div>
           </div>

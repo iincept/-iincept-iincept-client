@@ -11,6 +11,20 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src')
     }
   },
+  build: {
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'vendor-framework';
+            }
+          }
+        }
+      }
+    }
+  },
   server: {
     host: true,
     proxy: {

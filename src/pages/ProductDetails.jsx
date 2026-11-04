@@ -1887,7 +1887,7 @@ export default function ProductDetails() {
     message += `Please provide availability and best B2B pricing. Thank you!`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/918607222417?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/919971002348?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -2961,34 +2961,6 @@ export default function ProductDetails() {
       })()}
 
 
-      {/* Floating WhatsApp Widget */}
-      <a
-        href="https://wa.me/918607222417"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          position: 'fixed',
-          bottom: '30px',
-          right: '30px',
-          backgroundColor: '#25d366',
-          color: '#fff',
-          borderRadius: '50%',
-          width: '60px',
-          height: '60px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-          zIndex: 1000,
-          transition: 'transform 0.2s ease'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-      >
-        <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24" style={{ width: '32px', height: '32px' }}>
-          <path d="M12.012 2c-5.508 0-9.985 4.478-9.985 9.985 0 1.758.459 3.412 1.258 4.86L2 22l5.312-1.392c1.4.762 2.99 1.196 4.7 1.196 5.508 0 9.985-4.478 9.985-9.985 0-5.507-4.477-9.985-9.985-9.985zm0 17.986c-1.547 0-3.057-.417-4.375-1.206l-.313-.186-3.255.854.87-3.173-.205-.326c-.868-1.383-1.326-2.986-1.326-4.636 0-4.385 3.567-7.952 7.952-7.952 4.384 0 7.951 3.567 7.951 7.952 0 4.384-3.567 7.952-7.951 7.952zm4.359-5.966c-.239-.12-1.414-.698-1.634-.778-.22-.08-.38-.12-.54.12-.16.24-.62.778-.76.938-.14.16-.28.18-.519.06-.24-.12-1.012-.372-1.927-1.188-.713-.636-1.195-1.423-1.335-1.663-.14-.24-.015-.369.105-.489.108-.108.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.195-.47-.393-.406-.54-.414-.14-.007-.3-.007-.46-.007s-.42.06-.64.3c-.22.24-.84.82-.84 2.002 0 1.182.86 2.324.98 2.484.12.16 1.69 2.58 4.096 3.618.572.247 1.02.394 1.368.504.576.183 1.1.157 1.514.095.462-.069 1.414-.578 1.614-1.138.2-.56.2-1.04.14-1.138-.06-.098-.22-.178-.459-.298z" />
-        </svg>
-      </a>
     </div>
   );
 }

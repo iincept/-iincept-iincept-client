@@ -96,7 +96,7 @@ export default function ShippingPolicy() {
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs sm:text-sm flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <strong>Important Inspection Note:</strong> Please inspect the outer box seal before accepting delivery. If the package appears tampered with or damaged, kindly refuse delivery and notify our support desk immediately at <a href="tel:+918607222417" className="underline font-semibold">+91 86072 22417</a>.
+                <strong>Important Inspection Note:</strong> Please inspect the outer box seal before accepting delivery. If the package appears tampered with or damaged, kindly refuse delivery and notify our support desk immediately at <a href="tel:+919971002348" className="underline font-semibold">+91 99710 02348</a>.
               </div>
             </div>
           </section>
@@ -117,7 +117,7 @@ export default function ShippingPolicy() {
             <p className="text-xs text-zinc-400">Our B2B logistics team is available Mon-Sat, 9:30 AM to 6:30 PM.</p>
           </div>
           <a
-            href="https://wa.me/918607222417?text=Hi%20iincept,%20I%20have%20a%20question%20regarding%20shipping%20status."
+            href="https://wa.me/919971002348?text=Hi%20iincept,%20I%20have%20a%20question%20regarding%20shipping%20status."
             target="_blank"
             rel="noopener noreferrer"
             className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all shrink-0"

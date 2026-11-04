@@ -1574,7 +1574,7 @@ export default function AppleCare() {
 
   const handleWhatsAppInquiry = (planTitle) => {
     const text = encodeURIComponent(`Hello iiNCEPT! 👋 I have an inquiry regarding ${planTitle}. Please assist me with purchasing AppleCare+ coverage.`);
-    window.open(`https://wa.me/918607222417?text=${text}`, '_blank');
+    window.open(`https://wa.me/919971002348?text=${text}`, '_blank');
   };
 
   return (

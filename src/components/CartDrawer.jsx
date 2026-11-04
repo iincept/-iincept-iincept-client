@@ -109,7 +109,7 @@ export default function CartDrawer() {
     message += `Please confirm my order and share payment & delivery details. Thank you!`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/918607222417?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/919971002348?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
   };
 

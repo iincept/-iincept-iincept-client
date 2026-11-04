@@ -982,7 +982,7 @@ export default function Iphone() {
     const duration = dbDurationLabel ? `\n• *Duration:* ${dbDurationLabel}` : '';
 
     const message = `Hello iiNCEPT Team! 👋\n\nI want to buy *${header}AppleCare+ Coverage*:\n• *Product:* ${modelName}${sku}${duration}${desc}\n• *Sale Price:* ${salePrice}${mrp}${discount}\n\nPlease share the payment link & activation process. Thank you!`;
-    const whatsappUrl = `https://wa.me/918607222417?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/919971002348?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -1027,7 +1027,7 @@ export default function Iphone() {
     const formattedTotal = `₹${totalCost.toLocaleString('en-IN')}.00`;
     const message = `Hello iiNCEPT Team! 👋\n\nI want to buy *${selectedList.length} ${header}AppleCare+ Coverage Plans*:\n\n${itemsText}\n• *Total Combined Price:* ${formattedTotal}\n\nPlease share the combined payment link & activation steps. Thank you!`;
 
-    const whatsappUrl = `https://wa.me/918607222417?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/919971002348?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosClient from '../services/axiosClient';
 import * as orderApi from '../services/orderApi';
+import { generateSecureRandomPassword } from '../utils/cryptoUtils';
 
 const transformOrder = (dbOrder) => {
   return {
@@ -44,12 +45,12 @@ export const placeNewOrder = createAsyncThunk(
       const state = thunkAPI.getState();
       let token = state.auth.token || localStorage.getItem('token');
 
-      // If user is not authenticated yet, attempt guest auto-authentication using address email
+      // If user is not authenticated yet, attempt guest account creation using address email
       if (!token && shippingAddressData && shippingAddressData.email) {
         try {
           const guestEmail = shippingAddressData.email.toLowerCase().trim();
           const guestName = shippingAddressData.fullName || 'Guest Customer';
-          const guestPassword = 'GuestPass_' + guestEmail.replace(/[^a-zA-Z0-9]/g, '');
+          const guestPassword = generateSecureRandomPassword(32);
 
           try {
             const regRes = await axiosClient.post('/auth/register', {
@@ -64,19 +65,10 @@ export const placeNewOrder = createAsyncThunk(
               thunkAPI.dispatch({ type: 'auth/registerUser/fulfilled', payload: regRes.data });
             }
           } catch (regErr) {
-            const loginRes = await axiosClient.post('/auth/login', {
-              email: guestEmail,
-              password: guestPassword
-            });
-            token = loginRes.data?.token;
-            if (token) {
-              localStorage.setItem('token', token);
-              localStorage.setItem('user', JSON.stringify(loginRes.data));
-              thunkAPI.dispatch({ type: 'auth/loginUser/fulfilled', payload: loginRes.data });
-            }
+            // If user is already registered, never attempt password guessing or deterministic password derivation.
           }
         } catch (autoErr) {
-          console.error("Auto guest auth failed:", autoErr);
+          console.warn("Guest account creation note:", autoErr?.message || autoErr);
         }
       }
 

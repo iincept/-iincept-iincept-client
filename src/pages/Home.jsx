@@ -97,38 +97,38 @@ const DEFAULT_DEAL_BANNERS = [
 const DEFAULT_TESTIMONIALS = [
   {
     name: 'Rajesh Sharma',
-    role: 'IT Head, Fintech Firm',
+    role: 'IT Head, Fintech firm',
     location: 'Bengaluru',
     stars: 5,
     avatar: '/avatars/avatar2.jpg',
-    text: '“Purchased MacBook Air M4 from the authorised store. Staff was extremely knowledgeable and helped with EMI options. Delivery was next day. Highly recommended.”',
+    text: '“Procured 40 MacBooks for our new office in 3 days, GST invoice sorted same week.”',
     isActive: true
   },
   {
     name: 'Priya Patel',
-    role: 'Procurement Lead, D2C Brand',
+    role: 'Procurement Lead, D2C brand',
     location: 'Mumbai',
     stars: 5,
     avatar: '/avatars/avatar1.jpg',
-    text: '“Best experience buying iPhone 17 Pro. Got bank offer + trade-in value explained clearly. Genuine product with full warranty. Will buy again.”',
+    text: '“Our gifting desk orders AirPods every quarter — consolidated billing makes finance happy.”',
     isActive: true
   },
   {
     name: 'Vikram Malhotra',
-    role: 'Operations Manager, Consulting Firm',
+    role: 'Ops Manager, Consulting firm',
     location: 'Delhi NCR',
     stars: 5,
     avatar: '/avatars/avatar3.jpg',
-    text: '“Corporate order for 25 iPads was handled smoothly. Dedicated manager, proper invoicing and on-time delivery. Excellent B2B support.”',
+    text: '“Quote turnaround was faster than two other resellers we checked.”',
     isActive: true
   },
   {
     name: 'Sneha Kulkarni',
-    role: 'Admin Head, Enterprise BPO',
+    role: 'Admin Head, BPO',
     location: 'Pune',
-    stars: 5,
+    stars: 3,
     avatar: '/avatars/avatar4.jpg',
-    text: '“Reliable for repeat bulk orders, delivered to three city offices without issue. Smooth billing and genuine Apple products throughout.”',
+    text: '“Reliable for repeat bulk orders, delivered to three city offices without issue.”',
     isActive: true
   },
   {
@@ -155,31 +155,31 @@ const formatTestimonialItem = (t, idx) => {
   const defaults = [
     {
       name: 'Rajesh Sharma',
-      role: 'IT Head, Fintech Firm',
+      role: 'IT Head, Fintech firm',
       location: 'Bengaluru',
       avatar: '/avatars/avatar2.jpg',
-      text: '“Purchased MacBook Air M4 from the authorised store. Staff was extremely knowledgeable and helped with EMI options. Delivery was next day. Highly recommended.”'
+      text: '“Procured 40 MacBooks for our new office in 3 days, GST invoice sorted same week.”'
     },
     {
       name: 'Priya Patel',
-      role: 'Procurement Lead, D2C Brand',
+      role: 'Procurement Lead, D2C brand',
       location: 'Mumbai',
       avatar: '/avatars/avatar1.jpg',
-      text: '“Best experience buying iPhone 17 Pro. Got bank offer + trade-in value explained clearly. Genuine product with full warranty. Will buy again.”'
+      text: '“Our gifting desk orders AirPods every quarter — consolidated billing makes finance happy.”'
     },
     {
       name: 'Vikram Malhotra',
-      role: 'Operations Manager, Consulting Firm',
+      role: 'Ops Manager, Consulting firm',
       location: 'Delhi NCR',
       avatar: '/avatars/avatar3.jpg',
-      text: '“Corporate order for 25 iPads was handled smoothly. Dedicated manager, proper invoicing and on-time delivery. Excellent B2B support.”'
+      text: '“Quote turnaround was faster than two other resellers we checked.”'
     },
     {
       name: 'Sneha Kulkarni',
-      role: 'Admin Head, Enterprise BPO',
+      role: 'Admin Head, BPO',
       location: 'Pune',
       avatar: '/avatars/avatar4.jpg',
-      text: '“Reliable for repeat bulk orders, delivered to three city offices without issue. Smooth billing and genuine Apple products throughout.”'
+      text: '“Reliable for repeat bulk orders, delivered to three city offices without issue.”'
     },
     {
       name: 'Amitav Sen',
@@ -237,6 +237,11 @@ const formatTestimonialItem = (t, idx) => {
   if (!text || text.toLowerCase().includes('enter customer review') || text === '""' || text === "''") {
     text = d.text;
   }
+  // Strip redundant leading/trailing straight, escaped, or curly quotes and whitespace
+  text = text.replace(/^[\s"'“\\]+|[\s"'”\\]+$/g, '').trim();
+  if (text) {
+    text = `“${text}”`;
+  }
 
   return {
     ...t,
@@ -244,7 +249,7 @@ const formatTestimonialItem = (t, idx) => {
     role,
     location,
     avatar,
-    stars: 5,
+    stars: t.stars || 5,
     text
   };
 };
@@ -532,8 +537,17 @@ export default function Home() {
     return [];
   });
 
-  // Testimonials State & Autoplay Slider
-  const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
+  // Testimonials State & Autoplay Slider with LocalStorage Cache
+  const [testimonials, setTestimonials] = useState(() => {
+    try {
+      const cached = localStorage.getItem('iincept_home_testimonials_v2');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) { }
+    return DEFAULT_TESTIMONIALS.map((t, idx) => formatTestimonialItem(t, idx));
+  });
   const [isTestimonialsPaused, setIsTestimonialsPaused] = useState(false);
 
   // Autoplay Testimonials Slider (every 3800ms) with smooth wrap-around and pause-on-hover/touch
@@ -767,23 +781,14 @@ export default function Home() {
         if (response.data.testimonials && response.data.testimonials.length > 0) {
           const activeTestimonials = response.data.testimonials
             .filter(t => t.isActive !== false)
-            .map((t, idx) => {
-              const loc = t.location !== undefined && t.location !== '' ? t.location : (t.sub || t.city || '');
-              return {
-                ...t,
-                stars: 5,
-                text: t.text || '',
-                author: t.author || 'Verified Customer',
-                name: t.name || '',
-                role: t.role || '',
-                location: String(loc || '').trim(),
-                sub: String(loc || '').trim(),
-                avatar: t.image || t.avatar || t.avatarUrl || null
-              };
-            });
+            .map((t, idx) => formatTestimonialItem(t, idx));
+
           if (activeTestimonials.length > 0) {
             setTestimonials(prev => {
               if (JSON.stringify(prev) !== JSON.stringify(activeTestimonials)) {
+                try {
+                  localStorage.setItem('iincept_home_testimonials_v2', JSON.stringify(activeTestimonials));
+                } catch (e) { }
                 return activeTestimonials;
               }
               return prev;
@@ -805,7 +810,7 @@ export default function Home() {
 
     setB2bSubmitting(true);
     const waMessage = `Hello iiNCEPT Team! 👋\n\nI want to request a corporate / retail quotation:\n\n👤 *Name:* ${b2bForm.fullName}\n🏢 *Company:* ${b2bForm.company || 'N/A'}\n📧 *Email:* ${b2bForm.email}\n📞 *Phone:* ${b2bForm.phone || 'N/A'}\n📦 *Product Interest:* ${b2bForm.productInterest}\n💬 *Message:* ${b2bForm.message || 'N/A'}`;
-    const waUrl = `https://wa.me/918607222417?text=${encodeURIComponent(waMessage)}`;
+    const waUrl = `https://wa.me/919971002348?text=${encodeURIComponent(waMessage)}`;
 
     try {
       await axiosClient.post('/enquiries', {
@@ -2646,6 +2651,7 @@ export default function Home() {
           width: 350px;
           min-width: 320px;
           max-width: 360px;
+          min-height: 220px;
           background: #ffffff;
           border: 1px solid #e5e7eb;
           border-radius: 20px;
@@ -4140,7 +4146,7 @@ export default function Home() {
               <li>Fast delivery across India</li>
             </ul>
             <a
-              href="https://wa.me/918607222417?text=Hello%20iiNCEPT%20B2B%20Desk!%20I%20want%20to%20talk%20to%20sales."
+              href="https://wa.me/919971002348?text=Hello%20iiNCEPT%20B2B%20Desk!%20I%20want%20to%20talk%20to%20sales."
               target="_blank"
               rel="noreferrer"
               className="btn btn-primary"
@@ -4283,7 +4289,7 @@ export default function Home() {
             ).map((rawItem, idx) => {
               const item = formatTestimonialItem(rawItem, idx);
               return (
-                <div key={`${item.id || item._id || 't'}-${idx}`} className={`testimonial-card ${idx === 0 ? 'featured' : ''}`}>
+                <div key={`testimonial-card-${idx}`} className={`testimonial-card ${idx === 0 ? 'featured' : ''}`}>
                   {/* Top Row: Author details LEFT + Stars/Rating RIGHT */}
                   <div className="testimonial-card-header">
                     <div className="testimonial-author">
@@ -4320,10 +4326,10 @@ export default function Home() {
                     </div>
 
                     <div className="testimonial-stars-col">
-                      <span className="stars" aria-label="5 out of 5 stars">
+                      <span className="stars" aria-label={`${item.stars || 5} out of 5 stars`}>
                         {'★'.repeat(item.stars || 5)}
                       </span>
-                      <span className="stars-rating-label">5.0</span>
+                      <span className="stars-rating-label">{(item.stars || 5).toFixed(1)}</span>
                     </div>
                   </div>
 
