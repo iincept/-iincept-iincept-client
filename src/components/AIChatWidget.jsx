@@ -29,30 +29,40 @@ export default function AIChatWidget() {
   return (
     <aside
       aria-label="Quick Contact & Support"
-      className="fixed bottom-6 right-5 sm:right-6 z-50 flex flex-col items-center gap-3 select-none pointer-events-auto"
+      className="fixed z-50 flex flex-col items-end select-none pointer-events-auto right-0 bottom-24 gap-2.5 sm:right-6 sm:bottom-6 sm:items-center sm:gap-3.5"
     >
-      {/* 1. Phone Call Button (Blue) - Stacked directly above WhatsApp */}
-      <a
-        href={phoneCallUrl}
-        className="w-14 h-14 sm:w-15 sm:h-15 bg-[#1877F2] hover:bg-[#166fe5] active:bg-[#125ec7] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group cursor-pointer border-2 border-white/20"
-        aria-label="Call Customer Support (+91 99710 02348)"
-        title="Call Customer Support (+91 99710 02348)"
-      >
-        <PhoneCallIcon className="w-7 h-7 sm:w-7.5 sm:h-7.5 text-white drop-shadow-md transition-transform duration-300 group-hover:rotate-12" />
-      </a>
-
-      {/* 2. WhatsApp Button (Green) */}
+      {/* 1. WhatsApp Button (Green) - Top tab on mobile right edge */}
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-14 h-14 sm:w-15 sm:h-15 bg-[#25D366] hover:bg-[#20ba5a] active:bg-[#1da851] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group cursor-pointer border-2 border-white/20"
+        className="
+          w-[54px] h-[48px] rounded-l-full rounded-r-none pl-2.5 pr-1 bg-[#25D366] text-white
+          shadow-[-3px_4px_12px_rgba(0,0,0,0.18)]
+          flex items-center justify-center cursor-pointer transition-all duration-300
+          active:scale-95 hover:pl-3
+          sm:w-14 sm:h-14 sm:rounded-full sm:p-0 sm:shadow-2xl sm:border-2 sm:border-white/20 sm:hover:scale-110 sm:hover:pl-0 sm:hover:bg-[#20ba5a]
+        "
         aria-label="Chat on WhatsApp (+91 99710 02348)"
         title="Chat on WhatsApp (+91 99710 02348)"
       >
-        <div className="relative flex items-center justify-center">
-          <WhatsAppIcon className="w-8 h-8 text-white drop-shadow-md" />
-        </div>
+        <WhatsAppIcon className="w-7 h-7 sm:w-7.5 sm:h-7.5 text-white drop-shadow-sm" />
+      </a>
+
+      {/* 2. Phone Call Button (Blue) - Bottom tab on mobile right edge */}
+      <a
+        href={phoneCallUrl}
+        className="
+          w-[54px] h-[48px] rounded-l-full rounded-r-none pl-2.5 pr-1 bg-[#1877F2] text-white
+          shadow-[-3px_4px_12px_rgba(0,0,0,0.18)]
+          flex items-center justify-center cursor-pointer transition-all duration-300
+          active:scale-95 hover:pl-3 group
+          sm:w-14 sm:h-14 sm:rounded-full sm:p-0 sm:shadow-2xl sm:border-2 sm:border-white/20 sm:hover:scale-110 sm:hover:pl-0 sm:hover:bg-[#166fe5]
+        "
+        aria-label="Call Customer Support (+91 99710 02348)"
+        title="Call Customer Support (+91 99710 02348)"
+      >
+        <PhoneCallIcon className="w-6.5 h-6.5 sm:w-7 sm:h-7 text-white drop-shadow-sm transition-transform duration-300 group-hover:rotate-12" />
       </a>
     </aside>
   );

@@ -33,6 +33,7 @@ export default function Navbar() {
     productId.startsWith('tv')
   );
   const isIphonePage = true;
+  const [isDropdownClosing, setIsDropdownClosing] = useState(false);
 
   const getNavBtnClass = (isOpen) => {
     return `transition-colors duration-150 font-[600] text-[16px] xl:text-[17px] tracking-normal cursor-pointer bg-transparent border-0 focus:outline-none whitespace-nowrap font-sans px-1.5 py-1 ${isOpen
@@ -41,11 +42,35 @@ export default function Navbar() {
       }`;
   };
 
-  const dropdownClass = `absolute left-0 w-full shadow-lg z-20 pt-6 pb-8 px-6 sm:px-12 md:px-16 animate-in fade-in slide-in-from-top-2 duration-200 text-left select-text ${isIphonePage ? 'bg-white text-zinc-900 border-b border-zinc-200 iphone-dropdown-theme' : 'bg-zinc-950 text-[#f5f5f7]'
-    }`;
+  const dropdownClass = `nav-dropdown-panel absolute left-0 w-full shadow-lg z-20 pt-6 pb-8 px-6 sm:px-12 md:px-16 text-left select-text ${
+    isDropdownClosing
+      ? 'nav-dropdown-closing'
+      : 'nav-dropdown-open animate-in fade-in slide-in-from-top-2 duration-200'
+  } ${
+    isIphonePage
+      ? 'bg-white text-zinc-900 border-b border-zinc-200 iphone-dropdown-theme'
+      : 'bg-zinc-950 text-[#f5f5f7]'
+  }`;
 
   const styleTag = (
     <style>{`
+      /* APPLE-STYLE MEGA DROPDOWN TRANSITIONS & DISMISSAL */
+      .nav-dropdown-panel {
+        transform-origin: top center;
+        will-change: opacity, transform;
+      }
+      .nav-dropdown-open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+      .nav-dropdown-closing {
+        opacity: 0 !important;
+        transform: translateY(-8px) scale(0.992) !important;
+        pointer-events: none !important;
+        transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      }
+
       .iphone-dropdown-theme {
         background-color: #ffffff !important;
         color: #1d1d1f !important;
@@ -204,6 +229,9 @@ export default function Navbar() {
       if (e.key === 'Escape') {
         if (isMobileMenuOpen) setIsMobileMenuOpen(false);
         if (isSearchOpen) setIsSearchOpen(false);
+        if (isAnyDropdownOpenRef.current) {
+          dismissDropdownSmoothly(true);
+        }
       }
     };
 
@@ -224,6 +252,28 @@ export default function Navbar() {
   const entertainmentTimeoutRef = useRef(null);
   const accessoriesTimeoutRef = useRef(null);
   const supportTimeoutRef = useRef(null);
+
+  const isAnyDropdownOpenRef = useRef(false);
+  const scrollSuppressedRef = useRef(false);
+  const scrollCooldownTimerRef = useRef(null);
+  const closeAnimationTimerRef = useRef(null);
+  const navContainerRef = useRef(null);
+
+  const isAnyMegaDropdownOpen = Boolean(
+    isMacDropdownOpen ||
+    isIpadDropdownOpen ||
+    isIphoneDropdownOpen ||
+    isWatchDropdownOpen ||
+    isAirpodsDropdownOpen ||
+    isTvDropdownOpen ||
+    isEntertainmentDropdownOpen ||
+    isAccessoriesDropdownOpen ||
+    isSupportDropdownOpen
+  );
+
+  useEffect(() => {
+    isAnyDropdownOpenRef.current = isAnyMegaDropdownOpen;
+  }, [isAnyMegaDropdownOpen]);
 
   const closeAllDropdowns = () => {
     setIsMacDropdownOpen(false);
@@ -247,18 +297,105 @@ export default function Navbar() {
     if (entertainmentTimeoutRef.current) clearTimeout(entertainmentTimeoutRef.current);
     if (accessoriesTimeoutRef.current) clearTimeout(accessoriesTimeoutRef.current);
     if (supportTimeoutRef.current) clearTimeout(supportTimeoutRef.current);
+    if (closeAnimationTimerRef.current) clearTimeout(closeAnimationTimerRef.current);
   };
+
+  const dismissDropdownSmoothly = (immediate = false) => {
+    if (!isAnyDropdownOpenRef.current && !isDropdownClosing) return;
+
+    clearAllTimeouts();
+    setIsDropdownClosing(true);
+
+    // Instantly remove pointer-events on open dropdown panels so underlying page is immediately interactive
+    if (typeof document !== 'undefined') {
+      const openPanels = document.querySelectorAll('.nav-dropdown-panel');
+      openPanels.forEach(panel => {
+        panel.style.pointerEvents = 'none';
+      });
+    }
+
+    if (closeAnimationTimerRef.current) {
+      clearTimeout(closeAnimationTimerRef.current);
+    }
+
+    const duration = immediate ? 90 : 180;
+    closeAnimationTimerRef.current = setTimeout(() => {
+      closeAllDropdowns();
+      setHoveredProduct(null);
+      setIsDropdownClosing(false);
+      isAnyDropdownOpenRef.current = false;
+    }, duration);
+  };
+
+  // Apple-style automatic scroll dismissal & hover suppression
+  useEffect(() => {
+    const handleScrollOrWheel = (e) => {
+      // Ignore imperceptible micro-wheel ticks (< 2px) on high-precision trackpads
+      if (e.type === 'wheel') {
+        if (Math.abs(e.deltaY) < 2 && Math.abs(e.deltaX) < 2) {
+          return;
+        }
+      }
+
+      // Suppress hover while actively scrolling so cursor resting on navbar does NOT reopen dropdown
+      scrollSuppressedRef.current = true;
+      if (scrollCooldownTimerRef.current) {
+        clearTimeout(scrollCooldownTimerRef.current);
+      }
+      scrollCooldownTimerRef.current = setTimeout(() => {
+        scrollSuppressedRef.current = false;
+      }, 350);
+
+      // If any menu dropdown is open, smoothly fade out and dismiss
+      if (isAnyDropdownOpenRef.current) {
+        dismissDropdownSmoothly(false);
+      }
+    };
+
+    const handleMouseMove = () => {
+      if (!scrollCooldownTimerRef.current && scrollSuppressedRef.current) {
+        scrollSuppressedRef.current = false;
+      }
+    };
+
+    const handleClickOutside = (e) => {
+      if (isAnyDropdownOpenRef.current && navContainerRef.current && !navContainerRef.current.contains(e.target)) {
+        dismissDropdownSmoothly(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollOrWheel, { passive: true });
+    window.addEventListener('wheel', handleScrollOrWheel, { passive: true });
+    window.addEventListener('touchmove', handleScrollOrWheel, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrWheel);
+      window.removeEventListener('wheel', handleScrollOrWheel);
+      window.removeEventListener('touchmove', handleScrollOrWheel);
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (scrollCooldownTimerRef.current) clearTimeout(scrollCooldownTimerRef.current);
+      if (closeAnimationTimerRef.current) clearTimeout(closeAnimationTimerRef.current);
+    };
+  }, []);
 
   // Floating Navbar stays STILL (permanently fixed and visible on scroll down and scroll up)
   const [isNavVisible, setIsNavVisible] = useState(true);
 
-  // Ensure navbar is immediately visible on route navigation
+  // Ensure navbar is immediately visible on route navigation and dropdowns are reset
   useEffect(() => {
     setIsNavVisible(true);
+    closeAllDropdowns();
+    setIsDropdownClosing(false);
+    clearAllTimeouts();
   }, [location.pathname]);
 
   const handleMacMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsMacDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -269,12 +406,14 @@ export default function Navbar() {
 
   const handleMacMouseLeave = () => {
     macTimeoutRef.current = setTimeout(() => {
-      setIsMacDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const handleIpadMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsIpadDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -285,12 +424,14 @@ export default function Navbar() {
 
   const handleIpadMouseLeave = () => {
     ipadTimeoutRef.current = setTimeout(() => {
-      setIsIpadDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const handleIphoneMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsIphoneDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -301,12 +442,14 @@ export default function Navbar() {
 
   const handleIphoneMouseLeave = () => {
     iphoneTimeoutRef.current = setTimeout(() => {
-      setIsIphoneDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const handleWatchMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsWatchDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -317,12 +460,14 @@ export default function Navbar() {
 
   const handleWatchMouseLeave = () => {
     watchTimeoutRef.current = setTimeout(() => {
-      setIsWatchDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const handleAirpodsMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsAirpodsDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -333,12 +478,14 @@ export default function Navbar() {
 
   const handleAirpodsMouseLeave = () => {
     airpodsTimeoutRef.current = setTimeout(() => {
-      setIsAirpodsDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const handleTvMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsTvDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -349,12 +496,14 @@ export default function Navbar() {
 
   const handleTvMouseLeave = () => {
     tvTimeoutRef.current = setTimeout(() => {
-      setIsTvDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const handleEntertainmentMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsEntertainmentDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -364,12 +513,14 @@ export default function Navbar() {
 
   const handleEntertainmentMouseLeave = () => {
     entertainmentTimeoutRef.current = setTimeout(() => {
-      setIsEntertainmentDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const handleAccessoriesMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsAccessoriesDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -391,12 +542,14 @@ export default function Navbar() {
 
   const handleAccessoriesMouseLeave = () => {
     accessoriesTimeoutRef.current = setTimeout(() => {
-      setIsAccessoriesDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const handleSupportMouseEnter = () => {
+    if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
+    setIsDropdownClosing(false);
     closeAllDropdowns();
     setIsSupportDropdownOpen(true);
     setIsCategoriesOpen(false);
@@ -406,8 +559,8 @@ export default function Navbar() {
 
   const handleSupportMouseLeave = () => {
     supportTimeoutRef.current = setTimeout(() => {
-      setIsSupportDropdownOpen(false);
-    }, 350);
+      dismissDropdownSmoothly(false);
+    }, 250);
   };
 
   const dispatch = useDispatch();
@@ -1254,7 +1407,7 @@ export default function Navbar() {
         aria-hidden="true"
       />
       <div className={`pill-nav-stage ${isNavVisible ? 'nav-visible' : 'nav-hidden'}`}>
-        <nav className="pill-nav-container select-none relative z-40 text-black">
+        <nav ref={navContainerRef} className="pill-nav-container select-none relative z-40 text-black">
 
           {/* Sliding Search Overlay Input Pill */}
           {isSearchOpen && (
@@ -1401,7 +1554,7 @@ export default function Navbar() {
                         closeAllDropdowns();
                         navigate('/macbook');
                       }}
-                      className={getNavBtnClass(isMacDropdownOpen || location.pathname === '/macbook')}
+                      className={getNavBtnClass((isMacDropdownOpen && !isDropdownClosing) || location.pathname === '/macbook')}
                     >
                       {item.label}
                     </button>
@@ -1417,7 +1570,7 @@ export default function Navbar() {
                         closeAllDropdowns();
                         navigate('/ipad');
                       }}
-                      className={getNavBtnClass(isIpadDropdownOpen || location.pathname === '/ipad')}
+                      className={getNavBtnClass((isIpadDropdownOpen && !isDropdownClosing) || location.pathname === '/ipad')}
                     >
                       {item.label}
                     </button>
@@ -1433,7 +1586,7 @@ export default function Navbar() {
                         closeAllDropdowns();
                         navigate('/iphone');
                       }}
-                      className={getNavBtnClass(isIphoneDropdownOpen || location.pathname === '/iphone')}
+                      className={getNavBtnClass((isIphoneDropdownOpen && !isDropdownClosing) || location.pathname === '/iphone')}
                     >
                       {item.label}
                     </button>
@@ -1449,7 +1602,7 @@ export default function Navbar() {
                         closeAllDropdowns();
                         navigate('/watch');
                       }}
-                      className={getNavBtnClass(isWatchDropdownOpen || location.pathname === '/watch')}
+                      className={getNavBtnClass((isWatchDropdownOpen && !isDropdownClosing) || location.pathname === '/watch')}
                     >
                       {item.label}
                     </button>
@@ -1465,7 +1618,7 @@ export default function Navbar() {
                         closeAllDropdowns();
                         navigate('/airpods');
                       }}
-                      className={getNavBtnClass(isAirpodsDropdownOpen || location.pathname === '/airpods')}
+                      className={getNavBtnClass((isAirpodsDropdownOpen && !isDropdownClosing) || location.pathname === '/airpods')}
                     >
                       {item.label}
                     </button>
@@ -1481,7 +1634,7 @@ export default function Navbar() {
                         closeAllDropdowns();
                         navigate('/tv-home');
                       }}
-                      className={getNavBtnClass(isTvDropdownOpen || location.pathname === '/tv-home')}
+                      className={getNavBtnClass((isTvDropdownOpen && !isDropdownClosing) || location.pathname === '/tv-home')}
                     >
                       {item.label}
                     </button>
@@ -1497,7 +1650,7 @@ export default function Navbar() {
                         closeAllDropdowns();
                         navigate(item.path || '/accessories');
                       }}
-                      className={getNavBtnClass(isAccessoriesDropdownOpen || location.pathname === (item.path || '/accessories'))}
+                      className={getNavBtnClass((isAccessoriesDropdownOpen && !isDropdownClosing) || location.pathname === (item.path || '/accessories'))}
                     >
                       {item.label}
                     </button>
@@ -1551,7 +1704,7 @@ export default function Navbar() {
                         closeAllDropdowns();
                         navigate(item.path);
                       }}
-                      className={getNavBtnClass(isSupportDropdownOpen)}
+                      className={getNavBtnClass(isSupportDropdownOpen && !isDropdownClosing)}
                     >
                       {item.label}
                     </button>
