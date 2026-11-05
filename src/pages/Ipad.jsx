@@ -10,6 +10,7 @@ import { getProductCardPricing } from '../utils/pricingUtils';
 import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import CleanProductImage from '../components/CleanProductImage';
+import AppleProductCard from '../components/AppleProductCard';
 import { resolveColorValue } from '../utils/colorResolver';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 
@@ -2015,123 +2016,19 @@ export default function Ipad() {
               </div>
             )}
 
-            {/* Grid */}
+            {/* Grid (Matching Apple Store Layout) */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.slice(0, visibleCount).map((prod) => {
-                const pricing = getProductCardPricing(prod);
-
-                return (
-                  <div
-                    key={prod.id}
-                    className="group bg-white rounded-2xl overflow-hidden flex flex-col justify-between p-6 shadow-sm border border-zinc-100/50 hover:shadow-md hover:border-zinc-200/55 transition-all duration-300 relative text-left"
-                  >
-                    <div className="flex items-center justify-between absolute top-4 left-4 right-4 z-10">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {prod.isSoldOut && (
-                          <span className="bg-[#f5f5f7] text-[#1d1d1f] font-bold text-[9px] tracking-widest uppercase px-2.5 py-1 rounded shadow-2xs">
-                            SOLD OUT
-                          </span>
-                        )}
-                        {pricing.hasDiscount && (
-                          <span className="bg-[#FF2D55] text-white font-extrabold text-[9.5px] tracking-wide uppercase px-2.5 py-1 rounded shadow-2xs">
-                            {pricing.discountPercent}% OFF
-                          </span>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => handleAddToWishlist(prod)}
-                        className={`p-2 rounded-full shadow-sm border border-zinc-100/80 bg-white/90 hover:scale-110 transition-all cursor-pointer ${localWishlist[prod.id] ? 'text-red-500' : 'text-zinc-400 hover:text-zinc-600'
-                          }`}
-                      >
-                        <Heart className={`h-4 w-4 ${localWishlist[prod.id] ? 'fill-current' : ''}`} />
-                      </button>
-                    </div>
-
-                    {/* Clickable Area: Image and Title */}
-                    <Link to={`/product/${prod.id}`} className="block cursor-pointer">
-                      {/* Product Visual - Apple Showcase Background (#f5f5f7) */}
-                      <CleanProductImage
-                        src={getProductImage(prod)}
-                        alt={prod.name}
-                        className="max-h-[92%] max-w-[92%] object-contain group-hover:scale-110 transition-transform duration-500 select-none transform scale-115 sm:scale-125"
-                        containerClassName="w-full h-72 sm:h-80 bg-white rounded-2xl flex items-center justify-center p-2 overflow-hidden relative mb-5 transition-colors duration-300 group-hover:bg-[#f0f0f2]"
-                      />
-
-                      {/* Title (Clean Product Name) */}
-                      <h3 className="font-semibold text-[16px] leading-snug tracking-tight text-zinc-900 group-hover:text-zinc-900 transition-colors min-h-[48px]">
-                        {(() => {
-                          const cleanProductTitle = (rawTitle) => {
-                            if (!rawTitle) return '';
-                            return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
-                          };
-                          return (
-                            <span>{cleanProductTitle(prod.name || prod.title)}</span>
-                          );
-                        })()}
-                      </h3>
-                    </Link>
-
-                    {/* Non-clickable configurations / actions */}
-                    <div className="space-y-4 pt-2">
-                      {/* Color Dot Options Row */}
-                      <div className="flex items-center justify-between gap-2 border-t border-zinc-100/60 pt-3">
-                        <span className="text-[17px] text-zinc-700 uppercase tracking-wider font-extrabold">Colors</span>
-                        <div className="flex items-center gap-3 shrink-0 py-1">
-                          {prod.colors.map((color) => {
-                            const isSelected = selectedColors[prod.id] === color.name || (!selectedColors[prod.id] && prod.colors[0]?.name === color.name);
-                            const resolvedColor = resolveColorValue(color.colorHex || color.value || color.name);
-                            return (
-                              <button
-                                key={color.name}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleColorChange(prod.id, color.name);
-                                }}
-                                style={{ backgroundColor: resolvedColor }}
-                                className={`w-6 h-6 rounded-full cursor-pointer transition-all shadow-sm ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-zinc-800 shadow-md z-10' : 'hover:scale-105 hover:shadow-md'
-                                  }`}
-                                title={color.name}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1 border-t border-zinc-100/60">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Price</span>
-                          {pricing.hasDiscount ? (
-                            <div className="flex items-baseline gap-1.5 flex-wrap">
-                              <span className="font-extrabold text-zinc-950 text-base">
-                                ₹{pricing.sellingPrice.toLocaleString('en-IN')}
-                              </span>
-                              <span className="text-xs text-zinc-400 line-through font-bold">
-                                ₹{pricing.originalMrp.toLocaleString('en-IN')}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="font-semibold text-zinc-900 text-base">
-                              {prod.priceStr || `₹${Number(prod.price || 0).toLocaleString('en-IN')}`}
-                            </span>
-                          )}
-                        </div>
-
-                        {!prod.isSoldOut && (
-                          <button
-                            onClick={() => handleAddToCart(prod)}
-                            className="flex items-center justify-center p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
-                            title="Add to Cart"
-                          >
-                            <ShoppingBag className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {filteredProducts.slice(0, visibleCount).map((prod) => (
+                <AppleProductCard
+                  key={prod.id}
+                  product={prod}
+                  selectedColor={selectedColors[prod.id]}
+                  onColorChange={(colorName) => handleColorChange(prod.id, colorName)}
+                  isWishlisted={Boolean(localWishlist[prod.id])}
+                  onToggleWishlist={() => handleAddToWishlist(prod)}
+                  onAddToCart={() => handleAddToCart(prod)}
+                />
+              ))}
             </div>
 
             {/* Infinite Scroll Indicator */}
