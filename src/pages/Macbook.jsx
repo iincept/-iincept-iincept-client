@@ -194,7 +194,22 @@ const DEFAULT_MAC_PRODUCTS = [
   },
   {
     "id": "6aa8044067bbb0a59686f6f3",
-    "name": "Mac Studio M5-ULTRA",
+    "name": "Mac Studio: Apple M5 Ultra chip with 30‑core CPU, 64‑core GPU",
+    "specs": [
+      "30-core CPU",
+      "64-core GPU",
+      "96GB",
+      "1TB"
+    ],
+    "processors": [
+      "Apple M5 Ultra chip with 30‑core CPU and 64‑core GPU"
+    ],
+    "ram": [
+      "96GB"
+    ],
+    "storage": [
+      "1TB"
+    ],
     "price": 629900,
     "priceStr": "\u20b9629,900",
     "discountPercent": 0,
@@ -216,7 +231,22 @@ const DEFAULT_MAC_PRODUCTS = [
   },
   {
     "id": "6aa7ffd567bbb0a596866b1c",
-    "name": "Mac Studio M5-MAX",
+    "name": "Mac Studio: Apple M5 Max chip with 18‑core CPU, 32‑core GPU",
+    "specs": [
+      "18-core CPU",
+      "32-core GPU",
+      "36GB",
+      "512GB"
+    ],
+    "processors": [
+      "Apple M5 Max chip with 18‑core CPU and 32‑core GPU"
+    ],
+    "ram": [
+      "36GB"
+    ],
+    "storage": [
+      "512GB"
+    ],
     "price": 279900,
     "priceStr": "\u20b9279,900",
     "discountPercent": 0,
@@ -292,6 +322,10 @@ const DEFAULT_MAC_PRODUCTS = [
       "/uploads/upload_1783141135955_269.jpeg",
       "/uploads/upload_1783141140803_68.jpeg"
     ],
+    "ram": [
+      "Tilt- and height-adjustable stand",
+      "VESA mount adapter (Stand not included)"
+    ],
     "variants": [
       {
         "price": 349900
@@ -299,7 +333,7 @@ const DEFAULT_MAC_PRODUCTS = [
     ],
     "colors": [],
     "rating": 5.0,
-    "isSoldOut": true
+    "isSoldOut": false
   },
   {
     "id": "6a44d92b4a9f2d3d8e71110a",
@@ -314,6 +348,16 @@ const DEFAULT_MAC_PRODUCTS = [
       "/uploads/upload_1789640911010_111.png",
       "/uploads/upload_1782896933797_194.jpeg"
     ],
+    "specs": [
+      "Tilt-adjustable stand",
+      "Tilt- and height-adjustable stand",
+      "VESA mount adapter (Stand not included)"
+    ],
+    "storage": [
+      "Tilt-adjustable stand",
+      "Tilt- and height-adjustable stand",
+      "VESA mount adapter (Stand not included)"
+    ],
     "variants": [
       {
         "price": 189900
@@ -326,6 +370,10 @@ const DEFAULT_MAC_PRODUCTS = [
   {
     "id": "6a44d3ee4a9f2d3d8e711107",
     "name": "24-inch iMac with Retina 4.5K display with Apple M4 chip",
+    "specs": [
+      "10-core CPU",
+      "10-core GPU"
+    ],
     "price": 174900,
     "priceStr": "\u20b9174,900",
     "discountPercent": 0,
@@ -1015,6 +1063,10 @@ export default function Macbook() {
       image: primaryImg,
       images: p.images || [],
       variants: p.variants || [],
+      ram: p.ram || [],
+      storage: p.storage || [],
+      specs: p.specs || [],
+      processors: p.processors || [],
       colors: Array.isArray(p.colors) ? p.colors.map(c => {
         const rawName = typeof c === 'string' ? c : (c.name || '');
         const normName = rawName.replace(/\s+/g, ' ').trim();

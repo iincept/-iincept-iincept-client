@@ -8,9 +8,30 @@ import { getProductCardPricing } from '../utils/pricingUtils';
 import { resolveColorValue } from '../utils/colorResolver';
 import CleanProductImage from './CleanProductImage';
 
+const cleanStorageSpec = (str) => {
+  if (!str) return '';
+  const s = String(str).trim();
+  const match = s.match(/(\d+)\s*(TB|GB)/i);
+  if (match) {
+    return `${match[1]}${match[2].toUpperCase()}`;
+  }
+  const matchNum = s.match(/(\d+)\s*SSD/i) || s.match(/^(\d+)$/);
+  if (matchNum) {
+    return `${matchNum[1]}GB`;
+  }
+  return s.replace(/\s*SSD/gi, '').trim();
+};
+
+const cleanRamSpec = (str) => {
+  if (!str) return '';
+  const s = String(str).trim();
+  const m = s.match(/\b(\d+GB)\b/i);
+  return m ? m[1].toUpperCase() : s;
+};
+
 /**
  * Intelligent helper to extract key technical specifications (CPU, GPU, RAM, Storage, etc.)
- * from title, description, variants, or features to match Apple's modern spec-bar layout:
+ * from starting (base) variant, title, and description to match Apple's modern spec-bar layout:
  * Example: "10-core CPU | 10-core GPU | 16GB | 512GB"
  */
 export const extractProductKeySpecs = (prod) => {
@@ -19,86 +40,214 @@ export const extractProductKeySpecs = (prod) => {
   const rawTitle = (prod.name || prod.title || '').trim();
   const rawDesc = (prod.description || '').trim();
   const lowerTitle = rawTitle.toLowerCase();
-  const lowerCat = (prod.category?.name || prod.category || '').toLowerCase();
+  const catName = typeof prod.category === 'object' && prod.category !== null
+    ? (prod.category.name || '')
+    : (typeof prod.category === 'string' ? prod.category : '');
+  const lowerCat = catName.toLowerCase();
 
-  const specs = [];
+  // Filter out accessories (chargers, cables, keyboards, adapters, etc.)
+  const isAccessory = lowerTitle.includes('adapter') ||
+    lowerTitle.includes('cable') ||
+    lowerTitle.includes('keyboard') ||
+    lowerTitle.includes('mouse') ||
+    lowerTitle.includes('trackpad') ||
+    lowerTitle.includes('case') ||
+    lowerTitle.includes('charger') ||
+    lowerTitle.includes('magsafe') ||
+    lowerCat.includes('accessories');
 
-  // 1. Check for explicit specs or features in product data
-  if (Array.isArray(prod.specs) && prod.specs.length > 0) {
-    return prod.specs.slice(0, 4);
-  }
-  if (Array.isArray(prod.features) && prod.features.length > 0) {
-    const cleanFeats = prod.features
-      .map(f => typeof f === 'string' ? f.split(':')[1]?.trim() || f.trim() : '')
-      .filter(f => f && f.length < 30);
-    if (cleanFeats.length >= 3) return cleanFeats.slice(0, 4);
-  }
+  const isMac = !isAccessory && (
+    lowerCat.includes('mac') ||
+    lowerCat.includes('laptop') ||
+    lowerCat.includes('pc') ||
+    lowerTitle.includes('macbook') ||
+    lowerTitle.includes('imac') ||
+    lowerTitle.includes('mac mini') ||
+    lowerTitle.includes('mac studio') ||
+    lowerTitle.includes('mac pro')
+  );
 
-  // 2. Extract CPU cores / chip
-  const cpuMatch = rawTitle.match(/(\d+[-‑]core\s+CPU)/i) || rawDesc.match(/(\d+[-‑]core\s+CPU)/i);
-  if (cpuMatch) {
-    specs.push(cpuMatch[1].replace('‑', '-'));
-  } else {
-    const chipMatch = rawTitle.match(/\b(M[1-5](?:\s*(?:Pro|Max|Ultra))?|A1[5-9](?:\s*Pro)?|S\d+)\s+chip\b/i);
-    if (chipMatch) {
-      specs.push(chipMatch[0]);
+  // Find starting / base variant (lowest price with price > 0)
+  let baseVariant = null;
+  if (Array.isArray(prod.variants) && prod.variants.length > 0) {
+    const pricedVariants = prod.variants.filter(v => (Number(v.price) || 0) > 0);
+    if (pricedVariants.length > 0) {
+      pricedVariants.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+      baseVariant = pricedVariants[0];
+    } else {
+      baseVariant = prod.variants[0];
     }
   }
 
-  // 3. Extract GPU cores
-  const gpuMatch = rawTitle.match(/(\d+[-‑]core\s+GPU)/i) || rawDesc.match(/(\d+[-‑]core\s+GPU)/i);
-  if (gpuMatch) {
-    specs.push(gpuMatch[1].replace('‑', '-'));
+  // Combined text to search for specs
+  const combinedText = [
+    rawTitle,
+    baseVariant?.processor || '',
+    baseVariant?.chip || '',
+    rawDesc,
+    ...(Array.isArray(prod.processors) ? prod.processors : [])
+  ].filter(Boolean).join(' ');
+
+  // 1. MAC COMPUTERS (MacBook, iMac, Mac mini, Mac Studio):
+  // Strictly format as starting variant [CPU, GPU, RAM, Storage]
+  // Example: 10-core CPU | 10-core GPU | 16GB | 512GB
+  if (isMac) {
+    let cpu = null;
+    let gpu = null;
+    let ram = null;
+    let storage = null;
+
+    // CPU Match
+    const cpuMatch = combinedText.match(/(\d+[-‑]core\s+CPU)/i);
+    if (cpuMatch) {
+      cpu = cpuMatch[1].replace('‑', '-');
+    }
+
+    // GPU Match
+    const gpuMatch = combinedText.match(/(\d+[-‑]core\s+GPU)/i);
+    if (gpuMatch) {
+      gpu = gpuMatch[1].replace('‑', '-');
+    }
+
+    // iMac: strictly display "10-core CPU | 10-core GPU" (RAM & Storage excluded as requested)
+    if (lowerTitle.includes('imac')) {
+      return [cpu || '10-core CPU', gpu || '10-core GPU'];
+    }
+
+    // Mac Studio M5-ULTRA: "30-core CPU | 64-core GPU | 96GB | 1TB"
+    if (lowerTitle.includes('studio') && (lowerTitle.includes('ultra') || lowerTitle.includes('m5-ultra'))) {
+      const uRam = baseVariant?.ram ? cleanRamSpec(baseVariant.ram) : (Array.isArray(prod.ram) && prod.ram[0] ? cleanRamSpec(prod.ram[0]) : '96GB');
+      const uStorage = baseVariant?.storage ? cleanStorageSpec(baseVariant.storage) : (Array.isArray(prod.storage) && prod.storage[0] ? cleanStorageSpec(prod.storage[0]) : '1TB');
+      return ['30-core CPU', '64-core GPU', uRam, uStorage];
+    }
+
+    // Mac Studio M5-MAX: "18-core CPU | 32-core GPU | 36GB | 512GB"
+    if (lowerTitle.includes('studio') && (lowerTitle.includes('max') || lowerTitle.includes('m5-max'))) {
+      const mRam = baseVariant?.ram ? cleanRamSpec(baseVariant.ram) : (Array.isArray(prod.ram) && prod.ram[0] ? cleanRamSpec(prod.ram[0]) : '36GB');
+      const mStorage = baseVariant?.storage ? cleanStorageSpec(baseVariant.storage) : (Array.isArray(prod.storage) && prod.storage[0] ? cleanStorageSpec(prod.storage[0]) : '512GB');
+      return ['18-core CPU', '32-core GPU', mRam, mStorage];
+    }
+
+    // Starting RAM (strictly from base variant first)
+    if (baseVariant?.ram) {
+      ram = cleanRamSpec(baseVariant.ram);
+    }
+    if (!ram && Array.isArray(prod.ram) && prod.ram[0]) {
+      ram = cleanRamSpec(prod.ram[0]);
+    }
+    if (!ram) {
+      const ramMatch = combinedText.match(/\b(8GB|16GB|18GB|24GB|32GB|36GB|48GB|64GB|128GB)\b/i);
+      if (ramMatch) ram = ramMatch[1].toUpperCase();
+    }
+
+    // Starting Storage (strictly from base variant first)
+    if (baseVariant?.storage) {
+      storage = cleanStorageSpec(baseVariant.storage);
+    }
+    if (!storage && Array.isArray(prod.storage) && prod.storage[0]) {
+      storage = cleanStorageSpec(prod.storage[0]);
+    }
+    if (!storage) {
+      const storageMatch = combinedText.match(/\b(128GB|256GB|512GB|1TB|2TB|4TB|8TB)\b/i);
+      if (storageMatch) storage = storageMatch[1].toUpperCase();
+    }
+
+    // Model intelligent fallbacks for any missing specs
+    if (!cpu) {
+      if (lowerTitle.includes('pro 16')) cpu = '18-core CPU';
+      else if (lowerTitle.includes('pro 14')) cpu = '10-core CPU';
+      else if (lowerTitle.includes('air 15')) cpu = '10-core CPU';
+      else if (lowerTitle.includes('air 13')) cpu = '10-core CPU';
+      else if (lowerTitle.includes('neo')) cpu = '6-core CPU';
+      else if (lowerTitle.includes('mini')) cpu = '10-core CPU';
+      else if (lowerTitle.includes('studio')) cpu = '14-core CPU';
+      else if (lowerTitle.includes('imac')) cpu = '8-core CPU';
+      else cpu = '10-core CPU';
+    }
+
+    if (!gpu) {
+      if (lowerTitle.includes('pro 16')) gpu = '20-core GPU';
+      else if (lowerTitle.includes('pro 14')) gpu = '10-core GPU';
+      else if (lowerTitle.includes('air 15')) gpu = '10-core GPU';
+      else if (lowerTitle.includes('air 13')) gpu = '8-core GPU';
+      else if (lowerTitle.includes('neo')) gpu = '5-core GPU';
+      else if (lowerTitle.includes('mini')) gpu = '10-core GPU';
+      else if (lowerTitle.includes('studio')) gpu = '30-core GPU';
+      else if (lowerTitle.includes('imac')) gpu = '8-core GPU';
+      else gpu = '10-core GPU';
+    }
+
+    if (!ram) {
+      if (lowerTitle.includes('pro 16')) ram = '24GB';
+      else if (lowerTitle.includes('studio')) ram = '36GB';
+      else if (lowerTitle.includes('neo')) ram = '8GB';
+      else ram = '16GB';
+    }
+
+    if (!storage) {
+      if (lowerTitle.includes('neo') || lowerTitle.includes('mini') || lowerTitle.includes('imac')) storage = '256GB';
+      else if (lowerTitle.includes('pro 16') || lowerTitle.includes('studio')) storage = '1TB';
+      else storage = '512GB';
+    }
+
+    return [cpu, gpu, ram, storage];
   }
 
-  // 4. Extract Unified Memory / RAM
-  const ramMatch = rawTitle.match(/\b(8GB|16GB|18GB|24GB|32GB|36GB|48GB|64GB|128GB)\b/i) ||
-                   rawDesc.match(/\b(8GB|16GB|18GB|24GB|32GB|36GB|48GB|64GB|128GB)\s*(?:Unified\s*Memory|RAM)\b/i);
-  if (ramMatch) {
-    specs.push(ramMatch[1].toUpperCase());
+  // Studio Display & Studio Display XDR: Display Stand / RAM options outside on the card
+  if (lowerTitle.includes('studio display') || lowerTitle.includes('display xdr') || lowerTitle.includes('pro display')) {
+    const rawList = (Array.isArray(prod.specs) && prod.specs.length > 0)
+      ? prod.specs
+      : (Array.isArray(prod.ram) && prod.ram.length > 0)
+        ? prod.ram
+        : (Array.isArray(prod.storage) && prod.storage.length > 0)
+          ? prod.storage
+          : ((prod.variants || []).map(v => v.ram || v.storage).filter(Boolean));
+    const uniqueOptions = Array.from(new Set(rawList.map(s => (s || '').trim()).filter(Boolean)));
+    if (uniqueOptions.length > 0) {
+      return uniqueOptions;
+    }
+    if (lowerTitle.includes('xdr')) {
+      return ['Tilt- and height-adjustable stand', 'VESA mount adapter (Stand not included)'];
+    }
+    return ['Tilt-adjustable stand', 'Tilt- and height-adjustable stand', 'VESA mount adapter (Stand not included)'];
   }
 
-  // 5. Extract Storage (SSD / Flash)
-  const storageMatch = rawTitle.match(/\b(128GB|256GB|512GB|1TB|2TB|4TB|8TB)\b/i) ||
-                       rawDesc.match(/\b(128GB|256GB|512GB|1TB|2TB|4TB|8TB)\s*(?:SSD|Storage)\b/i);
-  if (storageMatch) {
-    specs.push(storageMatch[1].toUpperCase());
+  // 2. Explicit specs array if defined in admin
+  if (Array.isArray(prod.specs) && prod.specs.length >= 2) {
+    return prod.specs.slice(0, 4);
   }
 
-  // If we found at least 2 distinct specs from title/desc, return them
-  if (specs.length >= 2) {
-    return specs.slice(0, 4);
+  // 3. Accessories
+  if (isAccessory) {
+    return ['Official Apple Warranty', 'Fast Shipping', '100% Genuine'];
   }
 
-  // 6. Category-intelligent Apple fallbacks if specs were not explicitly found in title
-  if (lowerCat.includes('mac') || lowerTitle.includes('macbook') || lowerTitle.includes('imac') || lowerTitle.includes('mac mini') || lowerTitle.includes('mac studio')) {
-    if (lowerTitle.includes('air')) return ['10-core CPU', '10-core GPU', '16GB', '512GB'];
-    if (lowerTitle.includes('pro')) return ['12-core CPU', '18-core GPU', '18GB', '512GB'];
-    if (lowerTitle.includes('mini')) return ['10-core CPU', '10-core GPU', '16GB', '256GB'];
-    if (lowerTitle.includes('imac')) return ['8-core CPU', '8-core GPU', '16GB', '256GB'];
-    if (lowerTitle.includes('studio')) return ['14-core CPU', '30-core GPU', '36GB', '512GB'];
-    return ['Apple Silicon', '16GB Unified Memory', '512GB SSD', 'Liquid Retina'];
-  }
-
+  // 4. iPhone
   if (lowerCat.includes('iphone') || lowerTitle.includes('iphone')) {
-    if (lowerTitle.includes('pro')) return ['A18 Pro chip', '48MP Fusion Camera', 'Super Retina XDR', '128GB'];
-    return ['A18 chip', 'Camera Control', '48MP 2x Telephoto', '128GB'];
+    const baseStorage = baseVariant?.storage ? cleanStorageSpec(baseVariant.storage) : '128GB';
+    if (lowerTitle.includes('pro')) return ['A18 Pro chip', '48MP Fusion Camera', 'Super Retina XDR', baseStorage];
+    return ['A18 chip', 'Camera Control', '48MP 2x Telephoto', baseStorage];
   }
 
+  // 5. iPad
   if (lowerCat.includes('ipad') || lowerTitle.includes('ipad')) {
-    if (lowerTitle.includes('pro')) return ['Ultra Retina XDR', 'M4 chip', 'Face ID', '256GB'];
-    if (lowerTitle.includes('air')) return ['Liquid Retina', 'M2 chip', 'Touch ID', '128GB'];
-    return ['10.9" Liquid Retina', 'A14 Bionic', 'USB-C', '64GB'];
+    const baseStorage = baseVariant?.storage ? cleanStorageSpec(baseVariant.storage) : '128GB';
+    if (lowerTitle.includes('pro')) return ['Ultra Retina XDR', 'M4 chip', 'Face ID', baseStorage];
+    if (lowerTitle.includes('air')) return ['Liquid Retina', 'M2 chip', 'Touch ID', baseStorage];
+    return ['10.9-inch Liquid Retina', 'A14 Bionic', 'USB-C', baseStorage];
   }
 
+  // 6. Apple Watch
   if (lowerCat.includes('watch') || lowerTitle.includes('watch')) {
     return ['Always-On Retina', 'S10 SiP', '50m Water Resistant', 'Blood Oxygen'];
   }
 
+  // 7. AirPods
   if (lowerCat.includes('airpod') || lowerTitle.includes('airpod')) {
     return ['Active Noise Cancellation', 'Spatial Audio', 'Transparency Mode', 'USB-C'];
   }
 
+  // 8. Apple TV
   if (lowerCat.includes('tv') || lowerTitle.includes('apple tv') || lowerTitle.includes('homepod')) {
     return ['4K High Frame Rate', 'Dolby Vision', 'A15 Bionic', 'Siri Remote'];
   }
@@ -111,18 +260,28 @@ export const extractProductKeySpecs = (prod) => {
  */
 export const cleanAppleTitle = (rawTitle) => {
   if (!rawTitle) return 'Apple Product';
-  return rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
-};
+  let t = rawTitle.replace(/\s*[A-Z0-9]{5,9}\/[A-Z]$/i, '').trim();
 
-/**
- * Standard Fallback Colors for Apple devices if product has no colors defined
- */
-const DEFAULT_APPLE_COLORS = [
-  { name: 'Midnight', value: '#1e2530', colorHex: '#1e2530' },
-  { name: 'Sky Blue', value: '#7dc9f7', colorHex: '#7dc9f7' },
-  { name: 'Silver', value: '#d8d9dc', colorHex: '#d8d9dc' },
-  { name: 'Starlight', value: '#f4ede4', colorHex: '#f4ede4' }
-];
+  // Pattern 1: "15-inch MacBook Air: Apple M5 chip with 10-core CPU and 10-core GPU" -> "15-inch MacBook Air (M5)"
+  const chipWithDetails = /:\s*Apple\s+([MA]\d+(?:\s*(?:Pro|Max|Ultra|Bionic))?)\s+chip(?:\s+with.*)?$/i;
+  const match1 = t.match(chipWithDetails);
+  if (match1) {
+    const base = t.substring(0, match1.index).trim();
+    const chip = match1[1].trim();
+    return `${base} (${chip})`;
+  }
+
+  // Pattern 2: "Mac mini: Apple M6" -> "Mac mini (M6)"
+  const colonChip = /:\s*(?:Apple\s+)?([MA]\d+(?:\s*(?:Pro|Max|Ultra|Bionic))?)$/i;
+  const match2 = t.match(colonChip);
+  if (match2) {
+    const base = t.substring(0, match2.index).trim();
+    const chip = match2[1].trim();
+    return `${base} (${chip})`;
+  }
+
+  return t;
+};
 
 export default function AppleProductCard({
   product,
@@ -148,8 +307,12 @@ export default function AppleProductCard({
   const discountPercent = pricing.discountPercent || (hasDiscount ? Math.round(((originalMrp - sellingPrice) / originalMrp) * 100) : 0);
   const savingsAmount = hasDiscount ? (originalMrp - sellingPrice) : 0;
 
-  // Colors resolution
-  const rawColors = Array.isArray(product?.colors) && product.colors.length > 0 ? product.colors : DEFAULT_APPLE_COLORS;
+  // Colors resolution: ONLY use colors if explicitly added in Admin Panel (product.colors or variant.color)
+  const rawColors = Array.isArray(product?.colors) && product.colors.length > 0
+    ? product.colors
+    : (Array.isArray(product?.variants) && product.variants.some(v => v.color)
+      ? [...new Set(product.variants.map(v => v.color).filter(Boolean))].map(c => ({ name: c, value: c }))
+      : []);
   const normalizedColors = rawColors.map(c => {
     const name = typeof c === 'string' ? c : (c.name || 'Standard');
     const val = typeof c === 'string' ? c : (c.value || c.colorHex || c.name || '');
@@ -158,23 +321,62 @@ export default function AppleProductCard({
     return { name, colorHex, image: img };
   });
 
-  // Color selection state (internal fallback if uncontrolled)
-  const [internalColor, setInternalColor] = useState(normalizedColors[0]?.name || 'Standard');
-  const activeColor = controlledColor !== undefined ? controlledColor : internalColor;
+  const hasColors = normalizedColors.length > 0;
 
-  // Active product image based on selected color
+  // Color selection state: track if user explicitly selected a color
+  const [internalColor, setInternalColor] = useState(null);
+  const [hasUserClickedColor, setHasUserClickedColor] = useState(false);
+  const hasUserSelectedColor = Boolean(controlledColor || hasUserClickedColor);
+  const activeColor = controlledColor || internalColor || (hasColors ? normalizedColors[0]?.name : '');
+
+  // Active product image: Prioritize Admin Panel displayImage by default
   const resolveActiveImage = () => {
-    // Check if current color has a matched image in colorImages or variant
-    if (product?.colorImages && product.colorImages[activeColor]) {
-      return product.colorImages[activeColor];
+    // 1. If user has NOT explicitly selected a color swatch or product has no colors, ALWAYS return the Admin Panel displayImage!
+    if (!hasUserSelectedColor || !hasColors) {
+      if (product?.displayImage && typeof product.displayImage === 'string' && product.displayImage.trim()) {
+        return product.displayImage.trim();
+      }
+      if (product?.image && typeof product.image === 'string' && product.image.trim() && !product.image.includes('mock-cloud')) {
+        return product.image.trim();
+      }
+      if (Array.isArray(product?.images) && product.images[0]) {
+        return product.images[0];
+      }
     }
-    const matchedColorObj = normalizedColors.find(c => c.name.toLowerCase() === activeColor.toLowerCase());
-    if (matchedColorObj?.image) {
-      return matchedColorObj.image;
+
+    // 2. If user specifically clicked a color swatch, search for an image specific to that color
+    if (hasUserSelectedColor && hasColors && activeColor) {
+      if (product?.colorImages && typeof product.colorImages === 'object') {
+        const directMatch = product.colorImages[activeColor];
+        if (directMatch) return directMatch;
+        const normActive = activeColor.trim().toLowerCase();
+        const matchedKey = Object.keys(product.colorImages).find(k => k.trim().toLowerCase() === normActive);
+        if (matchedKey && product.colorImages[matchedKey]) {
+          return product.colorImages[matchedKey];
+        }
+      }
+      const matchedColorObj = normalizedColors.find(c => c.name.toLowerCase() === activeColor.toLowerCase());
+      if (matchedColorObj?.image) {
+        return matchedColorObj.image;
+      }
+      if (Array.isArray(product?.variants)) {
+        const vMatch = product.variants.find(v => (v.color || '').trim().toLowerCase() === activeColor.toLowerCase());
+        if (vMatch && Array.isArray(vMatch.images) && vMatch.images[0]) {
+          return vMatch.images[0];
+        }
+      }
     }
-    if (product?.displayImage) return product.displayImage;
-    if (product?.image) return product.image;
-    if (Array.isArray(product?.images) && product.images[0]) return product.images[0];
+
+    // 3. Fallback: Admin displayImage -> product.image -> first image -> fallback
+    if (product?.displayImage && typeof product.displayImage === 'string' && product.displayImage.trim()) {
+      return product.displayImage.trim();
+    }
+    if (product?.image && typeof product.image === 'string' && product.image.trim()) {
+      return product.image.trim();
+    }
+    if (Array.isArray(product?.images) && product.images[0]) {
+      return product.images[0];
+    }
     return '/mac_nav/macbook_air.png';
   };
 
@@ -200,10 +402,10 @@ export default function AppleProductCard({
   const handleColorClick = (colorName, e) => {
     e.preventDefault();
     e.stopPropagation();
+    setHasUserClickedColor(true);
+    setInternalColor(colorName);
     if (onColorChange) {
       onColorChange(colorName);
-    } else {
-      setInternalColor(colorName);
     }
   };
 
@@ -228,19 +430,21 @@ export default function AppleProductCard({
   const handleAddToCartClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isSoldOut) return;
+
+    const cartColor = hasColors && activeColor ? activeColor : undefined;
+    const cartName = cartColor ? `${cleanTitle} (${cartColor})` : cleanTitle;
 
     if (controlledAddToCart) {
-      controlledAddToCart(product, activeColor);
+      controlledAddToCart(product, cartColor);
     } else {
       dispatch(addToCart({
         id: prodId,
         _id: prodId,
-        name: `${cleanTitle} (${activeColor})`,
+        name: cartName,
         price: sellingPrice,
         image: currentDisplayImage,
         quantity: 1,
-        color: activeColor
+        color: cartColor
       }));
       dispatch(openCart());
     }
@@ -293,9 +497,8 @@ export default function AppleProductCard({
             aria-label="Save to Wishlist"
           >
             <Heart
-              className={`h-6 w-6 stroke-[1.8] transition-all duration-200 ${
-                isWishlistActive ? 'fill-[#e11d48] text-[#e11d48] scale-110' : 'text-zinc-900 hover:text-[#e11d48]'
-              }`}
+              className={`h-6 w-6 stroke-[1.8] transition-all duration-200 ${isWishlistActive ? 'fill-[#e11d48] text-[#e11d48] scale-110' : 'text-zinc-900 hover:text-[#e11d48]'
+                }`}
             />
           </button>
         </div>
@@ -313,7 +516,7 @@ export default function AppleProductCard({
           </div>
 
           {/* Product Title */}
-          <h3 className="font-bold text-lg sm:text-[21px] xl:text-[22px] leading-snug tracking-tight text-zinc-950 group-hover/link:text-black transition-colors min-h-[46px] line-clamp-2">
+          <h3 className="font-extrabold sm:font-black text-xl sm:text-[22px] xl:text-[23px] leading-snug tracking-tight text-zinc-950 group-hover/link:text-black transition-colors line-clamp-2">
             {cleanTitle}
           </h3>
 
@@ -334,44 +537,43 @@ export default function AppleProductCard({
         <div className="border-t border-zinc-200/60 my-3.5 sm:my-4" />
 
         {/* Colours & In-Stock Status Row */}
-        <div className="flex items-center justify-between gap-2">
-          {/* Colours Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm sm:text-base font-bold text-zinc-900 tracking-tight">Colours:</span>
-            <div className="flex items-center gap-2 py-0.5">
-              {normalizedColors.slice(0, 5).map((color, cIdx) => {
-                const isSelected = activeColor.toLowerCase() === color.name.toLowerCase();
-                return (
-                  <button
-                    key={cIdx}
-                    type="button"
-                    onClick={(e) => handleColorClick(color.name, e)}
-                    style={{ backgroundColor: color.colorHex }}
-                    className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-all duration-150 cursor-pointer shadow-xs border border-black/10 ${
-                      isSelected
+        <div className={`flex items-center ${hasColors ? 'justify-between' : 'justify-end'} gap-2 min-h-[32px]`}>
+          {/* Colours Selector (only shown if colors were added from Admin Panel) */}
+          {hasColors && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm sm:text-base font-bold text-zinc-900 tracking-tight">Colours:</span>
+              <div className="flex items-center gap-3 sm:gap-3.5 py-0.5">
+                {normalizedColors.slice(0, 5).map((color, cIdx) => {
+                  const isSelected = activeColor && activeColor.toLowerCase() === color.name.toLowerCase();
+                  return (
+                    <button
+                      key={cIdx}
+                      type="button"
+                      onClick={(e) => handleColorClick(color.name, e)}
+                      style={{ backgroundColor: color.colorHex }}
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-all duration-150 cursor-pointer shadow-xs border border-black/10 ${isSelected
                         ? 'ring-2 ring-offset-2 ring-zinc-950 scale-110 z-10'
                         : 'hover:scale-105 hover:shadow-sm opacity-90 hover:opacity-100'
-                    }`}
-                    title={color.name}
-                    aria-label={`Select ${color.name} colour`}
-                  />
-                );
-              })}
+                        }`}
+                      title={color.name}
+                      aria-label={`Select ${color.name} colour`}
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* In Stock Badge */}
           <div
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 select-none ${
-              isSoldOut
-                ? 'bg-zinc-100 text-zinc-500'
-                : 'bg-[#eaf8ee] text-[#16a34a]'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 select-none ${isSoldOut
+              ? 'bg-zinc-100 text-zinc-500'
+              : 'bg-[#eaf8ee] text-[#16a34a]'
+              }`}
           >
             <span
-              className={`h-2 w-2 rounded-full shrink-0 ${
-                isSoldOut ? 'bg-zinc-400' : 'bg-[#16a34a]'
-              }`}
+              className={`h-2 w-2 rounded-full shrink-0 ${isSoldOut ? 'bg-zinc-400' : 'bg-[#16a34a]'
+                }`}
             />
             <span>{isSoldOut ? 'Out of Stock' : 'In Stock'}</span>
           </div>
@@ -392,7 +594,7 @@ export default function AppleProductCard({
                 ₹{sellingPrice.toLocaleString('en-IN')}
               </span>
               {hasDiscount && (
-                <span className="text-xs sm:text-sm font-semibold text-zinc-400 line-through">
+                <span className="text-xs sm:text-[13.5px] font-bold text-zinc-400 line-through">
                   ₹{originalMrp.toLocaleString('en-IN')}
                 </span>
               )}
@@ -420,17 +622,15 @@ export default function AppleProductCard({
             </button>
 
             {/* Add to Cart Button */}
-            {!isSoldOut && (
-              <button
-                type="button"
-                onClick={handleAddToCartClick}
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#18181b] hover:bg-black text-white flex items-center justify-center transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
-                title="Add to Cart"
-                aria-label="Add to Cart"
-              >
-                <ShoppingCart className="h-5 w-5 stroke-[1.8]" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleAddToCartClick}
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#18181b] hover:bg-black text-white flex items-center justify-center transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+              title="Add to Cart"
+              aria-label="Add to Cart"
+            >
+              <ShoppingCart className="h-5 w-5 stroke-[1.8]" />
+            </button>
           </div>
         </div>
 
@@ -500,27 +700,28 @@ export default function AppleProductCard({
                 </div>
 
                 {/* Color Selector */}
-                <div className="space-y-1.5 pt-1">
-                  <span className="text-xs font-bold text-zinc-900 block">
-                    Colour: <span className="text-zinc-600 font-semibold">{activeColor}</span>
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {normalizedColors.map((color, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={(e) => handleColorClick(color.name, e)}
-                        style={{ backgroundColor: color.colorHex }}
-                        className={`w-7 h-7 rounded-full cursor-pointer transition-all border border-black/10 ${
-                          activeColor.toLowerCase() === color.name.toLowerCase()
+                {hasColors && (
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-xs font-bold text-zinc-900 block">
+                      Colour: <span className="text-zinc-600 font-semibold">{activeColor}</span>
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {normalizedColors.map((color, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={(e) => handleColorClick(color.name, e)}
+                          style={{ backgroundColor: color.colorHex }}
+                          className={`w-7 h-7 rounded-full cursor-pointer transition-all border border-black/10 ${activeColor && activeColor.toLowerCase() === color.name.toLowerCase()
                             ? 'ring-2 ring-offset-2 ring-black scale-110'
                             : 'hover:scale-105 opacity-80 hover:opacity-100'
-                        }`}
-                        title={color.name}
-                      />
-                    ))}
+                            }`}
+                          title={color.name}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Pricing */}
                 <div className="pt-2 border-t border-zinc-100">
@@ -530,7 +731,7 @@ export default function AppleProductCard({
                       ₹{sellingPrice.toLocaleString('en-IN')}
                     </span>
                     {hasDiscount && (
-                      <span className="text-sm font-semibold text-zinc-400 line-through">
+                      <span className="text-sm font-bold text-zinc-400 line-through">
                         ₹{originalMrp.toLocaleString('en-IN')}
                       </span>
                     )}

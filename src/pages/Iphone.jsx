@@ -1381,8 +1381,20 @@ export default function Iphone() {
 
   const filteredProducts = useMemo(() => {
     return sortedProducts.filter((prod) => {
-      if (searchQuery && !matchesProductSearch(prod, searchQuery)) {
-        return false;
+      if (searchQuery) {
+        const searchNorm = searchQuery.trim().toLowerCase();
+        if (searchNorm === 'iphone 17') {
+          const titleLower = (prod.name || prod.title || '').toLowerCase();
+          // Specifically match base iPhone 17 (exclude Pro, Pro Max, Air, 17e)
+          const isBase17 = titleLower.includes('iphone 17') &&
+            !titleLower.includes('pro') &&
+            !titleLower.includes('air') &&
+            !titleLower.includes('17e') &&
+            !titleLower.includes('17 e');
+          if (!isBase17) return false;
+        } else if (!matchesProductSearch(prod, searchQuery)) {
+          return false;
+        }
       }
 
       if (activeTab === 'available') return !prod.isSoldOut;
@@ -1421,7 +1433,7 @@ export default function Iphone() {
               } else {
                 const normSearch = currentSearch.toLowerCase().replace(/[^a-z0-9]/g, '');
                 const normQuery = (item.query || item.name || item.label || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-                isActive = normSearch === normQuery || normSearch.includes(normQuery) || normQuery.includes(normSearch);
+                isActive = normSearch === normQuery;
               }
 
               return (

@@ -1096,6 +1096,16 @@ export default function ProductDetails() {
       }
     }
 
+    // 1b. Check product.colorImages map
+    if (product.colorImages && typeof product.colorImages === 'object') {
+      const direct = product.colorImages[colorName];
+      if (direct) return [direct];
+      const matchKey = Object.keys(product.colorImages).find(k => k.trim().toLowerCase() === normColor);
+      if (matchKey && product.colorImages[matchKey]) {
+        return [product.colorImages[matchKey]];
+      }
+    }
+
     // 2. Check product.colors array object
     const colorIdx = (product.colors || []).findIndex(c => {
       const name = getColorStr(c);
@@ -1536,10 +1546,17 @@ export default function ProductDetails() {
     const is1TB = sStr.includes('1tb') || sStr.includes('1024') || sStr.includes('1 tb');
 
     if (pTitle.includes('imac') || pTitle.includes('24-inch')) {
-      if (is24 || is1TB || (is16 && is512)) {
-        return 'Apple M4 chip with 10‑core CPU and 10‑core GPU';
-      }
-      return 'Apple M4 chip with 8‑core CPU and 8‑core GPU';
+      return 'Apple M4 chip with 10‑core CPU and 10‑core GPU';
+    }
+
+    // Mac Studio M5-ULTRA
+    if (pTitle.includes('studio') && (pTitle.includes('ultra') || pTitle.includes('m5-ultra'))) {
+      return 'Apple M5 Ultra chip with 30‑core CPU and 64‑core GPU';
+    }
+
+    // Mac Studio M5-MAX
+    if (pTitle.includes('studio') && (pTitle.includes('max') || pTitle.includes('m5-max'))) {
+      return 'Apple M5 Max chip with 18‑core CPU and 32‑core GPU';
     }
 
     if (is24 && is1TB) {
@@ -1790,7 +1807,7 @@ export default function ProductDetails() {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    const colorName = selectedColor?.name || (colors[0]?.name || 'Standard');
+    const colorName = colors.length > 0 ? (selectedColor?.name || colors[0]?.name || '') : '';
     const activeVar = getActiveVariant();
     const partNum = activeVar?.partNumber || product.partNumber || product.modelNumber || '';
     const glassVal = selectedGlass || selectedConnectivity || activeVar?.glass || activeVar?.connectivity || '';
@@ -1813,12 +1830,12 @@ export default function ProductDetails() {
     }
     if (partNum) detailsArr.push(`MPN: ${partNum}`);
 
-    const nameDetails = detailsArr.join(' / ');
+    const nameDetails = detailsArr.length > 0 ? ` (${detailsArr.join(' / ')})` : '';
 
     try {
       const result = await dispatch(addToCart({
-        id: `${id}-${selectedAccessoriesSize || 'nosz'}-${selectedSize || 'std'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${selectedAppleCare ? (activeAppleCarePlan?.id || 'ac') : 'noac'}-${colorName}`,
-        name: `${cleanProductTitle(product.name || product.title)} (${nameDetails})`,
+        id: `${id}-${selectedAccessoriesSize || 'nosz'}-${selectedSize || 'std'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${selectedAppleCare ? (activeAppleCarePlan?.id || 'ac') : 'noac'}-${colorName || 'std'}`,
+        name: `${cleanProductTitle(product.name || product.title)}${nameDetails}`,
         price: unitPrice,
         image: activeImage || processedImage || colors[0]?.image || product.images?.[0] || product.image,
         quantity,
@@ -1831,7 +1848,7 @@ export default function ProductDetails() {
         processor: processorVal,
         partNumber: partNum,
         ram: selectedRam,
-        color: colorName,
+        color: colors.length > 0 ? colorName : undefined,
         appleCare: selectedAppleCare ? (activeAppleCarePlan?.name || true) : false,
         appleCarePlan: activeAppleCarePlan?.name || '',
         appleCarePrice: appleCareCost,
@@ -1861,7 +1878,7 @@ export default function ProductDetails() {
 
     const prodTitle = cleanProductTitle(product.title || product.name || 'Apple Product');
     const activeVar = getActiveVariant();
-    const activeColorStr = selectedColor?.name || (colors[0]?.name || '');
+    const activeColorStr = colors.length > 0 ? (selectedColor?.name || colors[0]?.name || '') : '';
     const partNum = activeVar?.partNumber || product.partNumber || product.modelNumber || '';
     const glassVal = selectedGlass || selectedConnectivity || activeVar?.glass || activeVar?.connectivity || '';
     const processorVal = activeVar?.processor || activeVar?.chip || getProcessorSpec();
@@ -1872,7 +1889,7 @@ export default function ProductDetails() {
     if (selectedSize) message += `📏 *Case Size/Model:* ${selectedSize}\n`;
     if (selectedBandSize) message += `⌚ *Band Size:* ${selectedBandSize}\n`;
     if (selectedConnectivity) message += `📡 *Connectivity:* ${selectedConnectivity}\n`;
-    if (activeColorStr) message += `🎨 *Color:* ${activeColorStr}\n`;
+    if (activeColorStr && colors.length > 0) message += `🎨 *Color:* ${activeColorStr}\n`;
     if (selectedStorage) message += `💾 *Storage:* ${selectedStorage}\n`;
     if (glassVal) message += `✨ *Glass Finish / Option:* ${glassVal}\n`;
     if (selectedRam) message += `⚡ *RAM:* ${selectedRam}\n`;
@@ -1891,7 +1908,7 @@ export default function ProductDetails() {
     window.open(whatsappUrl, '_blank');
   };
 
-  const colorName = selectedColor?.name || (colors[0]?.name || 'Standard');
+  const colorName = colors.length > 0 ? (selectedColor?.name || colors[0]?.name || '') : '';
 
   const getIpadModelName = () => {
     const titleStr = (product?.title || product?.name || id || '').toLowerCase();
@@ -2196,10 +2213,11 @@ export default function ProductDetails() {
             )}
 
             {/* Color swatches */}
-            <div className="optgroup mb-8">
-              <label className="block text-base font-semibold text-zinc-900 mb-3 text-left">
-                Colour – <span className="text-zinc-700 font-normal">{colorName}</span>
-              </label>
+            {colors.length > 0 && (
+              <div className="optgroup mb-8">
+                <label className="block text-base font-semibold text-zinc-900 mb-3 text-left">
+                  Colour – <span className="text-zinc-700 font-normal">{colorName}</span>
+                </label>
               <div className="swatches flex items-center gap-2">
                 {colors.map((cObj) => {
                   const isSelected = (selectedColor?.name || '').toString().trim().toLowerCase() === (cObj.name || '').toString().trim().toLowerCase();
@@ -2296,6 +2314,7 @@ export default function ProductDetails() {
                 })}
               </div>
             </div>
+            )}
 
             {/* SKU / Part Number option group (placed right below Colour) */}
             {(() => {

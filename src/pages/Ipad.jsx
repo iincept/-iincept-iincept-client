@@ -155,6 +155,12 @@ const resolveSubItemPath = (item) => {
   if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
     return '/compare?category=ipad';
   }
+  if (nameLower.includes('pencil') || queryLower.includes('pencil')) {
+    return '/ipad?search=Pencil';
+  }
+  if (nameLower.includes('keyboard') || queryLower.includes('keyboard')) {
+    return '/ipad?search=Keyboard';
+  }
   if (item?.path && item.path.trim()) {
     const normalized = normalizeTargetPath(item.path.trim());
     if (normalized && normalized !== '/ipad') return normalized;
@@ -1541,33 +1547,44 @@ export default function Ipad() {
 
   const getIpadSequenceRank = (productName) => {
     const name = (productName || '').toLowerCase();
-    let sizeNum = 99;
 
-    if (name.includes('mini') || name.includes('8.3')) {
-      sizeNum = 8;
-    } else if (name.includes('10.9-inch') || name.includes('10.9 inch') || name.includes('10.9"') || name.includes('10th gen') || (name.includes('ipad') && !name.includes('air') && !name.includes('pro') && !name.includes('mini') && !name.includes('pencil') && !name.includes('keyboard'))) {
-      sizeNum = 10;
-    } else if (name.includes('11-inch') || name.includes('11 inch') || name.includes('11"')) {
-      sizeNum = 11;
-    } else if (name.includes('12.9-inch') || name.includes('12.9 inch') || name.includes('12.9"')) {
-      sizeNum = 12;
-    } else if (name.includes('13-inch') || name.includes('13 inch') || name.includes('13"')) {
-      sizeNum = 13;
-    } else {
-      const match = name.match(/(\d{1,2}(?:\.\d)?)\s*(?:-|\s)?(?:inch|in|\")/);
-      if (match) {
-        sizeNum = Math.floor(parseFloat(match[1]));
-      }
+    // Group 1: iPads (Ranks 0 - 99)
+    // Group 2: Keyboards (Ranks 100 - 199)
+    // Group 3: Pencils (Ranks 200 - 299)
+    const isPencil = name.includes('pencil');
+    const isKeyboard = name.includes('keyboard') || name.includes('folio');
+
+    if (isPencil) {
+      let pencilSub = 5;
+      if (name.includes('pro')) pencilSub = 1;
+      else if (name.includes('usb-c')) pencilSub = 2;
+      else if (name.includes('2nd') || name.includes('second')) pencilSub = 3;
+      else if (name.includes('1st') || name.includes('first')) pencilSub = 4;
+      return 200 + pencilSub;
     }
 
-    let subWeight = 5;
-    if (name.includes('mini')) subWeight = 1;
-    else if (name.includes('ipad') && !name.includes('air') && !name.includes('pro')) subWeight = 2;
-    else if (name.includes('air')) subWeight = 3;
-    else if (name.includes('pro')) subWeight = 4;
-    else if (name.includes('pencil') || name.includes('keyboard') || name.includes('case')) subWeight = 9;
+    if (isKeyboard) {
+      let kbSub = 5;
+      if (name.includes('pro')) kbSub = 1;
+      else if (name.includes('air')) kbSub = 2;
+      else if (name.includes('folio') || name.includes('a16')) kbSub = 3;
+      return 100 + kbSub;
+    }
 
-    return sizeNum * 10 + subWeight;
+    // Group 1: iPad devices (Pro -> Air -> 11-inch base iPad -> mini)
+    let modelRank = 50;
+    if (name.includes('pro')) {
+      modelRank = name.includes('13') ? 10 : 12;
+    } else if (name.includes('air')) {
+      modelRank = name.includes('13') ? 20 : 22;
+    } else if (name.includes('mini')) {
+      modelRank = 40;
+    } else {
+      // Base iPad (11-inch iPad)
+      modelRank = 30;
+    }
+
+    return modelRank;
   };
 
   const sortedProducts = [...combinedProducts].sort((a, b) => {
@@ -1579,13 +1596,29 @@ export default function Ipad() {
     const rankB = getIpadSequenceRank(b.name || b.title);
     if (rankA !== rankB) return rankA - rankB;
 
-    return 0;
+    return (a.name || a.title || '').localeCompare(b.name || b.title || '');
   });
 
   const filteredProducts = sortedProducts.filter((prod) => {
     const search = searchParams.get('search') || '';
-    if (search && !matchesProductSearch(prod, search)) {
-      return false;
+    if (search) {
+      const searchNorm = search.trim().toLowerCase();
+      const isBaseIpadQuery = searchNorm === 'ipad' || searchNorm === '11-inch ipad' || searchNorm === 'ipad 11-inch';
+      if (isBaseIpadQuery) {
+        const titleLower = (prod.name || prod.title || '').toLowerCase();
+        // Specifically match base iPad models (e.g. "11-inch iPad") and exclude Pro, Air, Mini, and accessories
+        const isBaseIpad = titleLower.includes('ipad') &&
+          !titleLower.includes('pro') &&
+          !titleLower.includes('air') &&
+          !titleLower.includes('mini') &&
+          !titleLower.includes('keyboard') &&
+          !titleLower.includes('pencil') &&
+          !titleLower.includes('folio') &&
+          !titleLower.includes('case');
+        if (!isBaseIpad) return false;
+      } else if (!matchesProductSearch(prod, search)) {
+        return false;
+      }
     }
 
     if (activeTab === 'available') return !prod.isSoldOut;
