@@ -21,18 +21,7 @@ export const resolveNavbarImageUrl = (img) => {
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
     return trimmed;
   }
-  const cleanPath = trimmed.startsWith('/') ? trimmed : '/' + trimmed;
-  
-  const apiUrl = import.meta.env.VITE_API_URL || '';
-  if (cleanPath.startsWith('/uploads') && apiUrl && apiUrl.startsWith('http')) {
-    try {
-      const serverOrigin = new URL(apiUrl).origin;
-      return `${serverOrigin}${cleanPath}`;
-    } catch (e) {
-      // fallback
-    }
-  }
-  return cleanPath;
+  return trimmed.startsWith('/') ? trimmed : '/' + trimmed;
 };
 
 const AppleIcon = (props) => (
