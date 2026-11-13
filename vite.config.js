@@ -31,12 +31,16 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:5088',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        timeout: 60000,
+        proxyTimeout: 60000
       },
       '/uploads': {
         target: 'http://127.0.0.1:5088',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        timeout: 60000,
+        proxyTimeout: 60000
       }
     }
   }

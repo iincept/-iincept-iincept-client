@@ -351,7 +351,7 @@ export default function Contact() {
             </span>
             <div>
               <p className="info-label">Call us</p>
-              <p className="info-line">+91 99710 02348</p>
+              <p className="info-line"><a href="tel:+919971002348" className="hover:underline text-inherit">+91 99710 02348</a></p>
               <p className="info-sub">Mon–Sat · 10:00AM – 6:00PM IST</p>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { ShieldAlert, Star, ChevronDown, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ShieldAlert, Star } from 'lucide-react';
+import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import { fetchProductById, fetchProducts, setCurrentProduct } from '../redux/productSlice';
 import { addToCart } from '../redux/cartSlice';
 import Loader from '../components/Loader';
@@ -11,215 +12,6 @@ import { resolveColorHex, resolveColorValue, isValidHex, normalizeHex } from '..
 
 // In-memory cache for processed canvas images to prevent main thread re-processing
 const canvasProcessedCache = new Map();
-
-const DEFAULT_APPLECARE_PRICING_TABLES = [
-  {
-    categoryKey: 'mac',
-    rows: [
-      { model: 'Mac Mini (M4)', mrp: '₹12900', salePrice: '₹9,804', discount: '24' },
-      { model: 'Mac Studio (M4 Max/M3 Ultra)', mrp: '₹19900', salePrice: '₹15,124', discount: '24' },
-      { model: 'iMac', mrp: '₹19900.00', salePrice: '₹15,124', discount: '24' },
-      { model: 'Macbook Neo', mrp: '16900', salePrice: '₹12,844', discount: '24' },
-      { model: 'MacBook Air 13-inch', mrp: '₹22900', salePrice: '₹17,404', discount: '24' },
-      { model: 'MacBook Air 15-inch', mrp: '₹24900', salePrice: '₹18,924', discount: '24' },
-      { model: 'MacBook Pro 14-inch', mrp: '₹29900', salePrice: '₹22,724', discount: '24' },
-      { model: 'MacBook Pro 16-inch', mrp: '₹40900', salePrice: '₹31,084', discount: '24' },
-      { model: 'Apple Studio Display', mrp: '14900', salePrice: '₹11,324', discount: '24' },
-      { model: 'Studio Display XDR', mrp: '29900', salePrice: '₹22,724', discount: '24' }
-    ]
-  },
-  {
-    categoryKey: 'iphone',
-    rows: [
-      { model: 'iPhone 17e', mrp: '₹16,900', mrp1yr: '₹8,499', mrp2yr: '₹16,900', salePrice: '₹13,858', salePrice1yr: '₹6,969', salePrice2yr: '₹13,858', discount: '18' },
-      { model: 'iPhone 17', mrp: '₹19,900', mrp1yr: '₹9,999', mrp2yr: '₹19,900', salePrice: '₹16,318', salePrice1yr: '₹8,199', salePrice2yr: '₹16,318', discount: '18' },
-      { model: 'iPhone 16', mrp: '₹19,900', mrp1yr: '₹9,999', mrp2yr: '₹19,900', salePrice: '₹16,318', salePrice1yr: '₹8,199', salePrice2yr: '₹16,318', discount: '18' },
-      { model: 'iPhone 17 Pro', mrp: '₹25,900', mrp1yr: '₹12,999', mrp2yr: '₹25,900', salePrice: '₹21,238', salePrice1yr: '₹10,659', salePrice2yr: '₹21,238', discount: '18' },
-      { model: 'IPhone 17 pro Max', mrp: '₹25,900', mrp1yr: '₹12,999', mrp2yr: '₹25,900', salePrice: '₹21,238', salePrice1yr: '₹10,659', salePrice2yr: '₹21,238', discount: '18' },
-      { model: 'iPhone 18 Pro', mrp: '25900', mrp1yr: '12999', mrp2yr: '25900', salePrice: '₹21,238', salePrice1yr: '₹10,659', salePrice2yr: '₹21,238', discount: '18' },
-      { model: 'iPhone 18 Pro Max', mrp: '25900', mrp1yr: '12999', mrp2yr: '25900', salePrice: '₹21,238', salePrice1yr: '₹10,659', salePrice2yr: '₹21,238', discount: '18' },
-      { model: 'iPhone Duo', mrp: '51900', mrp1yr: '25999', mrp2yr: '51900', salePrice: '₹42,558', salePrice1yr: '₹21,319', salePrice2yr: '₹42,558', discount: '18' }
-    ]
-  },
-  {
-    categoryKey: 'ipad',
-    rows: [
-      { model: 'iPad Air 11', mrp: '₹17900', mrp1yr: '₹8999', mrp2yr: '₹17900', salePrice: '₹14,678', salePrice1yr: '₹7,379', salePrice2yr: '₹14,678', discount: '18' },
-      { model: 'iPad Air 13″', mrp: '₹19900', mrp1yr: '₹9999', mrp2yr: '₹19900', salePrice: '₹16,318', salePrice1yr: '₹8,199', salePrice2yr: '₹16,318', discount: '18' },
-      { model: 'iPad Pro 11″', mrp: '₹17,900', mrp1yr: '₹8,999', mrp2yr: '₹17,900', salePrice: '₹14,678', salePrice1yr: '₹7,379', salePrice2yr: '₹14,678', discount: '18' },
-      { model: 'iPad Pro 13″', mrp: '₹19,900', mrp1yr: '₹9,999', mrp2yr: '₹19,900', salePrice: '₹16,318', salePrice1yr: '₹8,199', salePrice2yr: '₹16,318', discount: '18' },
-      { model: 'Pad (A16)', mrp: '8900', mrp1yr: '₹4,499', mrp2yr: '8900', salePrice: '₹7,298', salePrice1yr: '₹3,689', salePrice2yr: '₹7,298', discount: '18' },
-      { model: 'iPad mini', mrp: '₹8900', mrp1yr: '₹4499', mrp2yr: '₹8900', salePrice: '₹7,298', salePrice1yr: '₹3,689', salePrice2yr: '₹7,298', discount: '18' }
-    ]
-  },
-  {
-    categoryKey: 'watch',
-    rows: [
-      { model: 'Apple Watch SE 3', mrp: '5590', mrp1yr: '2,799', mrp2yr: '5590', salePrice: '₹4,584', salePrice1yr: '₹2,295', salePrice2yr: '₹4,584', discount: '18' },
-      { model: 'Apple Watch Ultra 4', mrp: '10990', mrp1yr: '5,499', mrp2yr: '10990', salePrice: '₹9,012', salePrice1yr: '₹4,509', salePrice2yr: '₹9,012', discount: '18' },
-      { model: 'Apple Watch Series 12', mrp: '8990', mrp1yr: '4,499', mrp2yr: '8990', salePrice: '₹7,372', salePrice1yr: '₹3,689', salePrice2yr: '₹7,372', discount: '18' }
-    ]
-  },
-  {
-    categoryKey: 'airpods',
-    rows: [
-      { model: 'AirPods 5', mrp: '3390', mrp1yr: '1,799.00', mrp2yr: '3390', salePrice: '₹2,780', salePrice1yr: '₹1,475', salePrice2yr: '₹2,780', discount: '18' },
-      { model: 'AirPods Pro 3', mrp: '4890', mrp1yr: '2,499.00', mrp2yr: '4890', salePrice: '₹4,010', salePrice1yr: '₹2,049', salePrice2yr: '₹4,010', discount: '18' },
-      { model: 'AirPods Max 2', mrp: '6890', mrp1yr: '', mrp2yr: '6890', salePrice: '₹5,650', salePrice1yr: '', salePrice2yr: '₹5,650', discount: '18' }
-    ]
-  },
-  {
-    categoryKey: 'tv-home',
-    rows: [
-      { model: 'Apple TV', mrp: '2,900.00', mrp2yr: '2,900.00', salePrice: '₹2,378', salePrice2yr: '₹2,378', discount: '18' },
-      { model: 'HomePod mini', mrp: '₹11600', mrp2yr: '₹11600', salePrice: '₹9,512', salePrice2yr: '₹9,512', discount: '18' },
-      { model: 'HomePod', mrp: '3,900.00', mrp2yr: '3,900.00', salePrice: '₹3,198', salePrice2yr: '₹3,198', discount: '18' }
-    ]
-  },
-  {
-    categoryKey: 'display',
-    rows: [
-      { model: 'Studio Display', mrp: '₹14,900.00', mrp2yr: '₹14,900.00', salePrice: '₹12,218', salePrice2yr: '₹12,218', discount: '18' },
-      { model: 'Pro Display XDR', mrp: '₹49,900.00', mrp2yr: '₹49,900.00', salePrice: '₹40,918', salePrice2yr: '₹40,918', discount: '18' }
-    ]
-  }
-];
-
-const parsePriceNumber = (val) => {
-  if (typeof val === 'number') return val;
-  if (!val) return 0;
-  const num = parseInt(val.toString().replace(/[^\d]/g, ''), 10);
-  return isNaN(num) ? 0 : num;
-};
-
-const cleanModelStr = (s) => {
-  return (s || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-};
-
-const isAccessoryProduct = (prod) => {
-  if (!prod) return false;
-  const cat = prod.category;
-  const catName = (cat && typeof cat === 'object') ? (cat.name || cat.title || '').toLowerCase() : (typeof cat === 'string' ? cat.toLowerCase() : '');
-  const catSlug = (cat && typeof cat === 'object') ? (cat.slug || '').toLowerCase() : '';
-  const title = (prod.title || prod.name || '').toLowerCase();
-
-  // Explicit category match
-  if (catName.includes('accessori') || catSlug.includes('accessori')) return true;
-
-  // Direct hardware categories are NOT accessories
-  if (['smartphones', 'iphone', 'laptops-pcs', 'mac', 'ipads', 'ipad', 'wearables', 'watch', 'premium-audio', 'airpods', 'tv-home'].includes(catSlug)) {
-    return false;
-  }
-
-  // Common accessory keywords
-  const accessoryKeywords = [
-    'case', 'sleeve', 'cover', 'bag', 'backpack', 'folio', 'screen protector',
-    'guard', 'film', 'skin', 'stand', 'mount', 'hub', 'dock', 'dongle', 'converter',
-    'adapter', 'charger', 'charging', 'cable', 'cord', 'connector', 'strap', 'band', 'loop',
-    'magic mouse', 'magic trackpad', 'magic keyboard', 'apple pencil', 'polishing cloth',
-    'airtag', 'wallet', 'buckle', 'link'
-  ];
-  return accessoryKeywords.some(kw => new RegExp('\\b' + kw + '\\b', 'i').test(title));
-};
-
-const findMatchingAppleCareRow = (prod, pricingTables) => {
-  if (!prod || isAccessoryProduct(prod)) return null;
-  const c = cleanModelStr(prod.category?.name || prod.category || '');
-  const t = cleanModelStr(prod.title || prod.name || '');
-
-  let catKey = 'mac';
-  if (c.includes('smartphone') || c.includes('iphone') || t.includes('iphone')) catKey = 'iphone';
-  else if (c.includes('ipad') || t.includes('ipad')) catKey = 'ipad';
-  else if (c.includes('wearable') || c.includes('watch') || t.includes('watch')) catKey = 'watch';
-  else if (c.includes('audio') || c.includes('airpod') || c.includes('headphone') || t.includes('airpod') || t.includes('earpod')) catKey = 'airpods';
-  else if (c.includes('tv') || c.includes('home') || t.includes('homepod') || t.includes('apple tv')) catKey = 'tv-home';
-  else if (t.includes('studio display')) catKey = 'mac';
-  else if (c.includes('laptop') || c.includes('pc') || c.includes('mac') || t.includes('mac')) catKey = 'mac';
-
-  const table = (pricingTables || []).find(tbl => {
-    const k = (tbl.categoryKey || '').toLowerCase();
-    if (catKey === 'tv-home') return k === 'tv-home' || k === 'tv' || k === 'homepod';
-    return k === catKey;
-  });
-
-  if (!table || !table.rows || table.rows.length === 0) return null;
-  const rows = table.rows.filter(r => r.isActive !== false);
-  if (rows.length === 0) return null;
-
-  // Watch matching
-  if (catKey === 'watch') {
-    if (/\bse\b/.test(t)) return rows.find(r => cleanModelStr(r.model).includes('se')) || rows[0];
-    if (t.includes('ultra')) return rows.find(r => cleanModelStr(r.model).includes('ultra')) || rows[0];
-    if (t.includes('series')) return rows.find(r => cleanModelStr(r.model).includes('series')) || rows[0];
-    return rows[0];
-  }
-
-  // Mac matching
-  if (catKey === 'mac') {
-    if (t.includes('xdr')) {
-      return rows.find(r => cleanModelStr(r.model).includes('xdr')) || rows[0];
-    }
-    if (t.includes('imac')) {
-      return rows.find(r => cleanModelStr(r.model).includes('imac')) || rows[0];
-    }
-    if (t.includes('studio display')) {
-      return rows.find(r => cleanModelStr(r.model).includes('apple studio display') || cleanModelStr(r.model).includes('studio display')) || rows[0];
-    }
-    if (t.includes('neo')) return rows.find(r => cleanModelStr(r.model).includes('neo')) || rows[0];
-    if (t.includes('mini')) return rows.find(r => cleanModelStr(r.model).includes('mini')) || rows[0];
-    if (t.includes('studio')) return rows.find(r => cleanModelStr(r.model).includes('studio')) || rows[0];
-    if (t.includes('pro')) {
-      if (t.includes('16')) return rows.find(r => cleanModelStr(r.model).includes('16')) || rows[0];
-      if (t.includes('14')) return rows.find(r => cleanModelStr(r.model).includes('14')) || rows[0];
-    }
-    if (t.includes('air')) {
-      if (t.includes('15')) return rows.find(r => cleanModelStr(r.model).includes('15')) || rows[0];
-      if (t.includes('13')) return rows.find(r => cleanModelStr(r.model).includes('13')) || rows[0];
-    }
-    return rows[0];
-  }
-
-  // iPhone matching
-  if (catKey === 'iphone') {
-    if (t.includes('duo')) return rows.find(r => cleanModelStr(r.model).includes('duo')) || rows[0];
-    if (t.includes('18 pro max')) return rows.find(r => cleanModelStr(r.model).includes('18 pro max')) || rows[0];
-    if (t.includes('18 pro')) return rows.find(r => cleanModelStr(r.model).includes('18 pro')) || rows[0];
-    if (t.includes('17 pro max')) return rows.find(r => cleanModelStr(r.model).includes('17 pro max')) || rows[0];
-    if (t.includes('17 pro')) return rows.find(r => cleanModelStr(r.model).includes('17 pro')) || rows[0];
-    if (t.includes('17e') || t.includes('16e')) return rows.find(r => cleanModelStr(r.model).includes('17e')) || rows[0];
-    if (t.includes('17') || t.includes('air')) return rows.find(r => cleanModelStr(r.model) === 'iphone 17') || rows[0];
-    if (t.includes('16')) return rows.find(r => cleanModelStr(r.model).includes('16')) || rows[0];
-    return rows[0];
-  }
-
-  // iPad matching
-  if (catKey === 'ipad') {
-    if (t.includes('mini')) return rows.find(r => cleanModelStr(r.model).includes('mini')) || rows[0];
-    if (t.includes('pro 13') || t.includes('13 inch ipad pro')) return rows.find(r => cleanModelStr(r.model).includes('pro 13') || (cleanModelStr(r.model).includes('pro') && cleanModelStr(r.model).includes('13'))) || rows[0];
-    if (t.includes('air 13') || t.includes('13 inch ipad air')) return rows.find(r => cleanModelStr(r.model).includes('air 13') || (cleanModelStr(r.model).includes('air') && cleanModelStr(r.model).includes('13'))) || rows[0];
-    if (t.includes('pro 11') || t.includes('11 inch ipad pro')) return rows.find(r => cleanModelStr(r.model).includes('pro 11') || (cleanModelStr(r.model).includes('pro') && cleanModelStr(r.model).includes('11'))) || rows[0];
-    if (t.includes('air 11') || t.includes('11 inch ipad air')) return rows.find(r => cleanModelStr(r.model).includes('air 11') || (cleanModelStr(r.model).includes('air') && cleanModelStr(r.model).includes('11'))) || rows[0];
-    if (t.includes('a16') || t.includes('11 inch ipad') || t.includes('ipad')) return rows.find(r => cleanModelStr(r.model).includes('a16') || cleanModelStr(r.model).includes('ipad')) || rows[0];
-    return rows[0];
-  }
-
-  // AirPods matching
-  if (catKey === 'airpods') {
-    if (t.includes('max')) return rows.find(r => cleanModelStr(r.model).includes('max')) || rows[0];
-    if (t.includes('pro')) return rows.find(r => cleanModelStr(r.model).includes('pro')) || rows[0];
-    return rows.find(r => cleanModelStr(r.model).includes('5') || cleanModelStr(r.model).includes('4')) || rows[0];
-  }
-
-  // TV & Home matching
-  if (catKey === 'tv-home') {
-    if (t.includes('mini')) return rows.find(r => cleanModelStr(r.model).includes('mini')) || rows[0];
-    if (t.includes('homepod')) return rows.find(r => cleanModelStr(r.model) === 'homepod') || rows[0];
-    if (t.includes('tv')) return rows.find(r => cleanModelStr(r.model).includes('tv')) || rows[0];
-    return rows[0];
-  }
-
-  return rows[0] || null;
-};
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -259,8 +51,14 @@ export default function ProductDetails() {
   const [selectedConnectivity, setSelectedConnectivity] = useState('');
   const [selectedBandSize, setSelectedBandSize] = useState('');
   const [selectedAccessoriesSize, setSelectedAccessoriesSize] = useState('');
-  const [selectedAppleCarePlan, setSelectedAppleCarePlan] = useState('none');
-  const [isAppleCareOpen, setIsAppleCareOpen] = useState(false);
+  const [selectedAppleCare, setSelectedAppleCare] = useState(false);
+  const [selectedAppleCarePlan, setSelectedAppleCarePlan] = useState(null);
+  const [isAppleCareExpanded, setIsAppleCareExpanded] = useState(false);
+  const [selectedIpadDuration, setSelectedIpadDuration] = useState('2yr');
+  const [selectedIphoneDuration, setSelectedIphoneDuration] = useState('2yr');
+  const [selectedWatchDuration, setSelectedWatchDuration] = useState('2yr');
+  const [selectedAirpodsDuration, setSelectedAirpodsDuration] = useState('2yr');
+  const [selectedTvHomeDuration, setSelectedTvHomeDuration] = useState('2yr');
   const [activeTab, setActiveTab] = useState('specs');
 
   const [reviews, setReviews] = useState([]);
@@ -275,171 +73,7 @@ export default function ProductDetails() {
 
   // Product AppleCare state
   const [productAppleCare, setProductAppleCare] = useState(null);
-  const [appleCarePricingTables, setAppleCarePricingTables] = useState(DEFAULT_APPLECARE_PRICING_TABLES);
-
-  const getAppleCarePlanOptions = () => {
-    // 0. Remove AppleCare completely for all accessories
-    if (isAccessoryProduct(product)) {
-      return [];
-    }
-
-    const catN = (product?.category?.name || product?.category || 'Mac').toString().toLowerCase();
-    const prodT = (product?.title || product?.name || id || '').toString().toLowerCase();
-    const isMacProduct = catN.includes('mac') || prodT.includes('mac') || catN.includes('laptop') || prodT.includes('book') || catN.includes('imac');
-    const fallbackDiscount = isMacProduct ? 24 : 18;
-
-    // 1. If product has custom plans defined
-    if (product?.appleCarePlans && Array.isArray(product.appleCarePlans) && product.appleCarePlans.length > 0) {
-      const activePlans = product.appleCarePlans.filter(p => p.isActive !== false);
-      if (activePlans.length > 0) {
-        return activePlans.map(p => ({
-          ...p,
-          discount: p.discount ?? fallbackDiscount
-        }));
-      }
-    }
-
-    // 2. If productAppleCare has custom plans defined by admin
-    if (productAppleCare?.plans && Array.isArray(productAppleCare.plans) && productAppleCare.plans.length > 0) {
-      const activePlans = productAppleCare.plans.filter(p => p.isActive !== false);
-      if (activePlans.length > 0) {
-        return activePlans.map(p => ({
-          ...p,
-          discount: p.discount ?? fallbackDiscount
-        }));
-      }
-    }
-
-    // 3. Match from appleCarePricingTables
-    const matchedRow = findMatchingAppleCareRow(product, appleCarePricingTables);
-
-    const catName = catN;
-    const prodTitle = prodT;
-
-    let catLabel = 'Mac';
-    let durationLabel = '3 Years';
-    let productSubtitle = '';
-
-    if (catName.includes('mac') || prodTitle.includes('mac') || catName.includes('laptop') || prodTitle.includes('book') || catName.includes('imac')) {
-      catLabel = 'Mac';
-      durationLabel = '3 Years';
-
-      // Detect specific MacBook Neo with A18 Pro chip
-      if (
-        (prodTitle.includes('macbook neo') || prodTitle.includes('neo')) &&
-        (prodTitle.includes('a18') || prodTitle.includes('13-inch') || prodTitle.includes('13 inch'))
-      ) {
-        productSubtitle = '13-inch MacBook Neo: Apple A18 Pro chip with 6‑core CPU and 5‑core GPU';
-      } else if (prodTitle.includes('macbook neo') || prodTitle.includes('neo')) {
-        productSubtitle = 'MacBook Neo: Apple A18 Pro chip with 6‑core CPU and 5‑core GPU';
-      }
-    } else if (catName.includes('iphone') || prodTitle.includes('iphone') || catName.includes('phone') || catName.includes('smartphone')) {
-      catLabel = 'iPhone';
-      durationLabel = '2 Years';
-    } else if (catName.includes('ipad') || prodTitle.includes('ipad') || catName.includes('tablet')) {
-      catLabel = 'iPad';
-      durationLabel = '2 Years';
-    } else if (catName.includes('watch') || prodTitle.includes('watch') || catName.includes('wearable')) {
-      catLabel = 'Apple Watch';
-      durationLabel = '2 Years';
-    } else if (catName.includes('airpod') || prodTitle.includes('airpod') || catName.includes('audio') || catName.includes('headphone')) {
-      catLabel = 'AirPods';
-      durationLabel = '2 Years';
-    } else if (catName.includes('tv') || prodTitle.includes('tv') || catName.includes('home') || prodTitle.includes('homepod')) {
-      if (prodTitle.includes('tv') || catName.includes('tv')) {
-        catLabel = 'Apple TV';
-        durationLabel = '3 Years';
-      } else if (prodTitle.includes('homepod') || catName.includes('homepod')) {
-        catLabel = 'HomePod';
-        durationLabel = '2 Years';
-      } else {
-        catLabel = 'Apple TV & Home';
-        durationLabel = '3 Years';
-      }
-    }
-
-    const catDiscount = catLabel === 'Mac' ? 24 : 18;
-
-    // Determine prices from matched row or fallback
-    let salePrice2Yr = matchedRow ? parsePriceNumber(matchedRow.salePrice2yr || matchedRow.salePrice || matchedRow.yearly) : 0;
-    let mrp2Yr = matchedRow ? parsePriceNumber(matchedRow.mrp2yr || matchedRow.mrp) : 0;
-
-    if (!mrp2Yr && salePrice2Yr) {
-      mrp2Yr = Math.round(salePrice2Yr / (1 - catDiscount / 100));
-    } else if (mrp2Yr && !salePrice2Yr) {
-      salePrice2Yr = Math.round(mrp2Yr * (1 - catDiscount / 100));
-    }
-
-    // Category fallbacks if neither row nor price found
-    if (!salePrice2Yr) {
-      if (catLabel === 'Mac') {
-        mrp2Yr = 22900;
-        salePrice2Yr = 17404;
-      } else if (catLabel === 'iPhone') {
-        mrp2Yr = 19900;
-        salePrice2Yr = 16318;
-      } else if (catLabel === 'iPad') {
-        mrp2Yr = 17900;
-        salePrice2Yr = 14678;
-      } else if (catLabel === 'Apple Watch') {
-        mrp2Yr = 8990;
-        salePrice2Yr = 7372;
-      } else if (catLabel === 'AirPods') {
-        mrp2Yr = 3390;
-        salePrice2Yr = 2780;
-      } else {
-        mrp2Yr = 2900;
-        salePrice2Yr = 2378;
-      }
-    }
-
-    let salePrice1Yr = matchedRow ? parsePriceNumber(matchedRow.salePrice1yr) : 0;
-    let mrp1Yr = matchedRow ? parsePriceNumber(matchedRow.mrp1yr) : 0;
-
-    if (!mrp1Yr && salePrice1Yr) {
-      mrp1Yr = Math.round(salePrice1Yr / (1 - catDiscount / 100));
-    } else if (mrp1Yr && !salePrice1Yr) {
-      salePrice1Yr = Math.round(mrp1Yr * (1 - catDiscount / 100));
-    }
-
-    const plans = [
-      {
-        id: `${catLabel.toLowerCase().replace(/\s+/g, '_')}_2yr`,
-        name: productSubtitle
-          ? `AppleCare+ for ${catLabel} (${durationLabel} Coverage)`
-          : `AppleCare+ for ${catLabel} (${durationLabel} Coverage)`,
-        price: salePrice2Yr,
-        mrp: mrp2Yr,
-        discount: catDiscount,
-        duration: durationLabel,
-        description: productSubtitle
-          ? `${productSubtitle} — Official ${durationLabel} coverage with unlimited repairs & priority Apple support`
-          : `Official ${durationLabel} coverage with unlimited repairs & priority Apple support`
-      }
-    ];
-
-    // Add 1-Year plan for non-Mac devices if pricing is present (or calculated)
-    if (catLabel !== 'Mac') {
-      const finalPrice1Yr = salePrice1Yr || (mrp1Yr ? Math.round(mrp1Yr * (1 - catDiscount / 100)) : (catLabel === 'Apple TV' || catLabel === 'HomePod' || prodTitle.includes('max') ? 0 : Math.round(salePrice2Yr * 0.5)));
-      const finalMrp1Yr = mrp1Yr || (finalPrice1Yr > 0 ? Math.round(finalPrice1Yr / (1 - catDiscount / 100)) : 0);
-
-      if (finalPrice1Yr > 0) {
-        plans.push({
-          id: `${catLabel.toLowerCase().replace(/\s+/g, '_')}_1yr`,
-          name: `AppleCare+ for ${catLabel} (1 Year Coverage)`,
-          price: finalPrice1Yr,
-          mrp: finalMrp1Yr,
-          discount: catDiscount,
-          duration: '1 Year',
-          description: productSubtitle
-            ? `${productSubtitle} — Official 1-Year hardware protection & accidental damage coverage`
-            : 'Official 1-Year hardware protection & accidental damage coverage'
-        });
-      }
-    }
-
-    return plans;
-  };
+  const [appleCarePricingTables, setAppleCarePricingTables] = useState([]);
 
   useEffect(() => {
     if (!id) return;
@@ -447,21 +81,13 @@ export default function ProductDetails() {
     fetchAppleCareSettings();
   }, [id]);
 
-  useEffect(() => {
-    fetchAppleCareSettings();
-    const unsub = subscribeToLiveSync(() => {
-      fetchAppleCareSettings();
-    });
-    return () => unsub();
-  }, []);
-
   const fetchAppleCareSettings = async () => {
     try {
       const response = await axiosClient.get('/settings');
       if (response.data?.productAppleCare) {
         setProductAppleCare(response.data.productAppleCare);
       }
-      if (response.data?.appleCarePricingTables && Array.isArray(response.data.appleCarePricingTables) && response.data.appleCarePricingTables.length > 0) {
+      if (response.data?.appleCarePricingTables) {
         setAppleCarePricingTables(response.data.appleCarePricingTables);
       }
     } catch (err) {
@@ -503,7 +129,7 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (id) {
-      const isCurrentMatching = currentProduct &&
+      const isCurrentMatching = currentProduct && 
         (currentProduct._id === id || currentProduct.id === id || currentProduct.slug === id);
 
       if (!isCurrentMatching) {
@@ -511,6 +137,10 @@ export default function ProductDetails() {
         setActiveImage('');
         setProcessedImage('');
         setSelectedColor(null);
+        setSelectedAppleCare(false);
+        setSelectedAppleCarePlan(null);
+        setIsAppleCareExpanded(false);
+        setSelectedIpadDuration('2yr');
 
         if (id.match(/^[0-9a-fA-F]{24}$/)) {
           dispatch(fetchProductById(id));
@@ -908,8 +538,30 @@ export default function ProductDetails() {
     return null;
   };
 
+  const isAccessoryProduct = (prod) => {
+    if (!prod) return false;
+    const catObj = prod.category;
+    const catName = (catObj && typeof catObj === 'object') ? (catObj.name || catObj.title || '').toLowerCase() : (typeof catObj === 'string' ? catObj.toLowerCase() : '');
+    const catSlug = (catObj && typeof catObj === 'object') ? (catObj.slug || '').toLowerCase() : '';
+    const title = (prod.title || prod.name || '').toLowerCase();
+
+    if (catSlug.includes('accessori') || catName.includes('accessori')) return true;
+
+    const accessoryKeywords = [
+      'case', 'sleeve', 'cover', 'bag', 'backpack', 'folio', 'screen protector',
+      'guard', 'film', 'skin', 'stand', 'mount', 'hub', 'dock', 'dongle', 'converter',
+      'adapter', 'charger', 'charging', 'cable', 'cord', 'connector', 'strap', 'band',
+      'loop', 'wallet', 'keychain', 'lanyard', 'airtag', 'cleaning cloth', 'polishing cloth',
+      'pencil', 'magic mouse', 'magic keyboard', 'magic trackpad', 'power adapter'
+    ];
+
+    return accessoryKeywords.some(kw => title.includes(kw));
+  };
+
   const getCategoryGroup = (prod) => {
     if (!prod) return 'other';
+    if (isAccessoryProduct(prod)) return 'accessories';
+
     const catObj = prod.category;
     const catId = (catObj && typeof catObj === 'object') ? (catObj._id?.toString() || catObj.id || '') : (typeof catObj === 'string' ? catObj : '');
     const catName = (catObj && typeof catObj === 'object') ? (catObj.name || catObj.title || '').toLowerCase() : (typeof catObj === 'string' ? catObj.toLowerCase() : '');
@@ -933,140 +585,23 @@ export default function ProductDetails() {
     if (title.includes('airpods') || title.includes('airpod')) return 'airpods';
     if (title.includes('homepod') || title.includes('apple tv')) return 'tv-home';
 
-    // 3. Accessories Title Match
-    const isExplicitAccessoryTitle = [
-      'case', 'sleeve', 'cover', 'bag', 'backpack', 'folio', 'screen protector',
-      'guard', 'film', 'skin', 'stand', 'mount', 'hub', 'dock', 'dongle', 'converter',
-      'adapter', 'charger', 'charging', 'cable', 'cord', 'connector', 'strap', 'band', 'loop'
-    ].some(kw => title.includes(kw));
-
-    if (isExplicitAccessoryTitle) return 'accessories';
-
     return catName || 'other';
   };
 
-  const isValidCurrentProduct = currentProduct &&
+  const isValidCurrentProduct = currentProduct && 
     (currentProduct._id === id || currentProduct.id === id || currentProduct.slug === id);
 
   const localProduct = getProductFromStore(id);
   const product = isValidCurrentProduct ? currentProduct : localProduct;
 
   useEffect(() => {
-    const rawTarget = activeImage || (selectedColor ? (colors.find(c => c.name === selectedColor.name)?.image || product?.images?.[0]) : (product?.displayImage || colors[0]?.image || product?.images?.[0] || product?.image)) || '';
+    const rawTarget = activeImage || (product?.displayImage || product?.images?.[0] || product?.image) || '';
     if (!rawTarget) return;
 
-    let isMounted = true;
     let targetSrc = rawTarget.trim();
     if (targetSrc.startsWith('uploads/')) targetSrc = `/${targetSrc}`;
 
     setProcessedImage(targetSrc);
-
-    if (canvasProcessedCache.has(targetSrc)) {
-      setProcessedImage(canvasProcessedCache.get(targetSrc));
-      return;
-    }
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = targetSrc;
-
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const origW = img.naturalWidth || img.width;
-        const origH = img.naturalHeight || img.height;
-        if (origW === 0 || origH === 0) return;
-
-        // Downsample to max 350px for super-fast background threshold calculation (<2ms)
-        const maxDim = 350;
-        let w = origW;
-        let h = origH;
-        if (w > maxDim || h > maxDim) {
-          if (w > h) {
-            h = Math.round((h * maxDim) / w);
-            w = maxDim;
-          } else {
-            w = Math.round((w * maxDim) / h);
-            h = maxDim;
-          }
-        }
-
-        canvas.width = w;
-        canvas.height = h;
-        ctx.drawImage(img, 0, 0, w, h);
-
-        const imgData = ctx.getImageData(0, 0, w, h);
-        const data = imgData.data;
-
-        const samplePoints = [
-          [0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1],
-          [Math.floor(w / 2), 0], [0, Math.floor(h / 2)],
-          [w - 1, Math.floor(h / 2)], [Math.floor(w / 2), h - 1]
-        ];
-
-        let bgR = 0, bgG = 0, bgB = 0, validSamples = 0;
-        samplePoints.forEach(([x, y]) => {
-          const idx = (y * w + x) * 4;
-          if (data[idx + 3] > 200) {
-            bgR += data[idx];
-            bgG += data[idx + 1];
-            bgB += data[idx + 2];
-            validSamples++;
-          }
-        });
-
-        if (validSamples > 0) {
-          bgR = Math.round(bgR / validSamples);
-          bgG = Math.round(bgG / validSamples);
-          bgB = Math.round(bgB / validSamples);
-
-          // Clean off-white/light-grey background colors (> 180, e.g. #f5f5f7 or #f0f0f2)
-          if (bgR > 180 && bgG > 180 && bgB > 180) {
-            const tolerance = 45;
-            let modified = false;
-
-            for (let i = 0; i < data.length; i += 4) {
-              const r = data[i];
-              const g = data[i + 1];
-              const b = data[i + 2];
-              const a = data[i + 3];
-
-              if (a > 0) {
-                const diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-                if (diff <= tolerance) {
-                  data[i + 3] = 0;
-                  modified = true;
-                } else if (diff <= tolerance + 25) {
-                  const factor = (diff - tolerance) / 25;
-                  data[i + 3] = Math.round(a * factor);
-                  modified = true;
-                }
-              }
-            }
-
-            if (modified && isMounted) {
-              ctx.putImageData(imgData, 0, 0);
-              const processedUrl = canvas.toDataURL('image/png');
-              canvasProcessedCache.set(targetSrc, processedUrl);
-              setProcessedImage(processedUrl);
-              return;
-            }
-          }
-        }
-      } catch (e) {
-        // Fallback for CORS or canvas errors
-      }
-      canvasProcessedCache.set(targetSrc, targetSrc);
-      if (isMounted) setProcessedImage(targetSrc);
-    };
-
-    img.onerror = () => {
-      canvasProcessedCache.set(targetSrc, targetSrc);
-      if (isMounted) setProcessedImage(targetSrc);
-    };
-
-    return () => { isMounted = false; };
   }, [activeImage, product]);
 
 
@@ -1093,16 +628,6 @@ export default function ProductDetails() {
         if (colorVariant.image) {
           return [colorVariant.image];
         }
-      }
-    }
-
-    // 1b. Check product.colorImages map
-    if (product.colorImages && typeof product.colorImages === 'object') {
-      const direct = product.colorImages[colorName];
-      if (direct) return [direct];
-      const matchKey = Object.keys(product.colorImages).find(k => k.trim().toLowerCase() === normColor);
-      if (matchKey && product.colorImages[matchKey]) {
-        return [product.colorImages[matchKey]];
       }
     }
 
@@ -1309,7 +834,7 @@ export default function ProductDetails() {
     if (category.includes('airpod')) return '/airpods';
     if (category.includes('tv') || category.includes('home')) return '/tv-home';
     if (category.includes('accessory') || category.includes('accessories')) return '/accessories';
-    return '/accessories';
+    return '/shop';
   };
 
   const getCategoryName = () => {
@@ -1420,7 +945,7 @@ export default function ProductDetails() {
       const normRam = ramVal.toString().toLowerCase();
 
       // Check if current selectedStorage works with this RAM
-      const currentCompatible = product.variants.find(v =>
+      const currentCompatible = product.variants.find(v => 
         (v.color || '').toString().toLowerCase() === activeColorStr &&
         (v.ram || '').toString().toLowerCase() === normRam &&
         (v.storage || '').toString().toLowerCase() === (selectedStorage || '').toString().toLowerCase()
@@ -1428,7 +953,7 @@ export default function ProductDetails() {
 
       if (!currentCompatible) {
         // Find any storage that works with this RAM
-        const match = product.variants.find(v =>
+        const match = product.variants.find(v => 
           (v.ram || '').toString().toLowerCase() === normRam && v.storage
         );
         if (match && match.storage) {
@@ -1447,7 +972,7 @@ export default function ProductDetails() {
       const normGlass = glassVal.toString().toLowerCase();
 
       // Check if current selectedStorage works with this Glass/Connectivity
-      const currentCompatible = product.variants.find(v =>
+      const currentCompatible = product.variants.find(v => 
         (v.color || '').toString().toLowerCase() === activeColorStr &&
         ((v.glass || '').toString().toLowerCase() === normGlass || (v.connectivity || '').toString().toLowerCase() === normGlass) &&
         (v.storage || '').toString().toLowerCase() === (selectedStorage || '').toString().toLowerCase()
@@ -1455,7 +980,7 @@ export default function ProductDetails() {
 
       if (!currentCompatible) {
         // Find first storage that works with this glass finish
-        const match = product.variants.find(v =>
+        const match = product.variants.find(v => 
           ((v.glass || '').toString().toLowerCase() === normGlass || (v.connectivity || '').toString().toLowerCase() === normGlass) && v.storage
         );
         if (match && match.storage) {
@@ -1473,15 +998,15 @@ export default function ProductDetails() {
       const normStorage = storageVal.toString().toLowerCase();
 
       // Check if current selectedGlass works with this storage
-      const currentCompatibleGlass = product.variants.find(v =>
+      const currentCompatibleGlass = product.variants.find(v => 
         (v.color || '').toString().toLowerCase() === activeColorStr &&
         (v.storage || '').toString().toLowerCase() === normStorage &&
         ((v.glass || '').toString().toLowerCase() === (selectedGlass || '').toString().toLowerCase() ||
-          (v.connectivity || '').toString().toLowerCase() === (selectedGlass || '').toString().toLowerCase())
+         (v.connectivity || '').toString().toLowerCase() === (selectedGlass || '').toString().toLowerCase())
       );
 
       if (!currentCompatibleGlass) {
-        const matchGlass = product.variants.find(v =>
+        const matchGlass = product.variants.find(v => 
           (v.storage || '').toString().toLowerCase() === normStorage && (v.glass || v.connectivity)
         );
         if (matchGlass) {
@@ -1492,14 +1017,14 @@ export default function ProductDetails() {
       }
 
       // Check if current selectedRam works with this storage
-      const currentCompatibleRam = product.variants.find(v =>
+      const currentCompatibleRam = product.variants.find(v => 
         (v.color || '').toString().toLowerCase() === activeColorStr &&
         (v.storage || '').toString().toLowerCase() === normStorage &&
         (v.ram || '').toString().toLowerCase() === (selectedRam || '').toString().toLowerCase()
       );
 
       if (!currentCompatibleRam) {
-        const matchRam = product.variants.find(v =>
+        const matchRam = product.variants.find(v => 
           (v.storage || '').toString().toLowerCase() === normStorage && v.ram
         );
         if (matchRam && matchRam.ram) {
@@ -1546,17 +1071,10 @@ export default function ProductDetails() {
     const is1TB = sStr.includes('1tb') || sStr.includes('1024') || sStr.includes('1 tb');
 
     if (pTitle.includes('imac') || pTitle.includes('24-inch')) {
-      return 'Apple M4 chip with 10‑core CPU and 10‑core GPU';
-    }
-
-    // Mac Studio M5-ULTRA
-    if (pTitle.includes('studio') && (pTitle.includes('ultra') || pTitle.includes('m5-ultra'))) {
-      return 'Apple M5 Ultra chip with 30‑core CPU and 64‑core GPU';
-    }
-
-    // Mac Studio M5-MAX
-    if (pTitle.includes('studio') && (pTitle.includes('max') || pTitle.includes('m5-max'))) {
-      return 'Apple M5 Max chip with 18‑core CPU and 32‑core GPU';
+      if (is24 || is1TB || (is16 && is512)) {
+        return 'Apple M4 chip with 10‑core CPU and 10‑core GPU';
+      }
+      return 'Apple M4 chip with 8‑core CPU and 8‑core GPU';
     }
 
     if (is24 && is1TB) {
@@ -1756,14 +1274,1080 @@ export default function ProductDetails() {
     return getVariantPricingInfo(oColor, oSize, oStorage, oRam, oGlass, oConnectivity).sellingPrice;
   };
 
+  const getAppleCareInfo = () => {
+    const fallbackIneligible = {
+      isEligible: false,
+      title: 'Add AppleCare+',
+      monthlyText: '',
+      mrpText: '',
+      features: [],
+      price: 0,
+      friendlyCatName: 'Mac'
+    };
+
+    if (!product) return fallbackIneligible;
+    if (productAppleCare?.isEnabled === false) return fallbackIneligible;
+
+    const rawTitle = (product?.title || product?.name || '').trim();
+    const lowerTitle = rawTitle.toLowerCase();
+    const catGroup = getCategoryGroup(product);
+
+    // Strictly exclude all accessories
+    const isAccessory = isAccessoryProduct(product) || catGroup === 'accessories';
+    if (isAccessory) return fallbackIneligible;
+
+    const friendlyCatName = catGroup === 'iphone' ? 'iPhone'
+      : catGroup === 'ipad' ? 'iPad'
+      : catGroup === 'watch' ? 'Apple Watch'
+      : catGroup === 'airpods' ? 'AirPods'
+      : catGroup === 'tv-home' ? 'Apple TV & HomePod'
+      : 'Mac';
+
+    const tableKey = (catGroup === 'laptops-pcs' || catGroup === 'other') ? 'mac' : catGroup;
+    const catTable = (appleCarePricingTables || []).find(t => t.categoryKey === tableKey || t.categoryKey === catGroup);
+    const activeRows = (catTable?.rows || []).filter(r => r.isActive !== false);
+
+    let matchedCare = null;
+
+    if (activeRows.length > 0) {
+      if (catGroup === 'mac' || tableKey === 'mac') {
+        if (lowerTitle.includes('neo')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('neo'));
+        } else if (lowerTitle.includes('proled') || lowerTitle.includes('pro led')) {
+          if (lowerTitle.includes('16')) {
+            matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('16') && (r.model || '').toLowerCase().includes('proled'));
+          } else {
+            matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('14') && (r.model || '').toLowerCase().includes('proled'));
+          }
+        } else if (lowerTitle.includes('m6') && lowerTitle.includes('imac')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('imac') && (r.model || '').toLowerCase().includes('m6'));
+        } else if (lowerTitle.includes('m6') && (lowerTitle.includes('14') || lowerTitle.includes('pro'))) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('m6') && (r.model || '').toLowerCase().includes('14'));
+        } else if (lowerTitle.includes('air 13') || (lowerTitle.includes('air') && lowerTitle.includes('13'))) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('air 13') || (r.model || '').toLowerCase().includes('13-inch'));
+        } else if (lowerTitle.includes('air 15') || (lowerTitle.includes('air') && lowerTitle.includes('15'))) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('air 15') || (r.model || '').toLowerCase().includes('15-inch'));
+        } else if (lowerTitle.includes('pro 14') || (lowerTitle.includes('pro') && lowerTitle.includes('14'))) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro 14') || (r.model || '').toLowerCase().includes('14-inch'));
+        } else if (lowerTitle.includes('pro 16') || (lowerTitle.includes('pro') && lowerTitle.includes('16'))) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro 16') || (r.model || '').toLowerCase().includes('16-inch'));
+        } else if (lowerTitle.includes('mini')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('mini'));
+        } else if (lowerTitle.includes('display xdr') || lowerTitle.includes('studio display xdr')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('display xdr'));
+        } else if (lowerTitle.includes('studio display')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('apple studio display') || ((r.model || '').toLowerCase().includes('studio display') && !(r.model || '').toLowerCase().includes('xdr')));
+        } else if (lowerTitle.includes('studio') && !lowerTitle.includes('display')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('mac studio') || ((r.model || '').toLowerCase().includes('studio') && !(r.model || '').toLowerCase().includes('display')));
+        } else if (lowerTitle.includes('imac')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('imac'));
+        }
+      } else if (catGroup === 'iphone') {
+        if (lowerTitle.includes('18 pro max')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('18 pro max'));
+        } else if (lowerTitle.includes('duo')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('duo'));
+        } else if (lowerTitle.includes('17 pro max') || lowerTitle.includes('16 pro max')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro max')) || activeRows[0];
+        } else if (lowerTitle.includes('17 pro') || lowerTitle.includes('16 pro')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro') && !(r.model || '').toLowerCase().includes('max')) || activeRows[0];
+        } else if (lowerTitle.includes('17e')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('17e'));
+        } else if (lowerTitle.includes('17')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase() === 'iphone 17');
+        } else if (lowerTitle.includes('16')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('16'));
+        } else {
+          matchedCare = activeRows.find(r => lowerTitle.includes((r.model || '').toLowerCase()) || (r.model || '').toLowerCase().includes(lowerTitle)) || activeRows[0];
+        }
+      } else if (catGroup === 'ipad') {
+        if (lowerTitle.includes('13') && (lowerTitle.includes('pro') || lowerTitle.includes('m5'))) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro 13') || (r.model || '').toLowerCase().includes('pro 13″'));
+        } else if (lowerTitle.includes('11') && (lowerTitle.includes('pro') || lowerTitle.includes('m5'))) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro 11') || (r.model || '').toLowerCase().includes('pro 11″'));
+        } else if (lowerTitle.includes('13') && lowerTitle.includes('air')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('air 13') || (r.model || '').toLowerCase().includes('air 13″'));
+        } else if (lowerTitle.includes('11') && lowerTitle.includes('air')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('air 11') || (r.model || '').toLowerCase().includes('air 11″'));
+        } else if (lowerTitle.includes('mini')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('mini'));
+        } else if (!lowerTitle.includes('pro') && !lowerTitle.includes('air')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('a16') || (r.model || '').toLowerCase().includes('pad ('));
+        } else {
+          matchedCare = activeRows.find(r => lowerTitle.includes((r.model || '').toLowerCase()) || (r.model || '').toLowerCase().includes(lowerTitle)) || activeRows[0];
+        }
+      } else if (catGroup === 'watch') {
+        if (lowerTitle.includes('ultra')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('ultra'));
+        } else if (lowerTitle.includes('series')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('series'));
+        } else if (/\bse\b/i.test(lowerTitle)) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('se'));
+        } else {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('series')) || activeRows[0];
+        }
+      } else if (catGroup === 'airpods') {
+        if (lowerTitle.includes('max')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('max'));
+        } else if (lowerTitle.includes('pro')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro'));
+        } else {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('airpods 5') || (r.model || '').toLowerCase().includes('airpods')) || activeRows[0];
+        }
+      } else if (catGroup === 'tv-home') {
+        if (lowerTitle.includes('mini')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('mini'));
+        } else if (lowerTitle.includes('homepod')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase() === 'homepod') || activeRows.find(r => (r.model || '').toLowerCase().includes('homepod'));
+        } else {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('tv')) || activeRows[0];
+        }
+      }
+
+      if (!matchedCare && activeRows.length > 0) {
+        matchedCare = activeRows[0];
+      }
+    }
+
+    const MAC_CARE_FALLBACKS = {
+      'mac-mini': {
+        model: 'Mac Mini (M4)',
+        title: 'AppleCare+ for Mac mini (M4)',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SR1C2HN/A',
+        mrp: '₹12900',
+        discount: '24',
+        salePrice: '₹9,804',
+        yearly: '₹9,804',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/mac_nav/mac_mini.png',
+        isActive: true
+      },
+      'neo': {
+        model: 'MacBook Neo',
+        title: 'AppleCare+ for MacBook Neo',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SCNA2HN/A',
+        mrp: '₹16,900',
+        discount: '24',
+        salePrice: '₹12,844',
+        yearly: '₹12,844',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/mac_nav/macbook_neo.png',
+        isActive: true
+      },
+      'air-13': {
+        model: '13-inch MacBook Air (M5)',
+        title: 'AppleCare+ for 13-inch MacBook Air (M5)',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SCW83HN/A',
+        mrp: '₹22,900',
+        discount: '24',
+        salePrice: '₹17,404',
+        yearly: '₹17,404',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/mac_nav/macbook_air.png',
+        isActive: true
+      },
+      'air-15': {
+        model: '15-inch MacBook Air (M5)',
+        title: 'AppleCare+ for 15-inch MacBook Air (M5)',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SCW93HN/A',
+        mrp: '₹24,900',
+        discount: '24',
+        salePrice: '₹18,924',
+        yearly: '₹18,924',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/mac_nav/macbook_air.png',
+        isActive: true
+      },
+      'proled-14': {
+        model: '14-inch MacBook Pro with Pro Display XDR',
+        title: 'AppleCare+ for 14-inch MacBook Pro with Pro Display XDR',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SGLX3HN/A',
+        mrp: '₹49,900',
+        discount: '24',
+        salePrice: '₹37,924',
+        yearly: '₹37,924',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/uploads/upload_1794389737801_347.png',
+        isActive: true
+      },
+      'pro-m6-14': {
+        model: '14-inch MacBook Pro (M6)',
+        title: 'AppleCare+ for 14-inch MacBook Pro (M6)',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SGKE3HN/A',
+        mrp: '₹36,900',
+        discount: '24',
+        salePrice: '₹28,044',
+        yearly: '₹28,044',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/uploads/upload_1794389501804_119.png',
+        isActive: true
+      },
+      'pro-14': {
+        model: '14-inch MacBook Pro (M5)',
+        title: 'AppleCare+ for 14-inch MacBook Pro (M5)',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SCXT3HN/A',
+        mrp: '₹43,900',
+        discount: '24',
+        salePrice: '₹33,364',
+        yearly: '₹33,364',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/mac_nav/macbook_pro.png',
+        isActive: true
+      },
+      'imac-m4': {
+        model: '24-inch iMac (M4)',
+        title: 'AppleCare+ for iMac (M4)',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SR1A2HN/A',
+        mrp: '₹19,900',
+        discount: '24',
+        salePrice: '₹15,124',
+        yearly: '₹15,124',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/mac_nav/imac.png',
+        isActive: true
+      },
+      'imac-m6': {
+        model: '24-inch iMac (M6)',
+        title: 'AppleCare+ for iMac (M6)',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SGHV3HN/A',
+        mrp: '₹22,900',
+        discount: '10% OFF',
+        salePrice: '₹20,610',
+        yearly: '₹20,610',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/uploads/upload_1794395236299_673.png',
+        isActive: true
+      },
+      'studio-display-xdr': {
+        model: 'Studio Display XDR',
+        title: 'AppleCare+ for Studio Display XDR',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SD263HN/A',
+        mrp: '₹29,900',
+        discount: '24',
+        salePrice: '₹22,724',
+        yearly: '₹22,724',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/uploads/upload_1790049556385_582.jpeg',
+        isActive: true
+      },
+      'studio-display': {
+        model: 'Studio Display',
+        title: 'AppleCare+ for Apple Studio Display',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'SD273HN/A',
+        mrp: '₹14,900',
+        discount: '24',
+        salePrice: '₹11,324',
+        yearly: '₹11,324',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        image: '/uploads/upload_1790049450284_756.jpeg',
+        isActive: true
+      },
+      'mac-studio': {
+        model: 'Mac Studio (M4 Max/M3 Ultra)',
+        title: 'AppleCare+ for Mac Studio (M4 Max/M3 Ultra)',
+        description: 'Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac',
+        sku: 'STKT2HN/A',
+        mrp: '₹19,900',
+        discount: '24',
+        salePrice: '₹15,124',
+        yearly: '₹15,124',
+        planType: 'APPLE CARE+',
+        duration: '3 Years',
+        badgeText: 'AppleCare+ (3 Years)',
+        image: '/mac_nav/mac_studio.png',
+        isActive: true
+      }
+    };
+
+    const IPHONE_CARE_FALLBACKS = {
+      'iphone-18-pro-max': {
+        model: 'iPhone 18 Pro Max',
+        title: 'AppleCare+ for iPhone 18 Pro Max',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for iPhone 18 Pro Max.',
+        description2yr: '2 Years Apple-certified coverage for iPhone 18 Pro Max.',
+        sku: 'SHJ83HN/A',
+        sku1yr: 'DHHA2HN/A',
+        sku2yr: 'SHJ83HN/A',
+        mrp: '₹25,900',
+        mrp1yr: '₹12,999',
+        mrp2yr: '₹25,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹21,238',
+        salePrice1yr: '₹10,659',
+        salePrice2yr: '₹21,238',
+        duration: '2 Years',
+        image: '/uploads/upload_1789401366287_53.png',
+        isActive: true
+      },
+      'iphone-18-pro': {
+        model: 'iPhone 18 Pro',
+        title: 'AppleCare+ for iPhone 18 Pro',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for iPhone 18 Pro.',
+        description2yr: '2 Years Apple-certified coverage for iPhone 18 Pro.',
+        sku: 'SHHL3HN/A',
+        sku1yr: 'DHH82HN/A',
+        sku2yr: 'SHHL3HN/A',
+        mrp: '₹25,900',
+        mrp1yr: '₹12,999',
+        mrp2yr: '₹25,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹21,238',
+        salePrice1yr: '₹10,659',
+        salePrice2yr: '₹21,238',
+        duration: '2 Years',
+        image: '/uploads/upload_1789401429907_843.webp',
+        isActive: true
+      },
+      'iphone-duo': {
+        model: 'iPhone Duo',
+        title: 'AppleCare+ for iPhone Duo',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for iPhone Duo.',
+        description2yr: '2 Years Apple-certified coverage for iPhone Duo.',
+        sku: 'SHJX3HN/A',
+        sku1yr: 'DHHD2HN/A',
+        sku2yr: 'SHJX3HN/A',
+        mrp: '₹51,900',
+        mrp1yr: '₹25,999',
+        mrp2yr: '₹51,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹42,558',
+        salePrice1yr: '₹21,319',
+        salePrice2yr: '₹42,558',
+        duration: '2 Years',
+        image: '/uploads/upload_1790431187717_101.jpg',
+        isActive: true
+      },
+      'iphone-17-pro-max': {
+        model: 'iPhone 17 Pro Max',
+        title: 'AppleCare+ for iPhone 17 Pro Max',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for iPhone 17 Pro Max.',
+        description2yr: '2 Years Apple-certified coverage for iPhone 17 Pro Max.',
+        sku: 'SWY92HN/A',
+        sku1yr: 'DFKC2HN/A',
+        sku2yr: 'SWY92HN/A',
+        mrp: '₹25,900',
+        mrp1yr: '₹12,999',
+        mrp2yr: '₹25,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹21,238',
+        salePrice1yr: '₹10,659',
+        salePrice2yr: '₹21,238',
+        duration: '2 Years',
+        image: '/uploads/upload_1789231375820_773.webp',
+        isActive: true
+      },
+      'iphone-17-pro': {
+        model: 'iPhone 17 Pro',
+        title: 'AppleCare+ for iPhone 17 Pro',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for iPhone 17 Pro.',
+        description2yr: '2 Years Apple-certified coverage for iPhone 17 Pro.',
+        sku: 'SWY42HN/A',
+        sku1yr: 'DFK92HN/A',
+        sku2yr: 'SWY42HN/A',
+        mrp: '₹25,900',
+        mrp1yr: '₹12,999',
+        mrp2yr: '₹25,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹21,238',
+        salePrice1yr: '₹10,659',
+        salePrice2yr: '₹21,238',
+        duration: '2 Years',
+        image: '/uploads/upload_1789231246638_726.webp',
+        isActive: true
+      },
+      'iphone-17': {
+        model: 'iPhone 17',
+        title: 'AppleCare+ for iPhone 17',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for iPhone 17.',
+        description2yr: '2 Years Apple-certified coverage for iPhone 17.',
+        sku: 'SWXT2HN/A',
+        sku1yr: 'DFK72HN/A',
+        sku2yr: 'SWXT2HN/A',
+        mrp: '₹19,900',
+        mrp1yr: '₹9,999',
+        mrp2yr: '₹19,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹16,318',
+        salePrice1yr: '₹8,199',
+        salePrice2yr: '₹16,318',
+        duration: '2 Years',
+        image: '/uploads/upload_1789230839048_616.jpg',
+        isActive: true
+      },
+      'iphone-17e': {
+        model: 'iPhone 17e',
+        title: 'AppleCare+ for iPhone 17e',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for iPhone 17e.',
+        description2yr: '2 Years Apple-certified coverage for iPhone 17e.',
+        sku: 'SCYW3HN/A',
+        sku1yr: 'DGV72HN/A',
+        sku2yr: 'SCYW3HN/A',
+        mrp: '₹16,900',
+        mrp1yr: '₹8,499',
+        mrp2yr: '₹16,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹13,858',
+        salePrice1yr: '₹6,969',
+        salePrice2yr: '₹13,858',
+        duration: '2 Years',
+        image: '/uploads/upload_1789230677662_90.webp',
+        isActive: true
+      },
+      'iphone-16': {
+        model: 'iPhone 16',
+        title: 'AppleCare+ for iPhone 16',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for iPhone 16.',
+        description2yr: '2 Years Apple-certified coverage for iPhone 16.',
+        sku: 'SNHA2HN/A',
+        sku1yr: 'DE7G2HN/A',
+        sku2yr: 'SNHA2HN/A',
+        mrp: '₹19,900',
+        mrp1yr: '₹9,999',
+        mrp2yr: '₹19,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹16,318',
+        salePrice1yr: '₹8,199',
+        salePrice2yr: '₹16,318',
+        duration: '2 Years',
+        image: '/uploads/upload_1789230931152_62.webp',
+        isActive: true
+      }
+    };
+
+    const IPAD_CARE_FALLBACKS = {
+      'ipad-pro-13': {
+        model: 'iPad Pro 13″',
+        title: 'AppleCare+ for iPad Pro 13-inch (M5)',
+        description: 'Apple-certified coverage for iPad Pro 13-inch.',
+        description1yr: '1 Year Apple-certified coverage for iPad Pro 13-inch (M5).',
+        description2yr: '2 Years Apple-certified coverage for iPad Pro 13-inch (M5).',
+        sku: 'SXT12HN/A',
+        sku1yr: 'DFQL2HN/A',
+        sku2yr: 'SXT12HN/A',
+        mrp: '₹19,900',
+        mrp1yr: '₹9,999',
+        mrp2yr: '₹19,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹16,318',
+        salePrice1yr: '₹8,199',
+        salePrice2yr: '₹16,318',
+        duration: '2 Years',
+        image: '/ipad_nav/ipad_pro.png',
+        isActive: true
+      },
+      'ipad-pro-11': {
+        model: 'iPad Pro 11″',
+        title: 'AppleCare+ for iPad Pro 11-inch (M5)',
+        description: 'Apple-certified coverage for iPad Pro 11-inch.',
+        description1yr: '1 Year Apple-certified coverage for iPad Pro 11-inch (M5).',
+        description2yr: '2 Years Apple-certified coverage for iPad Pro 11-inch (M5).',
+        sku: 'SXT02HN/A',
+        sku1yr: 'DFQK2HN/A',
+        sku2yr: 'SXT02HN/A',
+        mrp: '₹17,900',
+        mrp1yr: '₹8,999',
+        mrp2yr: '₹17,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹14,678',
+        salePrice1yr: '₹7,379',
+        salePrice2yr: '₹14,678',
+        duration: '2 Years',
+        image: '/ipad_nav/ipad_pro.png',
+        isActive: true
+      },
+      'ipad-air-13': {
+        model: 'iPad Air 13″',
+        title: 'AppleCare+ for iPad Air 13-inch',
+        description: 'Apple-certified coverage for iPad Air 13-inch.',
+        description1yr: '1 Year Apple-certified coverage for iPad Air 13-inch.',
+        description2yr: '2 Years Apple-certified coverage for iPad Air 13-inch.',
+        sku: 'SXT12HN/A',
+        sku1yr: 'DFQL2HN/A',
+        sku2yr: 'SXT12HN/A',
+        mrp: '₹19,900',
+        mrp1yr: '₹9,999',
+        mrp2yr: '₹19,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹16,318',
+        salePrice1yr: '₹8,199',
+        salePrice2yr: '₹16,318',
+        duration: '2 Years',
+        image: '/ipad_nav/ipad_air.png',
+        isActive: true
+      },
+      'ipad-air-11': {
+        model: 'iPad Air 11″',
+        title: 'AppleCare+ for iPad Air 11-inch',
+        description: 'Apple-certified coverage for iPad Air 11-inch.',
+        description1yr: '1 Year Apple-certified coverage for iPad Air 11-inch.',
+        description2yr: '2 Years Apple-certified coverage for iPad Air 11-inch.',
+        sku: 'SXT02HN/A',
+        sku1yr: 'DFQK2HN/A',
+        sku2yr: 'SXT02HN/A',
+        mrp: '₹17,900',
+        mrp1yr: '₹8,999',
+        mrp2yr: '₹17,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹14,678',
+        salePrice1yr: '₹7,379',
+        salePrice2yr: '₹14,678',
+        duration: '2 Years',
+        image: '/uploads/upload_1789399908792_474.webp',
+        isActive: true
+      },
+      'ipad-mini': {
+        model: 'iPad mini',
+        title: 'AppleCare+ for iPad mini',
+        description: 'Apple-certified coverage for iPad mini.',
+        description1yr: '1 Year Apple-certified coverage for iPad mini.',
+        description2yr: '2 Years Apple-certified coverage for iPad mini.',
+        sku: 'SGXF3HN/A',
+        sku1yr: 'DHG32HN/A',
+        sku2yr: 'SGXF3HN/A',
+        mrp: '₹9,900',
+        mrp1yr: '₹4,999',
+        mrp2yr: '₹9,900',
+        discount: '10% OFF',
+        discount1yr: '10% OFF',
+        discount2yr: '10% OFF',
+        salePrice: '₹8,910',
+        salePrice1yr: '₹4,499',
+        salePrice2yr: '₹8,910',
+        duration: '2 Years',
+        image: '/uploads/upload_1794395541674_391.png',
+        isActive: true
+      },
+      'ipad-a16': {
+        model: 'iPad (A16)',
+        title: 'AppleCare+ for iPad (A16)',
+        description: 'Apple-certified coverage for iPad.',
+        description1yr: '1 Year Apple-certified coverage for iPad.',
+        description2yr: '2 Years Apple-certified coverage for iPad.',
+        sku: 'SUYD2HN/A',
+        sku1yr: 'DEM92HN/A',
+        sku2yr: 'SUYD2HN/A',
+        mrp: '₹8,900',
+        mrp1yr: '₹4,499',
+        mrp2yr: '₹8,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹7,298',
+        salePrice1yr: '₹3,689',
+        salePrice2yr: '₹7,298',
+        duration: '2 Years',
+        image: '/ipad_nav/ipad.png',
+        isActive: true
+      }
+    };
+
+    const WATCH_CARE_FALLBACKS = {
+      'watch-ultra': {
+        model: 'Apple Watch Ultra 4',
+        title: 'AppleCare+ for Apple Watch Ultra 4',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for Apple Watch Ultra 4.',
+        description2yr: '2 Years Apple-certified coverage for Apple Watch Ultra 4.',
+        sku: 'SH1E3HN/A',
+        sku1yr: 'DHGL2HN/A',
+        sku2yr: 'SH1E3HN/A',
+        mrp: '₹10,990',
+        mrp1yr: '₹5,499',
+        mrp2yr: '₹10,990',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹9,012',
+        salePrice1yr: '₹4,509',
+        salePrice2yr: '₹9,012',
+        duration: '2 Years',
+        image: '/uploads/upload_1789377193163_963.jpeg',
+        isActive: true
+      },
+      'watch-series': {
+        model: 'Apple Watch Series 12',
+        title: 'AppleCare+ for Apple Watch Series 12',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for Apple Watch Series 12.',
+        description2yr: '2 Years Apple-certified coverage for Apple Watch Series 12.',
+        sku: 'SH0G3HN/A',
+        sku1yr: 'DHGJ2HN/A',
+        sku2yr: 'SH0G3HN/A',
+        mrp: '₹8,990',
+        mrp1yr: '₹4,499',
+        mrp2yr: '₹8,990',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹7,372',
+        salePrice1yr: '₹3,689',
+        salePrice2yr: '₹7,372',
+        duration: '2 Years',
+        image: '/uploads/upload_1789377199517_322.jpeg',
+        isActive: true
+      },
+      'watch-se': {
+        model: 'Apple Watch SE 3',
+        title: 'AppleCare+ for Apple Watch SE',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for Apple Watch SE.',
+        description2yr: '2 Years Apple-certified coverage for Apple Watch SE.',
+        sku: 'SXHW2HN/A',
+        sku1yr: 'DFLL2HN/A',
+        sku2yr: 'SXHW2HN/A',
+        mrp: '₹5,590',
+        mrp1yr: '₹2,799',
+        mrp2yr: '₹5,590',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹4,584',
+        salePrice1yr: '₹2,295',
+        salePrice2yr: '₹4,584',
+        duration: '2 Years',
+        image: '/uploads/upload_1789377186182_249.jpeg',
+        isActive: true
+      }
+    };
+
+    const AIRPODS_CARE_FALLBACKS = {
+      'airpods-max': {
+        model: 'AirPods Max 2',
+        title: 'AppleCare+ for AirPods Max 2',
+        description: 'Apple-certified coverage with battery service.',
+        description1yr: '1 Year Apple-certified coverage for AirPods Max 2.',
+        description2yr: '2 Years Apple-certified coverage for AirPods Max 2.',
+        sku: 'S9086HN/A',
+        sku1yr: 'S9086HN/A-1YR',
+        sku2yr: 'S9086HN/A',
+        mrp: '₹6,890',
+        mrp1yr: '₹4,499',
+        mrp2yr: '₹6,890',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹5,650',
+        salePrice1yr: '₹3,689',
+        salePrice2yr: '₹5,650',
+        duration: '2 Years',
+        image: '/uploads/upload_1789399972058_579.jpeg',
+        isActive: true
+      },
+      'airpods-pro': {
+        model: 'AirPods Pro 3',
+        title: 'AppleCare+ for AirPods Pro 3',
+        description: 'Apple-certified coverage with battery service.',
+        description1yr: '1 Year Apple-certified coverage for AirPods Pro 3.',
+        description2yr: '2 Years Apple-certified coverage for AirPods Pro 3.',
+        sku: 'SYLW2HN/A',
+        sku1yr: 'DG7Y2HN/A',
+        sku2yr: 'SYLW2HN/A',
+        mrp: '₹4,890',
+        mrp1yr: '₹2,499',
+        mrp2yr: '₹4,890',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹4,010',
+        salePrice1yr: '₹2,049',
+        salePrice2yr: '₹4,010',
+        duration: '2 Years',
+        image: '/uploads/upload_1789386462387_751.jpeg',
+        isActive: true
+      },
+      'airpods-std': {
+        model: 'AirPods 5',
+        title: 'AppleCare+ for AirPods 5',
+        description: 'Apple-certified coverage with battery service.',
+        description1yr: '1 Year Apple-certified coverage for AirPods 5.',
+        description2yr: '2 Years Apple-certified coverage for AirPods 5.',
+        sku: 'S9066HN/A',
+        sku1yr: 'DE6D2HN/A',
+        sku2yr: 'S9066HN/A',
+        mrp: '₹3,390',
+        mrp1yr: '₹1,799',
+        mrp2yr: '₹3,390',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹2,780',
+        salePrice1yr: '₹1,475',
+        salePrice2yr: '₹2,780',
+        duration: '2 Years',
+        image: '/uploads/upload_1789366058920_902.jpeg',
+        isActive: true
+      }
+    };
+
+    const TVHOME_CARE_FALLBACKS = {
+      'apple-tv': {
+        model: 'Apple TV',
+        title: 'AppleCare+ for Apple TV',
+        description: 'Apple-certified coverage with technical support.',
+        description1yr: '1 Year Apple-certified coverage for Apple TV with technical support & hardware service.',
+        description2yr: '2 Years Apple-certified coverage for Apple TV with technical support & hardware service.',
+        sku: 'S9634HN/A',
+        sku1yr: 'S9634HN/A-1YR',
+        sku2yr: 'S9634HN/A',
+        mrp: '₹2,900',
+        mrp1yr: '₹1,499',
+        mrp2yr: '₹2,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹2,378',
+        salePrice1yr: '₹1,229',
+        salePrice2yr: '₹2,378',
+        duration: '2 Years',
+        image: '/uploads/upload_1789438370600_868.jpeg',
+        isActive: true
+      },
+      'homepod-mini': {
+        model: 'HomePod mini',
+        title: 'AppleCare+ for HomePod mini',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for HomePod mini with accidental damage protection.',
+        description2yr: '2 Years Apple-certified coverage for HomePod mini with accidental damage protection.',
+        sku: 'DE6C2HN/A',
+        sku1yr: 'DE6C2HN/A-1YR',
+        sku2yr: 'DE6C2HN/A',
+        mrp: '₹1,990',
+        mrp1yr: '₹999',
+        mrp2yr: '₹1,990',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹1,600',
+        salePrice1yr: '₹819',
+        salePrice2yr: '₹1,600',
+        duration: '2 Years',
+        image: '/uploads/upload_1789438361522_258.jpg',
+        isActive: true
+      },
+      'homepod': {
+        model: 'HomePod',
+        title: 'AppleCare+ for HomePod',
+        description: 'Apple-certified coverage with accidental damage protection.',
+        description1yr: '1 Year Apple-certified coverage for HomePod with accidental damage protection.',
+        description2yr: '2 Years Apple-certified coverage for HomePod with accidental damage protection.',
+        sku: 'S6446HN/A',
+        sku1yr: 'S6446HN/A-1YR',
+        sku2yr: 'S6446HN/A',
+        mrp: '₹3,900',
+        mrp1yr: '₹1,999',
+        mrp2yr: '₹3,900',
+        discount: '18% OFF',
+        discount1yr: '18% OFF',
+        discount2yr: '18% OFF',
+        salePrice: '₹3,198',
+        salePrice1yr: '₹1,639',
+        salePrice2yr: '₹3,198',
+        duration: '2 Years',
+        image: '/uploads/upload_1789438355569_951.jpeg',
+        isActive: true
+      }
+    };
+
+    const ALL_CARE_FALLBACKS = {
+      ...MAC_CARE_FALLBACKS,
+      ...IPHONE_CARE_FALLBACKS,
+      ...IPAD_CARE_FALLBACKS,
+      ...WATCH_CARE_FALLBACKS,
+      ...AIRPODS_CARE_FALLBACKS,
+      ...TVHOME_CARE_FALLBACKS
+    };
+
+    let fallbackKey = null;
+    if (catGroup === 'mac' || tableKey === 'mac') {
+      if (lowerTitle.includes('neo')) fallbackKey = 'neo';
+      else if (lowerTitle.includes('proled') || lowerTitle.includes('pro display xdr')) fallbackKey = 'proled-14';
+      else if (lowerTitle.includes('m6') && lowerTitle.includes('imac')) fallbackKey = 'imac-m6';
+      else if (lowerTitle.includes('m6') && (lowerTitle.includes('14') || lowerTitle.includes('pro'))) fallbackKey = 'pro-m6-14';
+      else if (lowerTitle.includes('air 13') || (lowerTitle.includes('air') && lowerTitle.includes('13'))) fallbackKey = 'air-13';
+      else if (lowerTitle.includes('air 15') || (lowerTitle.includes('air') && lowerTitle.includes('15'))) fallbackKey = 'air-15';
+      else if (lowerTitle.includes('pro 14') || (lowerTitle.includes('pro') && lowerTitle.includes('14'))) fallbackKey = 'pro-14';
+      else if (lowerTitle.includes('mini')) fallbackKey = 'mac-mini';
+      else if (lowerTitle.includes('display xdr') || lowerTitle.includes('studio display xdr')) fallbackKey = 'studio-display-xdr';
+      else if (lowerTitle.includes('studio display')) fallbackKey = 'studio-display';
+      else if (lowerTitle.includes('studio')) fallbackKey = 'mac-studio';
+      else if (lowerTitle.includes('imac')) fallbackKey = 'imac-m4';
+    } else if (catGroup === 'iphone') {
+      if (lowerTitle.includes('18 pro max')) fallbackKey = 'iphone-18-pro-max';
+      else if (lowerTitle.includes('18 pro')) fallbackKey = 'iphone-18-pro';
+      else if (lowerTitle.includes('duo')) fallbackKey = 'iphone-duo';
+      else if (lowerTitle.includes('17 pro max') || lowerTitle.includes('16 pro max')) fallbackKey = 'iphone-17-pro-max';
+      else if (lowerTitle.includes('17 pro') || lowerTitle.includes('16 pro')) fallbackKey = 'iphone-17-pro';
+      else if (lowerTitle.includes('17e')) fallbackKey = 'iphone-17e';
+      else if (lowerTitle.includes('17')) fallbackKey = 'iphone-17';
+      else if (lowerTitle.includes('16')) fallbackKey = 'iphone-16';
+      else fallbackKey = 'iphone-17';
+    } else if (catGroup === 'ipad') {
+      if (lowerTitle.includes('13') && (lowerTitle.includes('pro') || lowerTitle.includes('m5') || lowerTitle.includes('m4'))) fallbackKey = 'ipad-pro-13';
+      else if (lowerTitle.includes('11') && (lowerTitle.includes('pro') || lowerTitle.includes('m5') || lowerTitle.includes('m4'))) fallbackKey = 'ipad-pro-11';
+      else if (lowerTitle.includes('13') && lowerTitle.includes('air')) fallbackKey = 'ipad-air-13';
+      else if (lowerTitle.includes('11') && lowerTitle.includes('air')) fallbackKey = 'ipad-air-11';
+      else if (lowerTitle.includes('mini')) fallbackKey = 'ipad-mini';
+      else fallbackKey = 'ipad-a16';
+    } else if (catGroup === 'watch') {
+      if (lowerTitle.includes('ultra')) fallbackKey = 'watch-ultra';
+      else if (lowerTitle.includes('series')) fallbackKey = 'watch-series';
+      else if (/\bse\b/i.test(lowerTitle)) fallbackKey = 'watch-se';
+      else fallbackKey = 'watch-series';
+    } else if (catGroup === 'airpods') {
+      if (lowerTitle.includes('max')) fallbackKey = 'airpods-max';
+      else if (lowerTitle.includes('pro')) fallbackKey = 'airpods-pro';
+      else fallbackKey = 'airpods-std';
+    } else if (catGroup === 'tv-home') {
+      if (lowerTitle.includes('mini')) fallbackKey = 'homepod-mini';
+      else if (lowerTitle.includes('homepod')) fallbackKey = 'homepod';
+      else fallbackKey = 'apple-tv';
+    }
+
+    if (fallbackKey && ALL_CARE_FALLBACKS[fallbackKey]) {
+      const fb = ALL_CARE_FALLBACKS[fallbackKey];
+      matchedCare = matchedCare
+        ? {
+            ...fb,
+            ...matchedCare,
+            title: (matchedCare.title && matchedCare.title !== 'AppleCare+ for New Mac Model') ? matchedCare.title : fb.title,
+            sku: matchedCare.sku || fb.sku,
+            sku1yr: matchedCare.sku1yr || fb.sku1yr,
+            sku2yr: matchedCare.sku2yr || fb.sku2yr,
+            model: fb.model || matchedCare.model,
+            description: matchedCare.description || fb.description,
+            description1yr: matchedCare.description1yr || fb.description1yr,
+            description2yr: matchedCare.description2yr || fb.description2yr,
+            mrp: matchedCare.mrp ? String(matchedCare.mrp).replace(/^₹+/, '₹') : fb.mrp,
+            mrp1yr: matchedCare.mrp1yr || fb.mrp1yr,
+            mrp2yr: matchedCare.mrp2yr || fb.mrp2yr,
+            discount: matchedCare.discount || fb.discount,
+            discount1yr: matchedCare.discount1yr || fb.discount1yr,
+            discount2yr: matchedCare.discount2yr || fb.discount2yr,
+            salePrice: matchedCare.salePrice || fb.salePrice,
+            salePrice1yr: matchedCare.salePrice1yr || fb.salePrice1yr,
+            salePrice2yr: matchedCare.salePrice2yr || fb.salePrice2yr,
+            duration: matchedCare.duration || fb.duration,
+            image: matchedCare.image || fb.image
+          }
+        : fb;
+    }
+
+    let monthlyText = '';
+    let mrpText = '';
+    let price = 0;
+
+    if (matchedCare) {
+      const cleanMonthly = (matchedCare.monthly || '').trim();
+      const rawMrp = String(matchedCare.mrp || '').split('.')[0].replace(/[^0-9]/g, '');
+      const rawSale = String(matchedCare.salePrice || matchedCare.yearly || matchedCare.mrp || '').split('.')[0].replace(/[^0-9]/g, '');
+
+      if (cleanMonthly) {
+        monthlyText = cleanMonthly.toLowerCase().startsWith('from') ? cleanMonthly : `From ${cleanMonthly}/mo.◊`;
+      } else if (rawMrp) {
+        const calcEmi = Math.round(Number(rawMrp) / 24);
+        monthlyText = `From ₹${calcEmi.toLocaleString('en-IN')}.00/mo.◊`;
+      }
+
+      if (rawMrp) {
+        mrpText = `or MRP ₹${Number(rawMrp).toLocaleString('en-IN')}.00 (inclusive of all taxes)`;
+      }
+
+      price = parseInt(rawSale, 10) || (rawMrp ? parseInt(rawMrp, 10) : 0);
+    }
+
+    if (!monthlyText) monthlyText = 'From ₹579.00/mo.◊';
+    if (!mrpText) mrpText = 'or MRP ₹16,900.00 (inclusive of all taxes)';
+    if (!price || price <= 0) price = 2900;
+
+    const thirdBullet = (catGroup === 'airpods') ? 'AirPods, battery and included charging case covered'
+      : (catGroup === 'tv-home') ? 'Apple TV / HomePod, power supply and included accessories covered'
+      : `${friendlyCatName}, battery and included accessories covered`;
+
+    const features = [
+      'Unlimited repairs for accidental damage protection‡',
+      'Apple-certified repairs using genuine Apple parts',
+      thirdBullet,
+      'Priority access to Apple experts'
+    ];
+
+    return {
+      isEligible: true,
+      title: productAppleCare?.title || 'Add AppleCare+',
+      monthlyText,
+      mrpText,
+      features,
+      price: price > 0 ? price : 2900,
+      friendlyCatName,
+      matchedPlan: matchedCare
+    };
+  };
+
+  const appleCareInfo = getAppleCareInfo();
+  const rawTitle = (product?.title || product?.name || '').trim();
+  const lowerTitle = rawTitle.toLowerCase();
+  const catGroup = getCategoryGroup(product);
+  const isMacMini = (lowerTitle.includes('mac mini') || (lowerTitle.includes('mini') && catGroup === 'mac'));
+
+  const isEligibleAppleCareDropdown = Boolean(
+    !isAccessoryProduct(product) &&
+    catGroup !== 'accessories' &&
+    appleCareInfo?.isEligible &&
+    ['mac', 'iphone', 'ipad', 'watch', 'airpods', 'tv-home'].includes(catGroup)
+  );
+  const activeCarePlan = appleCareInfo?.matchedPlan;
+
+  const currentAppleCarePlan = (() => {
+    if (!activeCarePlan) return null;
+
+    if (catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods' || catGroup === 'tv-home') {
+      const activeDuration = catGroup === 'iphone'
+        ? selectedIphoneDuration
+        : (catGroup === 'watch'
+          ? selectedWatchDuration
+          : (catGroup === 'airpods'
+            ? selectedAirpodsDuration
+            : (catGroup === 'tv-home'
+              ? selectedTvHomeDuration
+              : selectedIpadDuration)));
+      const is1Yr = activeDuration === '1yr';
+      const isIphone = catGroup === 'iphone';
+      const isWatch = catGroup === 'watch';
+      const isAirpods = catGroup === 'airpods';
+      const isTvHome = catGroup === 'tv-home';
+      const friendlyModelName = isIphone ? 'iPhone' : (isWatch ? 'Apple Watch' : (isAirpods ? 'AirPods' : (isTvHome ? 'Apple TV / HomePod' : 'iPad')));
+
+      const mrp = is1Yr
+        ? (activeCarePlan.mrp1yr || (isIphone ? '₹12,999' : (isWatch ? '₹4,499' : (isAirpods ? '₹2,499' : (isTvHome ? '₹1,499' : '₹8,999')))))
+        : (activeCarePlan.mrp2yr || activeCarePlan.mrp || (isIphone ? '₹25,900' : (isWatch ? '₹8,990' : (isAirpods ? '₹4,890' : (isTvHome ? '₹2,900' : '₹17,900')))));
+      const discount = is1Yr
+        ? (activeCarePlan.discount1yr || '18% OFF')
+        : (activeCarePlan.discount2yr || activeCarePlan.discount || '18% OFF');
+      const salePrice = is1Yr
+        ? (activeCarePlan.salePrice1yr || (isIphone ? '₹10,659' : (isWatch ? '₹3,689' : (isAirpods ? '₹2,049' : (isTvHome ? '₹1,229' : '₹7,379')))))
+        : (activeCarePlan.salePrice2yr || activeCarePlan.salePrice || (isIphone ? '₹21,238' : (isWatch ? '₹7,372' : (isAirpods ? '₹4,010' : (isTvHome ? '₹2,378' : '₹14,678')))));
+      const sku = is1Yr
+        ? (activeCarePlan.sku1yr || (activeCarePlan.sku ? `${activeCarePlan.sku.replace(/-2YR$/i, '')}-1YR` : (isIphone ? 'DHHA2HN/A' : (isWatch ? 'DHGJ2HN/A' : (isAirpods ? 'DG7Y2HN/A' : (isTvHome ? 'S9634HN/A-1YR' : 'DFQK2HN/A'))))))
+        : (activeCarePlan.sku2yr || activeCarePlan.sku || (isIphone ? 'SHJ83HN/A' : (isWatch ? 'SH0G3HN/A' : (isAirpods ? 'SYLW2HN/A' : (isTvHome ? 'S9634HN/A' : 'SXT02HN/A')))));
+      const desc = is1Yr
+        ? (activeCarePlan.description1yr || `1 Year Apple-certified coverage for ${activeCarePlan.model || friendlyModelName}.`)
+        : (activeCarePlan.description2yr || activeCarePlan.description || `2 Years Apple-certified coverage for ${activeCarePlan.model || friendlyModelName}.`);
+      const dur = is1Yr ? '1 Year' : '2 Years';
+      const rawTitle = activeCarePlan.title || `AppleCare+ for ${activeCarePlan.model || friendlyModelName}`;
+      const titleWithoutDur = rawTitle.replace(/\s*\((?:1\s*Year|2\s*Years|3\s*Years)\)/gi, '').trim();
+      const numSale = parseInt(String(salePrice).replace(/[^0-9]/g, ''), 10) || (is1Yr ? (isIphone ? 10659 : (isWatch ? 3689 : (isAirpods ? 2049 : (isTvHome ? 1229 : 7379)))) : (isIphone ? 21238 : (isWatch ? 7372 : (isAirpods ? 4010 : (isTvHome ? 2378 : 14678)))));
+
+      return {
+        ...activeCarePlan,
+        title: `${titleWithoutDur} (${dur})`,
+        sku,
+        mrp,
+        discount,
+        salePrice,
+        price: numSale,
+        description: desc,
+        duration: dur,
+        badgeText: `AppleCare+ (${dur})`,
+        image: activeCarePlan.image || (isIphone ? '/iphone_nav/iphone_16.png' : (isWatch ? '/uploads/upload_1789377186182_249.jpeg' : (isAirpods ? '/uploads/upload_1789366058920_902.jpeg' : (isTvHome ? '/uploads/upload_1789438370600_868.jpeg' : '/ipad_nav/ipad.png'))))
+      };
+    }
+
+    // Non-iPad categories:
+    const isMacProduct = catGroup === 'mac' ||
+      lowerTitle.includes('macbook') ||
+      lowerTitle.includes('mbp') ||
+      lowerTitle.includes('imac') ||
+      lowerTitle.includes('mac mini') ||
+      (lowerTitle.includes('mini') && catGroup === 'mac') ||
+      lowerTitle.includes('studio display') ||
+      lowerTitle.includes('mac studio') ||
+      lowerTitle.includes('mac pro') ||
+      (product?.slug || '').toLowerCase().includes('mac') ||
+      (product?.slug || '').toLowerCase().includes('display') ||
+      (activeCarePlan.model || '').toLowerCase().includes('mac') ||
+      (activeCarePlan.model || '').toLowerCase().includes('display') ||
+      (activeCarePlan.title || '').toLowerCase().includes('mac');
+
+    const defaultDur = catGroup === 'tv-home'
+      ? ((activeCarePlan.model || '').toLowerCase().includes('tv') ? '3 Years' : '2 Years')
+      : (isMacProduct ? '3 Years' : '2 Years');
+    const dur = isMacProduct ? '3 Years' : (activeCarePlan.duration || defaultDur);
+    const badgeText = isMacProduct
+      ? 'AppleCare+ (3 Years)'
+      : (activeCarePlan.badgeText || `AppleCare+ (${dur})`);
+    const numSale = parseInt(String(activeCarePlan.salePrice || activeCarePlan.yearly || activeCarePlan.mrp || '').replace(/[^0-9]/g, ''), 10) || appleCareInfo?.price || 2900;
+
+    return {
+      ...activeCarePlan,
+      price: numSale,
+      duration: dur,
+      badgeText
+    };
+  })();
+
+  const getSelectedAppleCarePrice = () => {
+    if (isAccessoryProduct(product) || catGroup === 'accessories') return 0;
+    if (!selectedAppleCare && !selectedAppleCarePlan) return 0;
+    if (selectedAppleCarePlan?.price) return Number(selectedAppleCarePlan.price) || 0;
+    if (currentAppleCarePlan?.price) return currentAppleCarePlan.price;
+    return (selectedAppleCare && appleCareInfo?.isEligible) ? appleCareInfo.price : 2900;
+  };
+
   const pricingInfo = getVariantPricingInfo();
-  
-  const appleCarePlans = getAppleCarePlanOptions();
-  const activeAppleCarePlan = selectedAppleCarePlan !== 'none'
-    ? appleCarePlans.find(p => p.id === selectedAppleCarePlan)
-    : null;
-  const appleCareCost = activeAppleCarePlan ? (Number(activeAppleCarePlan.price) || 0) : 0;
-  const selectedAppleCare = !!activeAppleCarePlan;
+  const appleCareCost = getSelectedAppleCarePrice();
 
   const unitPrice = pricingInfo.sellingPrice + appleCareCost;
   const unitOriginalMrp = pricingInfo.originalMrp > 0 ? pricingInfo.originalMrp + appleCareCost : 0;
@@ -1807,7 +2391,7 @@ export default function ProductDetails() {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    const colorName = colors.length > 0 ? (selectedColor?.name || colors[0]?.name || '') : '';
+    const colorName = selectedColor?.name || (colors[0]?.name || 'Standard');
     const activeVar = getActiveVariant();
     const partNum = activeVar?.partNumber || product.partNumber || product.modelNumber || '';
     const glassVal = selectedGlass || selectedConnectivity || activeVar?.glass || activeVar?.connectivity || '';
@@ -1825,17 +2409,22 @@ export default function ProductDetails() {
     if (processorVal && ((product.title || product.name || '').toLowerCase().includes('mac') || (product.title || product.name || '').toLowerCase().includes('ipad'))) {
       detailsArr.push(processorVal);
     }
-    if (selectedAppleCare && activeAppleCarePlan) {
-      detailsArr.push(`${activeAppleCarePlan.name} (₹${appleCareCost.toLocaleString('en-IN')})`);
+    const hasAppleCare = Boolean(!isAccessoryProduct(product) && catGroup !== 'accessories' && (selectedAppleCarePlan || selectedAppleCare));
+    if (selectedAppleCarePlan) {
+      detailsArr.push(`${selectedAppleCarePlan.name} (₹${selectedAppleCarePlan.price.toLocaleString('en-IN')})`);
+    } else if (selectedAppleCare) {
+      const careName = currentAppleCarePlan?.title || activeCarePlan?.title || 'AppleCare+';
+      const careSkuStr = (currentAppleCarePlan?.sku || activeCarePlan?.sku) ? ` [SKU: ${currentAppleCarePlan?.sku || activeCarePlan?.sku}]` : '';
+      detailsArr.push(`${careName}${careSkuStr} (₹${appleCareCost.toLocaleString('en-IN')})`);
     }
     if (partNum) detailsArr.push(`MPN: ${partNum}`);
 
-    const nameDetails = detailsArr.length > 0 ? ` (${detailsArr.join(' / ')})` : '';
+    const nameDetails = detailsArr.join(' / ');
 
     try {
       const result = await dispatch(addToCart({
-        id: `${id}-${selectedAccessoriesSize || 'nosz'}-${selectedSize || 'std'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${selectedAppleCare ? (activeAppleCarePlan?.id || 'ac') : 'noac'}-${colorName || 'std'}`,
-        name: `${cleanProductTitle(product.name || product.title)}${nameDetails}`,
+        id: `${id}-${selectedAccessoriesSize || 'nosz'}-${selectedSize || 'std'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${hasAppleCare ? (selectedAppleCarePlan?.id || currentAppleCarePlan?.sku || 'ac') : 'noac'}-${colorName}`,
+        name: `${cleanProductTitle(product.name || product.title)} (${nameDetails})`,
         price: unitPrice,
         image: activeImage || processedImage || colors[0]?.image || product.images?.[0] || product.image,
         quantity,
@@ -1848,9 +2437,10 @@ export default function ProductDetails() {
         processor: processorVal,
         partNumber: partNum,
         ram: selectedRam,
-        color: colors.length > 0 ? colorName : undefined,
-        appleCare: selectedAppleCare ? (activeAppleCarePlan?.name || true) : false,
-        appleCarePlan: activeAppleCarePlan?.name || '',
+        color: colorName,
+        appleCare: hasAppleCare,
+        appleCarePlan: selectedAppleCarePlan?.name || (selectedAppleCare ? (currentAppleCarePlan?.title || activeCarePlan?.title || 'AppleCare+') : ''),
+        appleCareSku: selectedAppleCare ? (currentAppleCarePlan?.sku || activeCarePlan?.sku || '') : '',
         appleCarePrice: appleCareCost,
         stock: product.stock || 10
       }));
@@ -1878,7 +2468,7 @@ export default function ProductDetails() {
 
     const prodTitle = cleanProductTitle(product.title || product.name || 'Apple Product');
     const activeVar = getActiveVariant();
-    const activeColorStr = colors.length > 0 ? (selectedColor?.name || colors[0]?.name || '') : '';
+    const activeColorStr = selectedColor?.name || (colors[0]?.name || '');
     const partNum = activeVar?.partNumber || product.partNumber || product.modelNumber || '';
     const glassVal = selectedGlass || selectedConnectivity || activeVar?.glass || activeVar?.connectivity || '';
     const processorVal = activeVar?.processor || activeVar?.chip || getProcessorSpec();
@@ -1889,15 +2479,19 @@ export default function ProductDetails() {
     if (selectedSize) message += `📏 *Case Size/Model:* ${selectedSize}\n`;
     if (selectedBandSize) message += `⌚ *Band Size:* ${selectedBandSize}\n`;
     if (selectedConnectivity) message += `📡 *Connectivity:* ${selectedConnectivity}\n`;
-    if (activeColorStr && colors.length > 0) message += `🎨 *Color:* ${activeColorStr}\n`;
+    if (activeColorStr) message += `🎨 *Color:* ${activeColorStr}\n`;
     if (selectedStorage) message += `💾 *Storage:* ${selectedStorage}\n`;
     if (glassVal) message += `✨ *Glass Finish / Option:* ${glassVal}\n`;
     if (selectedRam) message += `⚡ *RAM:* ${selectedRam}\n`;
     if (processorVal && ((product.title || product.name || '').toLowerCase().includes('mac') || (product.title || product.name || '').toLowerCase().includes('ipad'))) {
       message += `💻 *Chip & Processor:* ${processorVal}\n`;
     }
-    if (selectedAppleCare && activeAppleCarePlan) {
-      message += `🛡️ *Protection:* ${activeAppleCarePlan.name} (+₹${appleCareCost.toLocaleString('en-IN')})\n`;
+    if (selectedAppleCarePlan) {
+      message += `🛡️ *Protection:* ${selectedAppleCarePlan.name} (₹${selectedAppleCarePlan.price.toLocaleString('en-IN')})\n`;
+    } else if (selectedAppleCare) {
+      const careName = currentAppleCarePlan?.title || activeCarePlan?.title || 'AppleCare+';
+      const careSkuStr = (currentAppleCarePlan?.sku || activeCarePlan?.sku) ? ` [SKU: ${currentAppleCarePlan?.sku || activeCarePlan?.sku}]` : '';
+      message += `🛡️ *Protection:* ${careName}${careSkuStr} (₹${appleCareCost.toLocaleString('en-IN')})\n`;
     }
     message += `📊 *Quantity Required:* ${quantity} unit(s)\n`;
     message += `💰 *Total Estimated Price:* ₹${totalPrice.toLocaleString('en-IN')}\n\n`;
@@ -1908,7 +2502,7 @@ export default function ProductDetails() {
     window.open(whatsappUrl, '_blank');
   };
 
-  const colorName = colors.length > 0 ? (selectedColor?.name || colors[0]?.name || '') : '';
+  const colorName = selectedColor?.name || (colors[0]?.name || 'Standard');
 
   const getIpadModelName = () => {
     const titleStr = (product?.title || product?.name || id || '').toLowerCase();
@@ -1919,14 +2513,42 @@ export default function ProductDetails() {
   };
 
   const getAllDisplayFeatures = () => {
-    const rawFeats = product?.features && Array.isArray(product.features) && product.features.length > 0
+    let rawFeats = product?.features && Array.isArray(product.features) && product.features.length > 0
       ? [...product.features]
       : [];
 
+    const isTvProduct = (product?.name || product?.title || '').toLowerCase().includes('apple tv') ||
+                        (product?.name || product?.title || '').toLowerCase().includes('tv 4k') ||
+                        (product?.category?.name || product?.category || '').toString().toLowerCase().includes('tv');
+
+    if (isTvProduct) {
+      rawFeats = rawFeats.filter(f => {
+        const fl = (f || '').toLowerCase();
+        return !fl.includes('4k high') && !fl.includes('dolby vision') && !fl.includes('a15 bionic');
+      });
+      if (rawFeats.length === 0) {
+        rawFeats = ['Siri Remote', 'USB-C', 'iPhone tracking'];
+      }
+    }
+
+    const isHomePodProduct = (product?.name || product?.title || '').toLowerCase().includes('homepod');
+    if (isHomePodProduct) {
+      const isMini = (product?.name || product?.title || '').toLowerCase().includes('mini');
+      rawFeats = rawFeats.filter(f => {
+        const fl = (f || '').toLowerCase();
+        return !fl.includes('room-filling') && !fl.includes('room felling') && !fl.includes('siri smart');
+      });
+      if (rawFeats.length === 0) {
+        rawFeats = isMini
+          ? ['Room-filling sound', 'Siri smart assistant', 'Smart home hub']
+          : ['Audio', 'Smart Home Hub', 'Safety'];
+      }
+    }
+
     const isMacProduct = (product?.name || product?.title || '').toLowerCase().includes('mac') ||
-      (product?.category?.name || product?.category || '').toString().toLowerCase().includes('mac') ||
-      (product?.category?.name || product?.category || '').toString().toLowerCase().includes('laptop') ||
-      (product?.category?.name || product?.category || '').toString().toLowerCase().includes('pc');
+                         (product?.category?.name || product?.category || '').toString().toLowerCase().includes('mac') ||
+                         (product?.category?.name || product?.category || '').toString().toLowerCase().includes('laptop') ||
+                         (product?.category?.name || product?.category || '').toString().toLowerCase().includes('pc');
 
     const result = [];
 
@@ -2142,9 +2764,9 @@ export default function ProductDetails() {
                   onClick={() => setActiveImage(imgUrl)}
                   className={`gthumb ${activeImage === imgUrl ? 'active' : ''}`}
                 >
-                  <img
-                    src={imgUrl}
-                    alt={`Thumbnail ${idx}`}
+                  <img 
+                    src={imgUrl} 
+                    alt={`Thumbnail ${idx}`} 
                     onError={(e) => {
                       e.currentTarget.parentElement.style.display = 'none';
                     }}
@@ -2213,11 +2835,10 @@ export default function ProductDetails() {
             )}
 
             {/* Color swatches */}
-            {colors.length > 0 && (
-              <div className="optgroup mb-8">
-                <label className="block text-base font-semibold text-zinc-900 mb-3 text-left">
-                  Colour – <span className="text-zinc-700 font-normal">{colorName}</span>
-                </label>
+            <div className="optgroup mb-8">
+              <label className="block text-base font-semibold text-zinc-900 mb-3 text-left">
+                Colour – <span className="text-zinc-700 font-normal">{colorName}</span>
+              </label>
               <div className="swatches flex items-center gap-2">
                 {colors.map((cObj) => {
                   const isSelected = (selectedColor?.name || '').toString().trim().toLowerCase() === (cObj.name || '').toString().trim().toLowerCase();
@@ -2314,7 +2935,6 @@ export default function ProductDetails() {
                 })}
               </div>
             </div>
-            )}
 
             {/* SKU / Part Number option group (placed right below Colour) */}
             {(() => {
@@ -2484,203 +3104,325 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            {/* Add AppleCare+ (Hidden for all accessories) */}
-            {productAppleCare?.isEnabled !== false && !isAccessoryProduct(product) && (() => {
-              const availablePlans = getAppleCarePlanOptions();
-              if (!availablePlans || availablePlans.length === 0) return null;
-
-              const hasSettings = productAppleCare !== null;
-              const acTitle = hasSettings
-                ? (productAppleCare.title ?? 'Add AppleCare+')
-                : 'Add AppleCare+';
-              const productImg = activeImage || processedImage || colors[0]?.image || product?.images?.[0] || product?.image;
-              const prodDisplayName = cleanProductTitle(product?.name || product?.title || '');
-              const prodSKU = product?.partNumber || product?.modelNumber || product?.sku || null;
-
-              const catN = (product?.category?.name || product?.category || '').toString().toLowerCase();
-              const ptN = (product?.title || product?.name || '').toString().toLowerCase();
-              const isMac = catN.includes('mac') || ptN.includes('mac') || ptN.includes('book') || catN.includes('laptop') || ptN.includes('imac');
-              const isWatch = catN.includes('watch') || ptN.includes('watch');
-              const isAirPods = catN.includes('airpod') || ptN.includes('airpod') || catN.includes('headphone') || ptN.includes('headphone') || catN.includes('audio') || ptN.includes('audio');
-              const isPhone = catN.includes('phone') || ptN.includes('phone') || catN.includes('iphone') || ptN.includes('iphone');
-              const isIpad = catN.includes('ipad') || ptN.includes('ipad') || catN.includes('tablet');
-              const isTvHome = catN.includes('tv') || catN.includes('home') || ptN.includes('tv') || ptN.includes('homepod');
-
-              const benefits = isMac ? [
-                { icon: '🔧', label: '3 Years Peace of Mind\nwith AppleCare+' },
-                { icon: '💬', label: 'Priority access to\ntechnical support' },
-                { icon: '🛡️', label: 'Unlimited Damage\nProtection' },
-                { icon: '🔋', label: 'Battery service\ncoverage' },
-              ] : isWatch ? [
-                { icon: '🔧', label: '2 Years Peace of Mind\nwith AppleCare+' },
-                { icon: '💬', label: 'Priority access to\ntechnical support' },
-                { icon: '🛡️', label: 'Unlimited Damage\nProtection' },
-                { icon: '📱', label: 'Crack screen\ncoverage' },
-              ] : isAirPods ? [
-                { icon: '🔧', label: '2 Years Peace of Mind\nwith AppleCare+' },
-                { icon: '💬', label: 'Priority access to\ntechnical support' },
-                { icon: '🛡️', label: 'Unlimited Damage\nProtection' },
-                { icon: '🎧', label: 'Battery service\ncoverage' },
-              ] : isPhone ? [
-                { icon: '🔧', label: '2 Years Peace of Mind\nwith AppleCare+' },
-                { icon: '💬', label: 'Priority access to\ntechnical support' },
-                { icon: '🛡️', label: 'Unlimited Damage\nProtection' },
-                { icon: '📱', label: 'Screen & back glass\ndamage coverage' },
-              ] : isIpad ? [
-                { icon: '🔧', label: '2 Years Peace of Mind\nwith AppleCare+' },
-                { icon: '💬', label: 'Priority access to\ntechnical support' },
-                { icon: '🛡️', label: 'Unlimited Damage\nProtection' },
-                { icon: '✏️', label: 'Apple Pencil &\nkeyboard coverage' },
-              ] : [
-                { icon: '🔧', label: '2 Years Peace of Mind\nwith AppleCare+' },
-                { icon: '💬', label: 'Priority access to\ntechnical support' },
-                { icon: '🛡️', label: 'Unlimited Damage\nProtection' },
-                { icon: '🔋', label: 'Battery service\ncoverage' },
-              ];
-
-              const displayPlan = (selectedAppleCarePlan && selectedAppleCarePlan !== 'none'
-                ? availablePlans.find(p => p.id === selectedAppleCarePlan)
-                : null) || availablePlans[0];
-              const displayFinal = displayPlan ? Number(displayPlan.price) : 0;
-              const displayDiscount = displayPlan?.discount ?? (isMac ? 24 : 18);
-              const displayMrp = displayPlan?.mrp ? Number(displayPlan.mrp) : (displayFinal > 0 ? Math.round(displayFinal / (1 - displayDiscount / 100)) : 0);
-              const displayDuration = displayPlan?.duration || (isMac ? '3 Years' : '2 Years');
-
-              return (
+            {/* 1. All Hardware Categories: MacBook-Style Complete AppleCare+ Product Card Inside Dropdown */}
+            {isEligibleAppleCareDropdown && !isAccessoryProduct(product) && catGroup !== 'accessories' && currentAppleCarePlan && (
+              <div
+                className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-5 my-5 shadow-xs text-left select-none relative transition-all ${
+                  selectedAppleCare
+                    ? 'border-[#0071e3] ring-2 ring-[#0071e3]/20 bg-blue-50/15'
+                    : 'border-[#d2d2d7] hover:border-zinc-400 bg-white'
+                }`}
+              >
+                {/* Header Row: Apple Icon, Title, Add Button, and Dropdown Button */}
                 <div
-                  className={`bg-white border rounded-2xl my-4 shadow-sm transition-all duration-300 overflow-hidden ${
-                    selectedAppleCare ? 'border-zinc-300' : 'border-zinc-200 hover:border-zinc-300'
-                  }`}
+                  onClick={() => setIsAppleCareExpanded(prev => !prev)}
+                  className="flex items-center justify-between gap-3 cursor-pointer"
                 >
-                  {/* Header */}
-                  <div
-                    onClick={() => setIsAppleCareOpen(prev => !prev)}
-                    className="px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer select-none transition-colors hover:bg-zinc-50/60"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <svg className="w-6 h-6 text-[#E30000] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.11-1 .04-2.19.67-2.9 1.49-.64.74-1.2 1.92-1.05 3.05 1.12.09 2.29-.61 2.96-1.43z" />
-                      </svg>
-                      <span className="text-base font-semibold text-zinc-900 tracking-tight">{acTitle}</span>
-                      {selectedAppleCare && activeAppleCarePlan && (
-                        <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded-full">
-                          <CheckCircle2 className="w-3 h-3" /> Added
-                        </span>
-                      )}
-                    </div>
-                    <ChevronDown className={`w-5 h-5 text-zinc-500 transition-transform duration-300 shrink-0 ${isAppleCareOpen ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2.5">
+                    <svg className="w-5.5 h-5.5 text-[#E30000] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.11-1 .04-2.19.67-2.9 1.49-.64.74-1.2 1.92-1.05 3.05 1.12.09 2.29-.61 2.96-1.43z" />
+                    </svg>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight leading-none">
+                      Add AppleCare+
+                    </h3>
                   </div>
 
-                  {/* Expanded */}
-                  {isAppleCareOpen && (
-                    <div className="border-t border-zinc-100">
-                      <div className="flex flex-col sm:flex-row gap-0 border-b border-zinc-100">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAppleCare(!selectedAppleCare);
+                      }}
+                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        selectedAppleCare
+                          ? 'bg-[#0071e3] text-white shadow-xs'
+                          : 'bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] border border-zinc-200/80'
+                      }`}
+                    >
+                      {selectedAppleCare ? '✓ Added' : '+ Add'}
+                    </button>
 
-                        {/* Left — product image */}
-                        <div className="sm:w-48 shrink-0 bg-zinc-50 flex flex-col items-center justify-center p-4 gap-1.5 border-b sm:border-b-0 sm:border-r border-zinc-100">
-                          <div className="relative w-full flex flex-col items-center">
-                            <span className="absolute top-0 left-0 text-[10px] font-bold bg-[#E30000] text-white px-2 py-0.5 rounded-full leading-tight z-10">
-                              Apple Care+
-                            </span>
-                            {productImg ? (
-                              <img src={productImg} alt={prodDisplayName} className="w-24 h-20 object-contain mt-5" />
-                            ) : (
-                              <div className="w-24 h-20 flex items-center justify-center mt-5">
-                                <svg className="w-14 h-14 text-zinc-300" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.11-1 .04-2.19.67-2.9 1.49-.64.74-1.2 1.92-1.05 3.05 1.12.09 2.29-.61 2.96-1.43z" />
-                                </svg>
-                              </div>
-                            )}
-                            <div className="flex gap-1 mt-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-700 inline-block" />
-                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 inline-block" />
-                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 inline-block" />
-                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 inline-block" />
-                            </div>
-                          </div>
-                          <div className="text-center mt-1">
-                            <p className="text-xs font-semibold text-zinc-800 flex items-center justify-center gap-1">
-                              <svg className="w-3 h-3 text-zinc-800 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.11-1 .04-2.19.67-2.9 1.49-.64.74-1.2 1.92-1.05 3.05 1.12.09 2.29-.61 2.96-1.43z" />
-                              </svg>
-                              {prodDisplayName}
-                            </p>
-                            {prodSKU && <p className="text-[10px] text-zinc-400 mt-0.5">SKU: {prodSKU}</p>}
-                          </div>
+                    {/* Red Dropdown Button with White Down Arrow (Matching Reference Image) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAppleCareExpanded(prev => !prev);
+                      }}
+                      title={isAppleCareExpanded ? "Collapse AppleCare+" : "Expand AppleCare+"}
+                      aria-label="Toggle AppleCare+"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#E30000] hover:bg-[#c90000] text-white flex items-center justify-center transition-all cursor-pointer shadow-xs border-0 shrink-0"
+                    >
+                      <svg
+                        className={`w-3.5 h-3.5 transition-transform duration-300 ${isAppleCareExpanded ? 'rotate-180' : ''}`}
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <polygon points="5,7 15,7 10,13" fill="currentColor" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded Full AppleCare+ Product Card (Matching MacBook Reference) */}
+                {isAppleCareExpanded && (
+                  <div className="mt-4 pt-4 border-t border-zinc-200/80 text-left">
+                    {/* Top Section: Media Left, Info Right */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+                      
+                      {/* LEFT COLUMN: Media Container Box */}
+                      <div className="md:col-span-5 bg-[#F5F5F7] rounded-2xl p-4 sm:p-5 relative flex flex-col items-center justify-between min-h-[260px] sm:min-h-[280px] h-full border border-zinc-200/60">
+                        
+                        {/* Top Left Badge */}
+                        <div className="w-full flex items-center justify-start z-10 mb-1">
+                          <span className={`text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide whitespace-nowrap transition-colors ${
+                            ((catGroup === 'ipad' && selectedIpadDuration === '1yr') || (catGroup === 'iphone' && selectedIphoneDuration === '1yr') || (catGroup === 'watch' && selectedWatchDuration === '1yr') || (catGroup === 'airpods' && selectedAirpodsDuration === '1yr') || (catGroup === 'tv-home' && selectedTvHomeDuration === '1yr')) ? 'bg-[#0071e3]' : 'bg-[#FF2D55]'
+                          }`}>
+                            {currentAppleCarePlan.badgeText}
+                          </span>
                         </div>
 
-                        {/* Right — plan details */}
-                        <div className="flex-1 p-4 flex flex-col justify-between gap-3">
-                          <div>
-                            <p className="text-[10px] font-bold text-[#E30000] tracking-widest uppercase mb-1">Apple Care+</p>
-                            <h4 className="text-sm font-bold text-zinc-900 leading-snug mb-1">AppleCare+ for {prodDisplayName}</h4>
-                            <p className="text-xs text-zinc-500 mb-3">
-                              Enjoy {displayDuration} of peace of mind when you buy AppleCare+ for {isMac ? 'Mac' : isWatch ? 'Apple Watch' : isAirPods ? 'AirPods' : isPhone ? 'iPhone' : isIpad ? 'iPad' : isTvHome ? 'TV & Home' : 'your device'}
-                            </p>
-                            <div className="space-y-1 text-sm border-t border-zinc-100 pt-3">
-                              <div className="flex justify-between items-center text-zinc-500 text-xs">
-                                <span>MRP</span>
-                                <span className="line-through text-zinc-400">₹{displayMrp.toLocaleString('en-IN')}</span>
-                              </div>
-                              <div className="flex justify-between items-center text-zinc-500 text-xs">
-                                <span>Discount</span>
-                                <span className="text-[#E30000] font-semibold">-{displayDiscount}%</span>
-                              </div>
-                              <div className="flex justify-between items-center pt-1 border-t border-zinc-100 mt-1">
-                                <span className="font-bold text-zinc-900 text-sm">Final Price</span>
-                                <div className="text-right">
-                                  <span className="text-lg font-extrabold text-[#1a7f3c]">₹{displayFinal.toLocaleString('en-IN')}</span>
-                                  <p className="text-[10px] text-zinc-400">GST Paid ⓘ</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                        {/* Main Product Image */}
+                        <div className="w-full h-28 sm:h-32 flex items-center justify-center my-1 overflow-hidden">
+                          <img
+                            src={
+                              currentAppleCarePlan.image || (
+                                catGroup === 'ipad' ? '/ipad_nav/ipad.png'
+                                : catGroup === 'iphone' ? '/iphone_nav/iphone_16.png'
+                                : catGroup === 'watch' ? '/uploads/upload_1789377186182_249.jpeg'
+                                : catGroup === 'airpods' ? '/uploads/upload_1789366058920_902.jpeg'
+                                : catGroup === 'tv-home' ? '/uploads/upload_1789438370600_868.jpeg'
+                                : '/mac_nav/mac_mini.png'
+                              )
+                            }
+                            alt={currentAppleCarePlan.title || 'AppleCare+'}
+                            className="max-h-full max-w-full object-contain mix-blend-multiply hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
 
-                          {/* Radio options — Mac: 3yr only | Others: 1yr + 2yr */}
-                          <div className="space-y-2 pt-1">
-                            {availablePlans.filter(p => isMac ? !p.id.endsWith('_1yr') : true).map((plan) => {
-                              const isSel = selectedAppleCarePlan === plan.id;
-                              return (
-                                <div
-                                  key={plan.id}
-                                  onClick={() => setSelectedAppleCarePlan(isSel ? 'none' : plan.id)}
-                                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border cursor-pointer transition-all text-xs select-none ${
-                                    isSel ? 'border-[#0071e3] bg-blue-50/40 font-semibold text-zinc-900' : 'border-zinc-200 hover:border-zinc-300 text-zinc-600'
-                                  }`}
-                                >
-                                  <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSel ? 'border-[#0071e3]' : 'border-zinc-300'}`}>
-                                    {isSel && <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]" />}
-                                  </div>
-                                  <span className="truncate">{plan.name}</span>
-                                  <span className={`ml-auto font-bold shrink-0 ${isSel ? 'text-[#0071e3]' : 'text-zinc-700'}`}>
-                                    +₹{Number(plan.price).toLocaleString('en-IN')}
-                                  </span>
-                                </div>
-                              );
-                            })}
+                        {/* Carousel Dots */}
+                        <div className="flex items-center justify-center gap-1.5 my-1">
+                          <span className="w-2 h-2 rounded-full bg-black"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
+                        </div>
+
+                        {/* Bottom Product Logo & Subtitle */}
+                        <div className="text-center min-h-[42px] flex flex-col justify-center items-center">
+                          <div className="flex items-center justify-center gap-1 font-extrabold text-[#1D1D1F] text-sm sm:text-base tracking-tight">
+                            <span></span>
+                            <span>{currentAppleCarePlan.model || currentAppleCarePlan.title}</span>
                           </div>
+                          {currentAppleCarePlan.sku && (
+                            <p className="text-[11px] text-zinc-500 font-mono font-semibold mt-0.5">
+                              SKU: {currentAppleCarePlan.sku}
+                            </p>
+                          )}
                         </div>
                       </div>
 
-                      {/* Benefits row */}
-                      <div className="grid grid-cols-4 divide-x divide-zinc-100">
-                        {benefits.map((b, i) => (
-                          <div key={i} className="flex flex-col items-center justify-start gap-1.5 px-2 py-3 text-center">
-                            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-sm shrink-0">{b.icon}</div>
-                            <p className="text-[9px] text-zinc-600 font-medium leading-tight whitespace-pre-line">{b.label}</p>
+                      {/* RIGHT COLUMN: Info & Pricing Block */}
+                      <div className="md:col-span-7 space-y-3 flex flex-col justify-between h-full text-left">
+                        <div>
+                          {/* Duration Selector Pills for iPad, iPhone, Watch, AirPods and TV & Home (Matching Reference Design) */}
+                          {(catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods' || catGroup === 'tv-home') && (
+                            <div className="flex items-center gap-1.5 mb-2.5 bg-zinc-100/80 p-1 rounded-xl w-fit">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (catGroup === 'iphone') setSelectedIphoneDuration('1yr');
+                                  else if (catGroup === 'watch') setSelectedWatchDuration('1yr');
+                                  else if (catGroup === 'airpods') setSelectedAirpodsDuration('1yr');
+                                  else if (catGroup === 'tv-home') setSelectedTvHomeDuration('1yr');
+                                  else setSelectedIpadDuration('1yr');
+                                }}
+                                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                  (catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : (catGroup === 'tv-home' ? selectedTvHomeDuration : selectedIpadDuration)))) === '1yr'
+                                    ? 'bg-white text-[#0071e3] shadow-xs ring-1 ring-black/5'
+                                    : 'text-zinc-600 hover:text-zinc-900'
+                                }`}
+                              >
+                                1 Year Plan
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (catGroup === 'iphone') setSelectedIphoneDuration('2yr');
+                                  else if (catGroup === 'watch') setSelectedWatchDuration('2yr');
+                                  else if (catGroup === 'airpods') setSelectedAirpodsDuration('2yr');
+                                  else if (catGroup === 'tv-home') setSelectedTvHomeDuration('2yr');
+                                  else setSelectedIpadDuration('2yr');
+                                }}
+                                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                  (catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : (catGroup === 'tv-home' ? selectedTvHomeDuration : selectedIpadDuration)))) === '2yr'
+                                    ? 'bg-white text-[#FF2D55] shadow-xs ring-1 ring-black/5'
+                                    : 'text-zinc-600 hover:text-zinc-900'
+                                }`}
+                              >
+                                2 Year Plan
+                              </button>
+                            </div>
+                          )}
+
+                          <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
+                            APPLE CARE+{(catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods' || catGroup === 'tv-home') ? ` • ${(catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : (catGroup === 'tv-home' ? selectedTvHomeDuration : selectedIpadDuration)))) === '1yr' ? '1 YEAR PLAN' : '2 YEAR PLAN'}` : ''}
                           </div>
-                        ))}
+                          <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight">
+                            {currentAppleCarePlan.title}
+                          </h3>
+                          <p className="text-xs text-zinc-500 font-medium mt-1 leading-relaxed">
+                            {currentAppleCarePlan.description}
+                          </p>
+                        </div>
+
+                        {/* Pricing Details Block */}
+                        <div className="space-y-1.5 pt-2.5 border-t border-zinc-100">
+                          {/* MRP Row */}
+                          <div className="flex items-center justify-between text-xs text-zinc-500">
+                            <span className="font-semibold text-zinc-500">MRP</span>
+                            <div className="flex items-center gap-2">
+                              <span className="line-through text-zinc-600 font-semibold">
+                                {(() => {
+                                  const raw = String(currentAppleCarePlan.mrp || '').replace(/^₹+/, '');
+                                  if (!raw) return '₹16,900';
+                                  const num = Number(raw.replace(/[^0-9]/g, ''));
+                                  return num ? `₹${num.toLocaleString('en-IN')}` : `₹${raw}`;
+                                })()}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Discount Row */}
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-zinc-500">Discount</span>
+                            <span className="font-bold text-[#FF2D55]">
+                              {(() => {
+                                const d = String(currentAppleCarePlan.discount || '18').trim();
+                                if (d.includes('%')) {
+                                  return d.startsWith('-') ? d : `-${d}`;
+                                }
+                                const num = d.replace(/[^0-9]/g, '');
+                                return num ? `-${num}%` : '-18%';
+                              })()}
+                            </span>
+                          </div>
+
+                          <div className="border-b border-zinc-100 my-1"></div>
+
+                          {/* Final Price Row */}
+                          <div className="flex items-baseline justify-between">
+                            <span className="font-extrabold text-[#1D1D1F] text-sm sm:text-base">Final Price</span>
+                            <div className="text-xl sm:text-2xl font-extrabold text-[#00875A] tabular-nums tracking-tight">
+                              {(() => {
+                                const raw = String(currentAppleCarePlan.salePrice || currentAppleCarePlan.yearly || '').replace(/^₹+/, '');
+                                if (!raw) return '₹12,844';
+                                const num = Number(raw.replace(/[^0-9]/g, ''));
+                                return num ? `₹${num.toLocaleString('en-IN')}` : `₹${raw}`;
+                              })()}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end gap-1 text-[11px] text-zinc-400 font-medium">
+                            <span>GST Paid</span>
+                            <span className="text-xs">ⓘ</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
+
+                    {/* BOTTOM SECTION: 4 Feature Highlights Grid */}
+                    <AppleCareFeaturesGrid
+                      years={
+                        (currentAppleCarePlan.duration || '2 Years')
+                          .toString()
+                          .replace(/years?/i, '')
+                          .trim() || '2'
+                      }
+                      className="border-t border-zinc-100 pt-4 mt-4"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 2. Other Product Categories: Preserved Existing AppleCare+ Widget (Strictly excluded for accessories) */}
+            {!isEligibleAppleCareDropdown && !isAccessoryProduct(product) && catGroup !== 'accessories' && productAppleCare?.isEnabled !== false && (() => {
+              if (isAccessoryProduct(product) || catGroup === 'accessories') return null;
+              const catName = product?.category?.name || 'Device';
+              const hasSettings = productAppleCare !== null;
+
+              const title = hasSettings 
+                ? (productAppleCare.title ?? 'Add AppleCare+') 
+                : 'Add AppleCare+';
+
+              const override = productAppleCare?.categoryPrices?.find(
+                c => c.categoryName && c.categoryName.toLowerCase() === catName.toLowerCase()
+              );
+
+              const monthlyText = (override && override.monthlyPrice !== '')
+                ? override.monthlyPrice
+                : (hasSettings ? (productAppleCare.monthlyPriceText ?? '') : 'From ₹2817.00/mo.◊');
+
+              const mrpText = (override && override.mrpPrice !== '')
+                ? override.mrpPrice
+                : (hasSettings ? (productAppleCare.mrpText ?? '') : 'or MRP ₹16900.00 (inclusive of all taxes)');
+
+              const features = hasSettings && Array.isArray(productAppleCare.features)
+                ? productAppleCare.features
+                : [
+                    'Unlimited repairs for accidental damage protection‡',
+                    'Apple-certified repairs using genuine Apple parts',
+                    '{category}, battery and included accessories covered',
+                    'Priority access to Apple experts'
+                  ];
+
+              if (hasSettings && !title && !monthlyText && !mrpText && features.length === 0) {
+                return null;
+              }
+
+              return (
+                <div className="bg-white border border-zinc-200 rounded-3xl p-5 sm:p-6 my-5 shadow-xs text-left select-none relative">
+                  {title && (
+                    <div className="flex items-center gap-2 mb-1">
+                      <svg className="w-5.5 h-5.5 text-[#E30000] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.11-1 .04-2.19.67-2.9 1.49-.64.74-1.2 1.92-1.05 3.05 1.12.09 2.29-.61 2.96-1.43z" />
+                      </svg>
+                      <h3 className="text-xl sm:text-2xl font-bold text-zinc-900 leading-tight tracking-tight">
+                        {title}
+                      </h3>
+                    </div>
+                  )}
+
+                  {(monthlyText || mrpText) && (
+                    <div className="mt-1.5 space-y-0.5">
+                      {monthlyText && <p className="text-sm sm:text-base font-bold text-zinc-900">{monthlyText}</p>}
+                      {mrpText && <p className="text-xs sm:text-sm text-zinc-600 font-medium">{mrpText}</p>}
+                    </div>
+                  )}
+
+                  {features.length > 0 && (
+                    <>
+                      <hr className="my-4 border-zinc-200" />
+
+                      <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-800 font-medium">
+                        {features.map((ft, idx) => (
+                          <li key={idx} className="flex items-start gap-2.5">
+                            <span className="text-zinc-900 font-bold">•</span>
+                            <span>{ft.replace('{category}', catName)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
                   )}
                 </div>
               );
             })()}
 
             {/* Action Buttons */}
-
-
-
             <div className="btnrow">
               <button type="button" onClick={handleAddToCart} className="btn btn-dark">Add to Order →</button>
               <button onClick={handleRequestBulkQuote} className="btn btn-line flex items-center justify-center gap-2">
@@ -2715,8 +3457,8 @@ export default function ProductDetails() {
               {(() => {
                 const featsList = getAllDisplayFeatures();
                 const isIpadProduct = (product?.title || product?.name || '').toLowerCase().includes('ipad') ||
-                  (product?.category?.name || product?.category || '').toString().toLowerCase().includes('ipad') ||
-                  (id || '').toLowerCase().includes('ipad');
+                                      (product?.category?.name || product?.category || '').toString().toLowerCase().includes('ipad') ||
+                                      (id || '').toLowerCase().includes('ipad');
 
                 if (featsList.length === 0 && !isIpadProduct) return null;
 
@@ -2980,6 +3722,34 @@ export default function ProductDetails() {
       })()}
 
 
+      {/* Floating WhatsApp Widget */}
+      <a
+        href="https://wa.me/919971002348"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          position: 'fixed',
+          bottom: '30px',
+          right: '30px',
+          backgroundColor: '#25d366',
+          color: '#fff',
+          borderRadius: '50%',
+          width: '60px',
+          height: '60px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+          zIndex: 1000,
+          transition: 'transform 0.2s ease'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24" style={{ width: '32px', height: '32px' }}>
+          <path d="M12.012 2c-5.508 0-9.985 4.478-9.985 9.985 0 1.758.459 3.412 1.258 4.86L2 22l5.312-1.392c1.4.762 2.99 1.196 4.7 1.196 5.508 0 9.985-4.478 9.985-9.985 0-5.507-4.477-9.985-9.985-9.985zm0 17.986c-1.547 0-3.057-.417-4.375-1.206l-.313-.186-3.255.854.87-3.173-.205-.326c-.868-1.383-1.326-2.986-1.326-4.636 0-4.385 3.567-7.952 7.952-7.952 4.384 0 7.951 3.567 7.951 7.952 0 4.384-3.567 7.952-7.951 7.952zm4.359-5.966c-.239-.12-1.414-.698-1.634-.778-.22-.08-.38-.12-.54.12-.16.24-.62.778-.76.938-.14.16-.28.18-.519.06-.24-.12-1.012-.372-1.927-1.188-.713-.636-1.195-1.423-1.335-1.663-.14-.24-.015-.369.105-.489.108-.108.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.195-.47-.393-.406-.54-.414-.14-.007-.3-.007-.46-.007s-.42.06-.64.3c-.22.24-.84.82-.84 2.002 0 1.182.86 2.324.98 2.484.12.16 1.69 2.58 4.096 3.618.572.247 1.02.394 1.368.504.576.183 1.1.157 1.514.095.462-.069 1.414-.578 1.614-1.138.2-.56.2-1.04.14-1.138-.06-.098-.22-.178-.459-.298z" />
+        </svg>
+      </a>
     </div>
   );
 }

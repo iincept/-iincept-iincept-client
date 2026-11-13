@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ShieldCheck, Wrench, Headphones, Check } from 'lucide-react';
 import { addToCart } from '../redux/cartSlice';
@@ -12,7 +12,7 @@ import { subscribeToLiveSync } from '../services/liveSyncService';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
 import AppleProductCard from '../components/AppleProductCard';
-import { resolveColorValue } from '../utils/colorResolver';
+import { resolveColorValue, isValidHex, normalizeHex } from '../utils/colorResolver';
 
 // Fallback iPhone products matching MongoDB
 const DEFAULT_IPHONE_PRODUCTS = [
@@ -664,7 +664,8 @@ const IPHONE_SUB_NAV_ITEMS = [
   { name: 'iPhone 17', query: 'iPhone 17', path: '/iphone?search=iPhone 17', image: '/iphone_nav/iphone_17.png', scale: 'scale-100' },
   { name: 'iPhone 17e', query: 'iPhone 17e', path: '/iphone?search=iPhone 17e', image: '/iphone_nav/iphone_17e.png', scale: 'scale-100' },
   { name: 'iPhone 16', query: 'iPhone 16', path: '/iphone?search=iPhone 16', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
-  { name: 'Accessories', query: 'Accessories', path: '/accessories', image: '/iphone_nav/accessories.png', scale: 'scale-90' },
+  { name: 'Iphone 16e', query: 'Iphone 16e', path: '/iphone?search=Iphone 16e', image: '/uploads/upload_1794286381161_97.png', scale: 'scale-100' },
+  { name: 'Accessories', query: 'Accessories', path: '/accessories?product=iphone', image: '/iphone_nav/accessories.png', scale: 'scale-90' },
   { name: 'AppleCare +', query: 'New iPhone Model', path: '/iphone?tab=applecare', image: '/uploads/upload_1792413047064_740.png', scale: 'scale-100' }
 ];
 
@@ -682,8 +683,15 @@ const resolveSubItemPath = (item) => {
   if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
     return '/compare?category=iphone';
   }
+  if (nameLower.includes('accessori') || queryLower.includes('accessori') || pathLower.includes('accessori')) {
+    return '/accessories?product=iphone';
+  }
   if (item?.path && item.path.trim()) {
-    const normalized = normalizeTargetPath(item.path.trim());
+    let cleanPath = item.path.trim();
+    if (cleanPath.toLowerCase().includes('search=iphone16') && !cleanPath.toLowerCase().includes('iphone16e')) {
+      cleanPath = '/iphone?search=iPhone 16';
+    }
+    const normalized = normalizeTargetPath(cleanPath);
     if (normalized && normalized !== '/iphone') return normalized;
   }
   const queryVal = item?.query || item?.label || item?.name || '';
@@ -810,6 +818,7 @@ const resolve2YrDetails = (row) => {
 
 export default function Iphone() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { products } = useSelector((state) => state.products);
   const [viewCols, setViewCols] = useState(4);
@@ -1081,7 +1090,7 @@ export default function Iphone() {
   };
 
   const handleColorChange = (productId, colorVal) => {
-    setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
+    setSelectedColors({ [productId]: colorVal });
   };
 
   const extractFirstValidImage = (p) => {
@@ -1131,7 +1140,8 @@ export default function Iphone() {
   const getProductImage = (prod) => {
     if (!prod) return '/iphone_nav/iphone_17.png';
 
-    const hasUserSelectedColor = Boolean(selectedColors[prod.id]);
+    const pId = prod.id || prod._id;
+    const hasUserSelectedColor = Boolean(selectedColors[pId]);
     const lowerName = (prod.name || prod.title || '').toLowerCase();
 
     // When no color is explicitly selected by user interaction, ALWAYS return the primary product image
@@ -1152,7 +1162,7 @@ export default function Iphone() {
       return (isValidImageString(prod.image) ? prod.image : '/iphone_nav/iphone_17.png');
     }
 
-    const userSelectedColor = selectedColors[prod.id];
+    const userSelectedColor = selectedColors[pId];
     if (userSelectedColor) {
       // Check for color-specific image map
       if (prod.colorImages && typeof prod.colorImages === 'object') {
@@ -1214,9 +1224,10 @@ export default function Iphone() {
   };
 
   const handleAddToCart = (prod) => {
-    const selectedColor = selectedColors[prod.id] || prod.colors[0]?.name || 'Standard';
+    const pId = prod.id || prod._id;
+    const selectedColor = selectedColors[pId] || prod.colors[0]?.name || 'Standard';
     dispatch(addToCart({
-      id: prod.id,
+      id: pId,
       name: `${prod.name} (${selectedColor})`,
       price: prod.price,
       image: getProductImage(prod),
@@ -1225,9 +1236,10 @@ export default function Iphone() {
   };
 
   const handleAddToWishlist = (prod) => {
-    setLocalWishlist((prev) => ({ ...prev, [prod.id]: !prev[prod.id] }));
+    const pId = prod.id || prod._id;
+    setLocalWishlist((prev) => ({ ...prev, [pId]: !prev[pId] }));
     dispatch(addToWishlist({
-      id: prod.id,
+      id: pId,
       name: prod.name,
       price: prod.price,
       image: getProductImage(prod),
@@ -1263,8 +1275,10 @@ export default function Iphone() {
     }).map(p => {
       const firstImg = extractFirstValidImage(p);
       const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/iphone_nav/iphone_17.png'));
+      const pId = p._id || p.id;
       return {
-        id: p._id || p.id,
+        id: pId,
+        _id: pId,
         name: (p.title || p.name || '').replace(/^phone\b/i, 'iPhone'),
         price: p.price,
         priceStr: `₹${p.price.toLocaleString('en-IN')}`,
@@ -1285,26 +1299,35 @@ export default function Iphone() {
           if (!variantImage && typeof c === 'object' && Array.isArray(c.images) && c.images[0]) {
             variantImage = c.images[0];
           }
-          if (!variantImage && p.variants && Array.isArray(p.variants)) {
-            const matchedVariant = p.variants.find(v => {
-              if (!v.color) return false;
-              const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
-              return vColor === normName.toLowerCase();
-            });
-            if (matchedVariant) {
-              if (matchedVariant.image) {
-                variantImage = matchedVariant.image;
-              } else if (matchedVariant.images && matchedVariant.images[0]) {
-                variantImage = matchedVariant.images[0];
-              }
+          const matchedVariant = p.variants && Array.isArray(p.variants)
+            ? p.variants.find(v => {
+                if (!v.color) return false;
+                const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
+                return vColor === normName.toLowerCase();
+              })
+            : null;
+
+          if (!variantImage && matchedVariant) {
+            if (matchedVariant.image) {
+              variantImage = matchedVariant.image;
+            } else if (matchedVariant.images && matchedVariant.images[0]) {
+              variantImage = matchedVariant.images[0];
             }
           }
+
+          const hex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+            ? normalizeHex(c.colorHex)
+            : (typeof c === 'object' && c.value && isValidHex(c.value))
+              ? normalizeHex(c.value)
+              : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+                ? normalizeHex(matchedVariant.colorHex)
+                : resolveColorValue(c?.colorHex || c?.value || val);
 
           return {
             name: normName,
             rawName: rawName,
-            value: resolveColorValue(c?.colorHex || c?.value || val),
-            colorHex: c?.colorHex || resolveColorValue(val),
+            value: hex,
+            colorHex: hex,
             image: variantImage
           };
         }) : [],
@@ -1383,15 +1406,31 @@ export default function Iphone() {
     return sortedProducts.filter((prod) => {
       if (searchQuery) {
         const searchNorm = searchQuery.trim().toLowerCase();
-        if (searchNorm === 'iphone 17') {
+        const searchNoSpace = searchNorm.replace(/[\s\-_]+/g, '');
+
+        if (searchNoSpace === 'iphone17') {
           const titleLower = (prod.name || prod.title || '').toLowerCase();
+          const titleNoSpace = titleLower.replace(/[\s\-_]+/g, '');
           // Specifically match base iPhone 17 (exclude Pro, Pro Max, Air, 17e)
-          const isBase17 = titleLower.includes('iphone 17') &&
+          const isBase17 = (titleLower.includes('iphone 17') || titleNoSpace.includes('iphone17')) &&
             !titleLower.includes('pro') &&
             !titleLower.includes('air') &&
             !titleLower.includes('17e') &&
             !titleLower.includes('17 e');
           if (!isBase17) return false;
+        } else if (searchNoSpace === 'iphone16') {
+          const titleLower = (prod.name || prod.title || '').toLowerCase();
+          const titleNoSpace = titleLower.replace(/[\s\-_]+/g, '');
+          // Specifically match base iPhone 16 (exclude 16e, 16 Pro, etc.)
+          const isBase16 = (titleLower.includes('iphone 16') || titleNoSpace.includes('iphone16')) &&
+            !titleLower.includes('16e') &&
+            !titleLower.includes('16 e') &&
+            !titleLower.includes('pro');
+          if (!isBase16) return false;
+        } else if (searchNoSpace === 'iphone16e') {
+          const titleLower = (prod.name || prod.title || '').toLowerCase();
+          const is16e = titleLower.includes('16e') || titleLower.includes('16 e') || titleLower.replace(/[\s\-_]+/g, '').includes('iphone16e');
+          if (!is16e) return false;
         } else if (!matchesProductSearch(prod, searchQuery)) {
           return false;
         }
@@ -1783,7 +1822,17 @@ export default function Iphone() {
             {searchQuery && (
               <div className="flex items-center justify-between gap-4 pb-4 mb-4 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
                 <button
-                  onClick={() => setSearchParams({})}
+                  type="button"
+                  onClick={() => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.delete('search');
+                    if (newParams.toString()) {
+                      setSearchParams(newParams);
+                    } else {
+                      setSearchParams({});
+                      navigate('/iphone', { replace: true });
+                    }
+                  }}
                   className="text-xs font-semibold text-[#0071e3] hover:underline cursor-pointer flex items-center gap-1"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1846,17 +1895,20 @@ export default function Iphone() {
 
             {/* Grid of iPhone models (Matching Apple Store Layout) */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.slice(0, visibleCount).map((prod) => (
-                <AppleProductCard
-                  key={prod.id}
-                  product={prod}
-                  selectedColor={selectedColors[prod.id]}
-                  onColorChange={(colorName) => handleColorChange(prod.id, colorName)}
-                  isWishlisted={Boolean(localWishlist[prod.id])}
-                  onToggleWishlist={() => handleAddToWishlist(prod)}
-                  onAddToCart={() => handleAddToCart(prod)}
-                />
-              ))}
+              {filteredProducts.slice(0, visibleCount).map((prod) => {
+                const pId = prod.id || prod._id;
+                return (
+                  <AppleProductCard
+                    key={pId}
+                    product={prod}
+                    selectedColor={selectedColors[pId]}
+                    onColorChange={(colorName) => handleColorChange(pId, colorName)}
+                    isWishlisted={Boolean(localWishlist[pId])}
+                    onToggleWishlist={() => handleAddToWishlist(prod)}
+                    onAddToCart={() => handleAddToCart(prod)}
+                  />
+                );
+              })}
             </div>
 
             {/* Infinite Scroll Indicator */}

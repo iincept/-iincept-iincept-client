@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Loader2, ChevronDown, Search, Laptop, Tablet, Smartphone, Watch, Headphones, Tv, Sparkles, Plug, CircleDot, Keyboard, Accessibility, Gamepad, Camera, PenTool, Activity, Home } from 'lucide-react';
 import { addToCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
@@ -9,96 +9,57 @@ import { matchesProductSearch } from '../utils/searchUtils';
 import { getProductCardPricing } from '../utils/pricingUtils';
 import CleanProductImage from '../components/CleanProductImage';
 import AppleProductCard from '../components/AppleProductCard';
+import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
-import { resolveColorValue } from '../utils/colorResolver';
+import { resolveColorValue, isValidHex, normalizeHex } from '../utils/colorResolver';
 
 // Products are loaded dynamically from e-commerce database API
 
-const ACCESSORIES_CHAPTER_NAV_ITEMS = [
-  {
-    id: 'all',
-    name: 'All Accessories',
-    query: '',
-    icon: (
-      <svg className="w-9 h-9 text-zinc-900 stroke-[1.6]" viewBox="0 0 36 36" fill="none" stroke="currentColor">
-        <rect x="5" y="5" width="11" height="11" rx="2.5" />
-        <rect x="20" y="5" width="11" height="11" rx="2.5" />
-        <rect x="5" y="20" width="11" height="11" rx="2.5" />
-        <rect x="20" y="20" width="11" height="11" rx="2.5" />
-      </svg>
-    )
-  },
-  {
-    id: 'mac',
-    name: 'Mac',
-    query: 'mac',
-    icon: (
-      <svg className="w-10 h-10 text-zinc-900 stroke-[1.6]" viewBox="0 0 40 40" fill="none" stroke="currentColor">
-        <rect x="6" y="8" width="28" height="18" rx="2" />
-        <path d="M4 30H36V32H4V30Z" fill="currentColor" stroke="none" />
-      </svg>
-    )
-  },
-  {
-    id: 'ipad',
-    name: 'iPad',
-    query: 'ipad',
-    icon: (
-      <svg className="w-8 h-10 text-zinc-900 stroke-[1.6]" viewBox="0 0 32 40" fill="none" stroke="currentColor">
-        <rect x="4" y="4" width="24" height="32" rx="4" />
-        <circle cx="16" cy="32" r="1" fill="currentColor" />
-      </svg>
-    )
-  },
-  {
-    id: 'iphone',
-    name: 'iPhone',
-    query: 'iphone',
-    icon: (
-      <svg className="w-7 h-10 text-zinc-900 stroke-[1.6]" viewBox="0 0 28 40" fill="none" stroke="currentColor">
-        <rect x="4" y="4" width="20" height="32" rx="4" />
-        <path d="M11 7H17" strokeLinecap="round" />
-      </svg>
-    )
-  },
-  {
-    id: 'watch',
-    name: 'Watch',
-    query: 'watch',
-    icon: (
-      <svg className="w-7 h-10 text-zinc-900 stroke-[1.6]" viewBox="0 0 28 40" fill="none" stroke="currentColor">
-        <path d="M9 8V2C9 1.4 9.4 1 10 1H18C18.6 1 19 1.4 19 2V8" strokeLinecap="round" />
-        <rect x="5" y="8" width="18" height="24" rx="6" />
-        <path d="M9 32V38C9 38.6 9.4 39 10 39H18C18.6 39 19 38.6 19 38V32" strokeLinecap="round" />
-      </svg>
-    )
-  },
-  {
-    id: 'airpods',
-    name: 'AirPods',
-    query: 'airpods',
-    icon: (
-      <svg className="w-9 h-9 text-zinc-900" viewBox="0 0 36 36" fill="currentColor">
-        <path d="M13 9c-2 0-3.5 1.5-3.5 3.5 0 1.8 1.2 3.2 2.8 3.5V25c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5V16c1.6-.3 2.8-1.7 2.8-3.5C18.1 10.5 16.6 9 14.6 9z" />
-        <path d="M23 9c-2 0-3.5 1.5-3.5 3.5 0 1.8 1.2 3.2 2.8 3.5V25c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5V16c1.6-.3 2.8-1.7 2.8-3.5C28.1 10.5 26.6 9 24.6 9z" />
-      </svg>
-    )
-  },
-  {
-    id: 'tv-home',
-    name: 'TV & Home',
-    query: 'tv-home',
-    icon: (
-      <svg className="w-9 h-9 text-zinc-900 stroke-[1.6]" viewBox="0 0 36 36" fill="none" stroke="currentColor">
-        <rect x="4" y="8" width="28" height="18" rx="3" />
-        <path d="M12 30L18 26L24 30" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
+// Products and sub-nav icons are loaded dynamically from e-commerce database API
+
+const DEFAULT_ACCESSORIES_SUB_NAV_ITEMS = [
+  { name: 'iPhone', query: 'iphone', path: '/accessories?product=iphone', image: '/uploads/upload_1794292689853_322.png' },
+  { name: 'iPad', query: 'ipad', path: '/accessories?product=ipad', image: '/uploads/upload_1794292702660_545.png' },
+  { name: 'Mac', query: 'mac', path: '/accessories?product=mac', image: '/uploads/upload_1794293051487_815.png' },
+  { name: 'Apple Watch', query: 'watch', path: '/accessories?product=watch', image: '/uploads/upload_1794292728655_907.png' },
+  { name: 'AirPods', query: 'airpods', path: '/accessories?product=airpods', image: '/uploads/upload_1794292736726_552.png' },
+  { name: 'Home', query: 'home', path: '/accessories?product=home', image: '/uploads/upload_1794292742147_25.png' },
+  { name: 'AirTag', query: 'airtag', path: '/accessories?product=airtag', image: '/uploads/upload_1794292747643_181.png' },
+  { name: 'Beats', query: 'beats', path: '/accessories?product=beats', image: '/uploads/upload_1794292752316_305.png' }
 ];
+
+const resolveIconImage = (img, label) => {
+  if (img && typeof img === 'string' && img.trim()) {
+    let clean = img.trim();
+    if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('data:') && !clean.startsWith('blob:') && !clean.startsWith('/')) {
+      clean = '/' + clean;
+    }
+    // Sanitize old white-background images from previous cache or database
+    if (clean.includes('upload_1792581168881_4')) return '/uploads/upload_1794292689853_322.png';
+    if (clean.includes('upload_1792581153922_319')) return '/uploads/upload_1794292702660_545.png';
+    if (clean.includes('upload_1792648517264_52')) return '/uploads/upload_1794293051487_815.png';
+    if (clean.includes('upload_1792581179789_461')) return '/uploads/upload_1794292728655_907.png';
+    if (clean.includes('upload_1792581185398_230')) return '/uploads/upload_1794292736726_552.png';
+    if (clean.includes('upload_1792581288180_720')) return '/uploads/upload_1794292742147_25.png';
+    if (clean.includes('upload_1792581436622_385')) return '/uploads/upload_1794292747643_181.png';
+    if (clean.includes('upload_1792648112910_540')) return '/uploads/upload_1794292752316_305.png';
+    return clean;
+  }
+  const lbl = (label || '').toLowerCase();
+  if (lbl.includes('iphone')) return '/uploads/upload_1794292689853_322.png';
+  if (lbl.includes('ipad')) return '/uploads/upload_1794292702660_545.png';
+  if (lbl.includes('mac')) return '/uploads/upload_1794293051487_815.png';
+  if (lbl.includes('watch')) return '/uploads/upload_1794292728655_907.png';
+  if (lbl.includes('airpod')) return '/uploads/upload_1794292736726_552.png';
+  if (lbl.includes('home')) return '/uploads/upload_1794292742147_25.png';
+  if (lbl.includes('tag')) return '/uploads/upload_1794292747643_181.png';
+  if (lbl.includes('beat')) return '/uploads/upload_1794292752316_305.png';
+  return '/accessories_category_uploaded.png';
+};
 
 export default function Accessories() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { products, loading } = useSelector((state) => state.products);
   const wishlistItems = useSelector((state) => state.wishlist?.items || []);
@@ -106,12 +67,124 @@ export default function Accessories() {
   const [activeTab, setActiveTab] = useState('all');
   const [localWishlist, setLocalWishlist] = useState({});
   const [showBrowseMenu, setShowBrowseMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProductFilter, setSelectedProductFilter] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get('search') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+  const [selectedProductFilter, setSelectedProductFilter] = useState(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const prod = sp.get('product');
+      if (prod) return prod.toLowerCase().trim();
+      const srch = sp.get('search');
+      const cat = sp.get('category');
+      if (srch || cat) return '';
+      return 'iphone';
+    } catch (e) {
+      return 'iphone';
+    }
+  });
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get('category') || '';
+    } catch (e) {
+      return '';
+    }
+  });
   const [visibleCount, setVisibleCount] = useState(6);
   const visibleCountRef = useRef(visibleCount);
   const isLoadingMore = useRef(false);
+
+  const [subItems, setSubItems] = useState(() => {
+    try {
+      const cached = localStorage.getItem('iincept_sub_items_v2_accessories');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(item => ({
+            ...item,
+            image: resolveIconImage(item.image, item.name)
+          }));
+        }
+      }
+    } catch (e) {}
+    return DEFAULT_ACCESSORIES_SUB_NAV_ITEMS;
+  });
+
+  useEffect(() => {
+    fetchSubNavItems();
+    const unsub = subscribeToLiveSync((data) => {
+      if (data?.type === 'categories') {
+        fetchSubNavItems();
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const fetchSubNavItems = async () => {
+    try {
+      const response = await axiosClient.get('/settings');
+      if (response.data) {
+        if (response.data.categoryIconGroups) {
+          const accGrp = response.data.categoryIconGroups.find(g => g.categoryKey === 'accessories');
+          if (accGrp && accGrp.icons && accGrp.icons.length > 0) {
+            const activeSub = accGrp.icons.filter(d => d.isActive !== false);
+            if (activeSub.length > 0) {
+              const mapped = activeSub.map(d => ({
+                name: d.label,
+                query: d.query || d.label,
+                path: d.path || `/accessories?product=${encodeURIComponent((d.query || d.label).toLowerCase())}`,
+                image: resolveIconImage(d.image, d.label)
+              }));
+              try {
+                localStorage.setItem('iincept_sub_items_v2_accessories', JSON.stringify(mapped));
+              } catch (e) {}
+              setSubItems(prev => (JSON.stringify(prev) !== JSON.stringify(mapped) ? mapped : prev));
+              return;
+            }
+          }
+        }
+        if (response.data.navbarMenuItems) {
+          const accItem = response.data.navbarMenuItems.find(i => (i.name || '').toLowerCase().includes('accessori'));
+          if (accItem && accItem.dropdownItems && accItem.dropdownItems.length > 0) {
+            const activeSub = accItem.dropdownItems.filter(d => d.isActive !== false && !(d.label || '').toLowerCase().startsWith('shop all'));
+            if (activeSub.length > 0) {
+              const mapped = activeSub.map(d => ({
+                name: d.label,
+                query: d.query || d.label,
+                path: d.path || `/accessories?product=${encodeURIComponent((d.query || d.label).toLowerCase())}`,
+                image: resolveIconImage(d.image, d.label)
+              }));
+              try {
+                localStorage.setItem('iincept_sub_items_v2_accessories', JSON.stringify(mapped));
+              } catch (e) {}
+              setSubItems(prev => (JSON.stringify(prev) !== JSON.stringify(mapped) ? mapped : prev));
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load accessories sub nav settings:', err);
+    }
+  };
+
+  const handleSubItemClick = (e, item) => {
+    e.preventDefault();
+    const itemQuery = (item.query || item.name || '').toLowerCase().trim();
+    if (selectedProductFilter.toLowerCase() === itemQuery) {
+      // If toggling the active item, fallback to iphone rather than bare /accessories
+      setSelectedProductFilter('iphone');
+      navigate('/accessories?product=iphone', { replace: true });
+    } else {
+      setSelectedProductFilter(itemQuery);
+      navigate(`/accessories?product=${encodeURIComponent(itemQuery)}`, { replace: true });
+    }
+  };
 
   useEffect(() => {
     visibleCountRef.current = visibleCount;
@@ -160,23 +233,29 @@ export default function Accessories() {
   }, []);
 
   useEffect(() => {
-    const urlSearch = searchParams.get('search');
-    if (urlSearch !== null) {
-      setSearchQuery(urlSearch);
-    }
     const urlProduct = searchParams.get('product');
-    if (urlProduct !== null) {
-      setSelectedProductFilter(urlProduct);
-    }
+    const urlSearch = searchParams.get('search');
     const urlCategory = searchParams.get('category');
-    if (urlCategory !== null) {
-      setSelectedCategoryFilter(urlCategory);
+
+    // If on bare /accessories without any parameters, automatically redirect to /accessories?product=iphone
+    if (!urlProduct && !urlSearch && !urlCategory) {
+      navigate('/accessories?product=iphone', { replace: true });
+      setSelectedProductFilter('iphone');
+    } else if (urlProduct) {
+      setSelectedProductFilter(urlProduct.toLowerCase().trim());
+    } else if (urlSearch || urlCategory) {
+      setSelectedProductFilter('');
+    } else {
+      setSelectedProductFilter('iphone');
     }
-  }, [searchParams]);
+
+    setSearchQuery(urlSearch || '');
+    setSelectedCategoryFilter(urlCategory || '');
+  }, [searchParams, navigate]);
 
 
   const handleColorChange = (productId, colorVal) => {
-    setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
+    setSelectedColors({ [productId]: colorVal });
   };
 
   const getVariantForSelectedColor = (prod, selectedColorName) => {
@@ -196,7 +275,8 @@ export default function Accessories() {
   const getProductImage = (prod) => {
     if (!prod) return '/avatar.png';
 
-    const selectedColorName = selectedColors[prod.id];
+    const pId = prod.id || prod._id;
+    const selectedColorName = selectedColors[pId];
     
     if (selectedColorName) {
       const targetNorm = String(selectedColorName).trim().toLowerCase();
@@ -288,15 +368,16 @@ export default function Accessories() {
   };
 
   const handleAddToCart = (prod) => {
-    const selectedColor = selectedColors[prod.id] || (prod.colors && prod.colors[0]?.name) || (prod.colors && typeof prod.colors[0] === 'string' ? prod.colors[0] : 'Standard');
+    const pId = prod.id || prod._id;
+    const selectedColor = selectedColors[pId] || (prod.colors && prod.colors[0]?.name) || (prod.colors && typeof prod.colors[0] === 'string' ? prod.colors[0] : 'Standard');
     const matchedVariant = getVariantForSelectedColor(prod, selectedColor);
     const variantPrice = matchedVariant?.price || prod.price;
     const variantImage = getProductImage(prod);
     const variantSku = matchedVariant?.sku || matchedVariant?.partNumber || prod.sku || prod.partNumber || '';
 
     dispatch(addToCart({
-      id: matchedVariant ? `${prod.id}-${matchedVariant._id || selectedColor}` : prod.id,
-      productId: prod.id,
+      id: matchedVariant ? `${pId}-${matchedVariant._id || selectedColor}` : pId,
+      productId: pId,
       name: selectedColor && selectedColor !== 'Standard' ? `${prod.name} (${selectedColor})` : prod.name,
       price: variantPrice,
       image: variantImage,
@@ -312,16 +393,17 @@ export default function Accessories() {
   };
 
   const handleAddToWishlist = (prod) => {
-    const selectedColor = selectedColors[prod.id] || (prod.colors && prod.colors[0]?.name) || (prod.colors && typeof prod.colors[0] === 'string' ? prod.colors[0] : '');
+    const pId = prod.id || prod._id;
+    const selectedColor = selectedColors[pId] || (prod.colors && prod.colors[0]?.name) || (prod.colors && typeof prod.colors[0] === 'string' ? prod.colors[0] : '');
     const matchedVariant = getVariantForSelectedColor(prod, selectedColor);
     const variantPrice = matchedVariant?.price || prod.price;
     const variantImage = getProductImage(prod);
     const variantSku = matchedVariant?.sku || matchedVariant?.partNumber || prod.sku || prod.partNumber || '';
 
-    const nextVal = !isWishlisted(prod.id);
-    setLocalWishlist((prev) => ({ ...prev, [prod.id]: nextVal }));
+    const nextVal = !isWishlisted(pId);
+    setLocalWishlist((prev) => ({ ...prev, [pId]: nextVal }));
     dispatch(addToWishlist({
-      id: prod.id,
+      id: pId,
       name: selectedColor ? `${prod.name} (${selectedColor})` : prod.name,
       price: variantPrice,
       image: variantImage,
@@ -443,12 +525,22 @@ export default function Accessories() {
         variants: p.variants || [],
         colors: Array.isArray(p.colors) ? p.colors.map(c => {
           const name = typeof c === 'string' ? c : (c.name || '');
+          const matchedVariant = p.variants && Array.isArray(p.variants)
+            ? p.variants.find(v => (v.color || '').trim().toLowerCase() === name.trim().toLowerCase())
+            : null;
           const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
-          const resolved = resolveColorValue(val);
-          return { name, value: resolved, colorHex: resolved };
+          const hex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+            ? normalizeHex(c.colorHex)
+            : (typeof c === 'object' && c.value && isValidHex(c.value))
+              ? normalizeHex(c.value)
+              : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+                ? normalizeHex(matchedVariant.colorHex)
+                : resolveColorValue(val);
+          return { name, value: hex, colorHex: hex };
         }) : [],
         rating: p.rating || 5.0,
-        isSoldOut: p.stock <= 0
+        isSoldOut: p.stock <= 0,
+        accessoryDevice: (p.accessoryDevice || '').toString().toLowerCase().trim()
       };
     });
   }, [products]);
@@ -463,12 +555,42 @@ export default function Accessories() {
       if (searchQuery && !matchesProductSearch(prod, searchQuery)) return false;
 
       if (selectedProductFilter) {
-        if (selectedProductFilter === 'mac' && !nameLower.includes('mac') && !nameLower.includes('pencil')) return false;
-        if (selectedProductFilter === 'ipad' && !nameLower.includes('ipad') && !nameLower.includes('pencil')) return false;
-        if (selectedProductFilter === 'iphone' && !nameLower.includes('iphone') && !nameLower.includes('case')) return false;
-        if (selectedProductFilter === 'watch' && !nameLower.includes('watch') && !nameLower.includes('band') && !nameLower.includes('loop') && !nameLower.includes('strap')) return false;
-        if (selectedProductFilter === 'airpods' && !nameLower.includes('airpod') && !nameLower.includes('max') && !nameLower.includes('pro')) return false;
-        if (selectedProductFilter === 'tv-home' && !nameLower.includes('tv') && !nameLower.includes('home') && !nameLower.includes('pod')) return false;
+        const f = selectedProductFilter.toLowerCase().trim();
+        const dev = (prod.accessoryDevice || '').toLowerCase().trim();
+
+        // 1. Direct match if product has an explicit accessoryDevice set in Admin Panel
+        if (dev) {
+          const isWatchMatch = (f === 'watch' || f === 'apple watch') && (dev === 'watch' || dev === 'apple watch');
+          const isHomeMatch = (f === 'home' || f === 'tv' || f === 'tv-home') && (dev === 'home' || dev === 'tv' || dev === 'tv-home');
+          const isTagMatch = (f === 'airtag' || f === 'tag') && (dev === 'airtag' || dev === 'tag');
+          const isDirectMatch = dev === f || isWatchMatch || isHomeMatch || isTagMatch;
+          if (!isDirectMatch) return false;
+        } else {
+          // 2. Intelligent keyword fallback for accessories without an explicit accessoryDevice
+          if (f === 'mac') {
+            if (nameLower.includes('ipad') || nameLower.includes('iphone') || nameLower.includes('watch')) return false;
+            if (!nameLower.includes('mac') && !nameLower.includes('keyboard') && !nameLower.includes('mouse') && !nameLower.includes('trackpad') && !nameLower.includes('adapter') && !nameLower.includes('cable') && !nameLower.includes('dock') && !nameLower.includes('stand')) return false;
+          } else if (f === 'ipad') {
+            if (nameLower.includes('for mac') || nameLower.includes('mac models') || nameLower.includes('macbook')) return false;
+            if (!nameLower.includes('ipad') && !nameLower.includes('pencil') && !nameLower.includes('folio') && !nameLower.includes('cover')) return false;
+          } else if (f === 'iphone') {
+            if (!nameLower.includes('iphone') && !nameLower.includes('case') && !nameLower.includes('cover') && !nameLower.includes('wallet') && !nameLower.includes('magsafe') && !nameLower.includes('charger')) return false;
+          } else if (f === 'watch' || f === 'apple watch') {
+            if (!nameLower.includes('watch') && !nameLower.includes('band') && !nameLower.includes('loop') && !nameLower.includes('strap') && !nameLower.includes('charger')) return false;
+          } else if (f === 'airpods') {
+            if (nameLower.includes('pencil') || nameLower.includes('thunderbolt') || nameLower.includes('watch')) return false;
+            if (!nameLower.includes('airpod') && !nameLower.includes('earpod') && !nameLower.includes('earbuds') && !nameLower.includes('audio cable')) return false;
+          } else if (f === 'home' || f === 'tv-home' || f === 'tv') {
+            if (nameLower.includes('earpod')) return false;
+            if (!nameLower.includes('tv') && !nameLower.includes('homepod') && !nameLower.includes('home pod') && !nameLower.includes('home') && !nameLower.includes('remote') && !nameLower.includes('mount')) return false;
+          } else if (f === 'airtag' || f === 'tag') {
+            if (!nameLower.includes('airtag') && !nameLower.includes('air tag') && !nameLower.includes('tag') && !nameLower.includes('ring') && !nameLower.includes('loop')) return false;
+          } else if (f === 'beats' || f === 'beat') {
+            if (!nameLower.includes('beats') && !nameLower.includes('beat') && !nameLower.includes('solo') && !nameLower.includes('studio') && !nameLower.includes('pill')) return false;
+          } else {
+            if (!nameLower.includes(f) && !matchesProductSearch(prod, f)) return false;
+          }
+        }
       }
 
       return true;
@@ -482,10 +604,48 @@ export default function Accessories() {
   return (
     <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 select-none relative font-sans">
 
-      {/* Accessories Title Header matching Mac, iPad, Watch, iPhone, AirPods */}
+      {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3 px-4 sm:px-8 md:px-12 lg:px-16">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-2">Accessories</h1>
+
+          {/* Horizontal Accessories Category Selector Row (Apple Style) */}
+          <div className="flex items-end justify-start gap-7 sm:gap-9 md:gap-11 lg:gap-12 overflow-x-auto no-scrollbar py-3 px-1">
+            {subItems.map((item, idx) => {
+              const itemQuery = (item.query || item.name || '').toLowerCase().trim();
+              const isActive = selectedProductFilter.toLowerCase() === itemQuery;
+
+              return (
+                <button
+                  key={item.name || idx}
+                  type="button"
+                  onClick={(e) => handleSubItemClick(e, item)}
+                  className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer bg-transparent border-0 p-0 transition-transform duration-200 opacity-100 ${
+                    isActive ? 'scale-105' : ''
+                  }`}
+                >
+                  <div className="h-16 sm:h-20 w-16 sm:w-20 md:w-24 flex items-center justify-center p-1 overflow-visible">
+                    <img
+                      src={resolveIconImage(item.image, item.name)}
+                      alt={item.name}
+                      loading="eager"
+                      decoding="async"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = resolveIconImage('', item.name);
+                      }}
+                      className="max-h-full max-w-full object-contain transition-transform duration-200 group-hover:scale-110 group-hover:-translate-y-1"
+                    />
+                  </div>
+                  <span className={`text-[12px] sm:text-[13px] tracking-tight transition-colors duration-200 ${
+                    isActive ? 'font-bold text-zinc-950' : 'font-medium text-zinc-700 group-hover:text-zinc-950'
+                  }`}>
+                    {item.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -504,17 +664,20 @@ export default function Accessories() {
           </div>
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredProducts.slice(0, visibleCount).map((prod) => (
-              <AppleProductCard
-                key={prod.id}
-                product={prod}
-                selectedColor={selectedColors[prod.id]}
-                onColorChange={(colorName) => handleColorChange(prod.id, colorName)}
-                isWishlisted={isWishlisted(prod.id)}
-                onToggleWishlist={() => handleAddToWishlist(prod)}
-                onAddToCart={() => handleAddToCart(prod)}
-              />
-            ))}
+            {filteredProducts.slice(0, visibleCount).map((prod) => {
+              const pId = prod.id || prod._id;
+              return (
+                <AppleProductCard
+                  key={pId}
+                  product={prod}
+                  selectedColor={selectedColors[pId]}
+                  onColorChange={(colorName) => handleColorChange(pId, colorName)}
+                  isWishlisted={isWishlisted(pId)}
+                  onToggleWishlist={() => handleAddToWishlist(prod)}
+                  onAddToCart={() => handleAddToCart(prod)}
+                />
+              );
+            })}
           </div>
         )}
 

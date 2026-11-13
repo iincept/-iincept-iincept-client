@@ -165,35 +165,6 @@ export default function CleanProductImage({
             if (isDark && isMounted) {
               setIsBlackBg(true);
             }
-
-            if (maxDiff < 60) {
-              const tolerance = 40;
-              let modified = false;
-
-              for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                const a = data[i + 3];
-
-                if (a > 0) {
-                  const diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-                  if (diff <= tolerance) {
-                    data[i + 3] = 0;
-                    modified = true;
-                  } else if (diff <= tolerance + 25) {
-                    const factor = (diff - tolerance) / 25;
-                    data[i + 3] = Math.round(a * factor);
-                    modified = true;
-                  }
-                }
-              }
-
-              if (modified) {
-                ctx.putImageData(imgData, 0, 0);
-                finalSrc = canvas.toDataURL('image/png');
-              }
-            }
           }
         }
       } catch (e) {
@@ -201,8 +172,8 @@ export default function CleanProductImage({
       }
 
       if (isMounted) {
-        processedImageCache.set(currentSrc, { finalSrc, isBlackBg: isDark, hasFailed: false });
-        setProcessedSrc(finalSrc);
+        processedImageCache.set(currentSrc, { finalSrc: currentSrc, isBlackBg: isDark, hasFailed: false });
+        setProcessedSrc(currentSrc);
         setIsLoading(false);
       }
     };

@@ -12,7 +12,7 @@ import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import CleanProductImage from '../components/CleanProductImage';
 import AppleProductCard from '../components/AppleProductCard';
-import { resolveColorValue } from '../utils/colorResolver';
+import { resolveColorValue, isValidHex, normalizeHex } from '../utils/colorResolver';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 
 // Default Watch AppleCare rows fallback
@@ -1112,16 +1112,17 @@ export default function Watch() {
   };
 
   const handleColorChange = (productId, colorVal) => {
-    setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
+    setSelectedColors({ [productId]: colorVal });
   };
 
   const getProductImage = (prod) => {
-    const hasUserSelectedColor = Boolean(selectedColors[prod.id]);
+    const pId = prod.id || prod._id;
+    const hasUserSelectedColor = Boolean(selectedColors[pId]);
     if (!hasUserSelectedColor && prod.displayImage) {
       return prod.displayImage;
     }
 
-    const selectedColorName = selectedColors[prod.id] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
+    const selectedColorName = selectedColors[pId] || (prod.colors && prod.colors[0] ? (prod.colors[0].name || (typeof prod.colors[0] === 'string' ? prod.colors[0] : '')) : null);
     if (selectedColorName) {
       if (prod.colorImages && typeof prod.colorImages === 'object') {
         const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
@@ -1143,9 +1144,10 @@ export default function Watch() {
   };
 
   const handleAddToCart = (prod) => {
-    const selectedColor = selectedColors[prod.id] || prod.colors[0]?.name || 'Standard';
+    const pId = prod.id || prod._id;
+    const selectedColor = selectedColors[pId] || prod.colors[0]?.name || 'Standard';
     dispatch(addToCart({
-      id: prod.id,
+      id: pId,
       name: `${prod.name} (${selectedColor})`,
       price: prod.price,
       image: getProductImage(prod),
@@ -1154,9 +1156,10 @@ export default function Watch() {
   };
 
   const handleAddToWishlist = (prod) => {
-    setLocalWishlist((prev) => ({ ...prev, [prod.id]: !prev[prod.id] }));
+    const pId = prod.id || prod._id;
+    setLocalWishlist((prev) => ({ ...prev, [pId]: !prev[pId] }));
     dispatch(addToWishlist({
-      id: prod.id,
+      id: pId,
       name: prod.name,
       price: prod.price,
       image: getProductImage(prod),
@@ -1224,8 +1227,10 @@ export default function Watch() {
     }).map(p => {
       const firstImg = extractFirstValidImage(p);
       const primaryImg = p.displayImage || (p.images && p.images[0]) || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : '/watch_category.jpg');
+      const pId = p._id || p.id;
       return {
-        id: p._id || p.id,
+        id: pId,
+        _id: pId,
         name: p.title || p.name,
         price: p.price,
         priceStr: `₹${p.price.toLocaleString('en-IN')}`,
@@ -1238,9 +1243,18 @@ export default function Watch() {
         variants: p.variants || [],
         colors: Array.isArray(p.colors) ? p.colors.map(c => {
           const name = typeof c === 'string' ? c : (c.name || '');
+          const matchedVariant = p.variants && Array.isArray(p.variants)
+            ? p.variants.find(v => (v.color || '').trim().toLowerCase() === name.trim().toLowerCase())
+            : null;
           const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
-          const resolved = resolveColorValue(val);
-          return { name, value: resolved, colorHex: resolved };
+          const hex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+            ? normalizeHex(c.colorHex)
+            : (typeof c === 'object' && c.value && isValidHex(c.value))
+              ? normalizeHex(c.value)
+              : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+                ? normalizeHex(matchedVariant.colorHex)
+                : resolveColorValue(val);
+          return { name, value: hex, colorHex: hex };
         }) : [],
         rating: p.rating || 5.0,
         isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false
@@ -1713,17 +1727,20 @@ export default function Watch() {
 
             {/* Grid (Matching Apple Store Layout) */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.slice(0, visibleCount).map((prod) => (
-                <AppleProductCard
-                  key={prod.id}
-                  product={prod}
-                  selectedColor={selectedColors[prod.id]}
-                  onColorChange={(colorName) => handleColorChange(prod.id, colorName)}
-                  isWishlisted={Boolean(localWishlist[prod.id])}
-                  onToggleWishlist={() => handleAddToWishlist(prod)}
-                  onAddToCart={() => handleAddToCart(prod)}
-                />
-              ))}
+              {filteredProducts.slice(0, visibleCount).map((prod) => {
+                const pId = prod.id || prod._id;
+                return (
+                  <AppleProductCard
+                    key={pId}
+                    product={prod}
+                    selectedColor={selectedColors[pId]}
+                    onColorChange={(colorName) => handleColorChange(pId, colorName)}
+                    isWishlisted={Boolean(localWishlist[pId])}
+                    onToggleWishlist={() => handleAddToWishlist(prod)}
+                    onAddToCart={() => handleAddToCart(prod)}
+                  />
+                );
+              })}
             </div>
 
             {/* Infinite Scroll Indicator */}

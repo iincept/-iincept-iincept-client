@@ -11,7 +11,7 @@ import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import CleanProductImage from '../components/CleanProductImage';
 import AppleProductCard from '../components/AppleProductCard';
-import { resolveColorValue } from '../utils/colorResolver';
+import { resolveColorValue, isValidHex, normalizeHex } from '../utils/colorResolver';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 
 // Default TV & Home AppleCare rows fallback matching live DB
@@ -61,6 +61,11 @@ const DEFAULT_TVHOME_PRODUCTS = [
   {
     "id": "6a437eb3345ade0885f68a5e",
     "name": "Apple TV 4K",
+    "features": [
+      "Siri Remote",
+      "USB-C",
+      "iPhone tracking"
+    ],
     "price": 25900,
     "priceStr": "₹25,900",
     "discountPercent": 0,
@@ -202,6 +207,11 @@ const DEFAULT_TVHOME_PRODUCTS = [
   {
     "id": "6a44ca05101e1328003fbb12",
     "name": "HomePod",
+    "features": [
+      "Audio",
+      "Smart Home Hub",
+      "Safety"
+    ],
     "price": 44900,
     "priceStr": "₹44,900",
     "discountPercent": 0,
@@ -631,7 +641,7 @@ export default function TvHome() {
   const getColorStr = (c) => (typeof c === 'object' ? (c?.name || c?.value || '') : (c || '')).toString().trim();
 
   const handleColorChange = (productId, colorVal) => {
-    setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
+    setSelectedColors({ [productId]: colorVal });
   };
 
   const getProductImage = (prod) => {
@@ -758,9 +768,18 @@ export default function TvHome() {
         variants: p.variants || [],
         colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors.map(c => {
           const name = typeof c === 'string' ? c : (c.name || '');
+          const matchedVariant = p.variants && Array.isArray(p.variants)
+            ? p.variants.find(v => (v.color || '').trim().toLowerCase() === name.trim().toLowerCase())
+            : null;
           const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
-          const resolved = resolveColorValue(val);
-          return { name, value: resolved, colorHex: resolved };
+          const hex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+            ? normalizeHex(c.colorHex)
+            : (typeof c === 'object' && c.value && isValidHex(c.value))
+              ? normalizeHex(c.value)
+              : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+                ? normalizeHex(matchedVariant.colorHex)
+                : resolveColorValue(val);
+          return { name, value: hex, colorHex: hex };
         }) : [{ name: 'Standard', value: '#1D1D1F', colorHex: '#1D1D1F' }],
         rating: p.rating || 5.0,
         isSoldOut: p.stock <= 0

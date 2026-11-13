@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, Eye, ShoppingCart, X, Check, ArrowRight } from 'lucide-react';
 import { addToCart, openCart } from '../redux/cartSlice';
 import { addToWishlist } from '../redux/wishlistSlice';
 import { getProductCardPricing } from '../utils/pricingUtils';
-import { resolveColorValue } from '../utils/colorResolver';
+import { resolveColorValue, isValidHex, normalizeHex } from '../utils/colorResolver';
 import CleanProductImage from './CleanProductImage';
 
 const cleanStorageSpec = (str) => {
@@ -20,6 +20,16 @@ const cleanStorageSpec = (str) => {
     return `${matchNum[1]}GB`;
   }
   return s.replace(/\s*SSD/gi, '').trim();
+};
+
+const parseStorageBytes = (str) => {
+  const m = String(str).match(/(\d+)\s*(TB|GB|MB)/i);
+  if (!m) return 0;
+  const val = parseInt(m[1], 10);
+  const unit = m[2].toUpperCase();
+  if (unit === 'TB') return val * 1024;
+  if (unit === 'GB') return val;
+  return val / 1024;
 };
 
 const cleanRamSpec = (str) => {
@@ -54,6 +64,10 @@ export const extractProductKeySpecs = (prod) => {
     lowerTitle.includes('case') ||
     lowerTitle.includes('charger') ||
     lowerTitle.includes('magsafe') ||
+    lowerTitle.includes('pencil') ||
+    lowerTitle.includes('folio') ||
+    lowerTitle.includes('strap') ||
+    lowerTitle.includes('band') ||
     lowerCat.includes('accessories');
 
   const isMac = !isAccessory && (
@@ -109,9 +123,32 @@ export const extractProductKeySpecs = (prod) => {
       gpu = gpuMatch[1].replace('‑', '-');
     }
 
-    // iMac: strictly display "10-core CPU | 10-core GPU" (RAM & Storage excluded as requested)
+    // 24-inch iMac with Retina 4.5K display (M6): exactly as requested
+    if (lowerTitle.includes('imac') && (lowerTitle.includes('m6') || lowerTitle.includes('24-inch imac with retina 4.5k display (m6)'))) {
+      return ['10‑core CPU, 10‑core GPU', '12‑core CPU, 12‑core GPU', '16GB', '256GB'];
+    }
+
+    // iMac: display CPU (including 10-core / 12-core options), GPU, 16GB RAM & 256GB Storage on card
     if (lowerTitle.includes('imac')) {
-      return [cpu || '10-core CPU', gpu || '10-core GPU'];
+      const has10Core = /10[-‑]core\s+CPU/i.test(combinedText);
+      const has12Core = /12[-‑]core\s+CPU/i.test(combinedText);
+      const has8Core = /8[-‑]core\s+CPU/i.test(combinedText);
+
+      let imacCpu = cpu || '10-core CPU';
+      let imacGpu = gpu || '10-core GPU';
+
+      if (has10Core && has12Core) {
+        imacCpu = '10-core / 12-core CPU';
+        imacGpu = '10-core / 12-core GPU';
+      } else if (has8Core && has10Core) {
+        imacCpu = '8-core / 10-core CPU';
+        imacGpu = '8-core / 10-core GPU';
+      }
+
+      const imacRam = baseVariant?.ram ? cleanRamSpec(baseVariant.ram) : (Array.isArray(prod.ram) && prod.ram[0] ? cleanRamSpec(prod.ram[0]) : '16GB');
+      const imacStorage = baseVariant?.storage ? cleanStorageSpec(baseVariant.storage) : (Array.isArray(prod.storage) && prod.storage[0] ? cleanStorageSpec(prod.storage[0]) : '256GB');
+
+      return [imacCpu, imacGpu, imacRam || '16GB', imacStorage || '256GB'];
     }
 
     // Mac Studio M5-ULTRA: "30-core CPU | 64-core GPU | 96GB | 1TB"
@@ -212,44 +249,179 @@ export const extractProductKeySpecs = (prod) => {
     return ['Tilt-adjustable stand', 'Tilt- and height-adjustable stand', 'VESA mount adapter (Stand not included)'];
   }
 
-  // 2. Explicit specs array if defined in admin
+  // 2. iPad dynamic specs from admin configuration
+  if (lowerCat.includes('ipad') || lowerTitle.includes('ipad')) {
+    const rawStorage = baseVariant?.storage || (Array.isArray(prod.storage) && prod.storage[0]) || (Array.isArray(prod.variants) && prod.variants[0]?.storage);
+    const baseStorage = rawStorage ? cleanStorageSpec(rawStorage) : (lowerTitle.includes('pro') ? '256GB' : '128GB');
+
+    // Collect configured glasses
+    const rawGlassesList = [
+      ...(Array.isArray(prod.glasses) ? prod.glasses : []),
+      ...(Array.isArray(prod.variants) ? prod.variants.map(v => v.glass) : [])
+    ].filter(Boolean);
+
+    const validGlasses = [];
+    rawGlassesList.forEach(g => {
+      const t = (g || '').toString().trim();
+      const l = t.toLowerCase();
+      if (!t || ['wi-fi', 'wi-fi + cellular', 'cellular', 'gps', 'gps + cellular'].includes(l)) return;
+      if (!validGlasses.some(x => x.toLowerCase() === l)) {
+        validGlasses.push(t);
+      }
+    });
+
+    // Collect configured connectivities
+    const rawConnList = [
+      ...(Array.isArray(prod.connectivities) ? prod.connectivities : []),
+      ...(Array.isArray(prod.variants) ? prod.variants.map(v => v.connectivity) : [])
+    ].filter(Boolean);
+
+    const hasExplicitConn = rawConnList.length > 0;
+    const hasWifi = !hasExplicitConn || rawConnList.some(c => (c || '').toLowerCase().includes('wi-fi'));
+    const hasCellular = !hasExplicitConn || rawConnList.some(c => (c || '').toLowerCase().includes('cellular'));
+
+    // Determine Glass label if any
+    let glassLabel = '';
+    if (lowerTitle.includes('pro')) {
+      glassLabel = 'Standard / Nano-texture glass';
+    } else if (validGlasses.length > 1 || (validGlasses.some(g => g.toLowerCase().includes('nano')) && validGlasses.some(g => g.toLowerCase().includes('standard')))) {
+      glassLabel = 'Standard / Nano-texture glass';
+    } else if (validGlasses.some(g => g.toLowerCase().includes('nano'))) {
+      glassLabel = 'Nano-texture glass';
+    } else if (validGlasses.some(g => g.toLowerCase().includes('standard'))) {
+      glassLabel = 'Standard glass';
+    } else if (validGlasses.length > 0) {
+      glassLabel = validGlasses[0];
+    }
+
+    // iPad Pro: outer card displays Wi-Fi, 256GB, Standard / Nano-texture glass (no cellular)
+    if (lowerTitle.includes('pro')) {
+      return ['Wi-Fi', baseStorage, glassLabel || 'Standard / Nano-texture glass'];
+    }
+
+    // If explicit specs are present on product in DB AND no custom glass options were configured
+    if (Array.isArray(prod.specs) && prod.specs.length >= 2 && !glassLabel) {
+      return prod.specs.slice(0, 4);
+    }
+
+    // Dynamic specs for all other iPads based on what admin configured:
+    const specs = [];
+    if (hasWifi) specs.push('Wi-Fi');
+    if (hasCellular) specs.push('Wi-Fi + Cellular');
+    if (baseStorage) specs.push(baseStorage);
+    if (glassLabel) specs.push(glassLabel);
+
+    if (specs.length < 2) {
+      return ['Wi-Fi', 'Wi-Fi + Cellular', baseStorage];
+    }
+    return specs.slice(0, 4);
+  }
+
+  // 3. iPhone (Display all storage options configured inside the product/variants)
+  if (!isAccessory && (lowerCat.includes('iphone') || lowerTitle.includes('iphone'))) {
+    const rawList = [
+      ...(Array.isArray(prod.storage) ? prod.storage : []),
+      ...((prod.variants || []).map(v => v.storage).filter(Boolean))
+    ];
+    let uniqueStorages = Array.from(new Set(rawList.map(s => cleanStorageSpec(s)).filter(Boolean)));
+
+    if (uniqueStorages.length === 0) {
+      if (lowerTitle.includes('18 pro') || lowerTitle.includes('duo')) {
+        uniqueStorages = ['256GB', '512GB', '1TB', '2TB'];
+      } else if (lowerTitle.includes('pro') || lowerTitle.includes('air')) {
+        uniqueStorages = ['256GB', '512GB', '1TB'];
+      } else {
+        uniqueStorages = ['128GB', '256GB', '512GB'];
+      }
+    }
+
+    uniqueStorages.sort((a, b) => parseStorageBytes(a) - parseStorageBytes(b));
+    return uniqueStorages;
+  }
+
+  // 4. Explicit specs array if defined in admin
   if (Array.isArray(prod.specs) && prod.specs.length >= 2) {
     return prod.specs.slice(0, 4);
   }
 
-  // 3. Accessories
+  // 5. Accessories
   if (isAccessory) {
     return ['Official Apple Warranty', 'Fast Shipping', '100% Genuine'];
   }
 
-  // 4. iPhone
-  if (lowerCat.includes('iphone') || lowerTitle.includes('iphone')) {
-    const baseStorage = baseVariant?.storage ? cleanStorageSpec(baseVariant.storage) : '128GB';
-    if (lowerTitle.includes('pro')) return ['A18 Pro chip', '48MP Fusion Camera', 'Super Retina XDR', baseStorage];
-    return ['A18 chip', 'Camera Control', '48MP 2x Telephoto', baseStorage];
-  }
+  // 6. Apple Watch (Display dial size and connectivity configured inside product/variants)
+  if (!isAccessory && (lowerCat.includes('watch') || lowerTitle.includes('watch'))) {
+    const specs = [];
 
-  // 5. iPad
-  if (lowerCat.includes('ipad') || lowerTitle.includes('ipad')) {
-    const baseStorage = baseVariant?.storage ? cleanStorageSpec(baseVariant.storage) : '128GB';
-    if (lowerTitle.includes('pro')) return ['Ultra Retina XDR', 'M4 chip', 'Face ID', baseStorage];
-    if (lowerTitle.includes('air')) return ['Liquid Retina', 'M2 chip', 'Touch ID', baseStorage];
-    return ['10.9-inch Liquid Retina', 'A14 Bionic', 'USB-C', baseStorage];
-  }
+    // Dial Size (40mm, 42mm, 44mm, 46mm, 49mm)
+    const rawSizes = [
+      ...(Array.isArray(prod.sizes) ? prod.sizes : []),
+      ...(Array.isArray(prod.size) ? prod.size : (prod.size ? [prod.size] : [])),
+      ...((prod.variants || []).map(v => v.size || v.bandSize).filter(Boolean))
+    ];
+    const uniqueSizes = Array.from(new Set(rawSizes.map(s => String(s).trim()).filter(Boolean)));
+    if (uniqueSizes.length > 0) {
+      uniqueSizes.sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0));
+      specs.push(...uniqueSizes);
+    } else {
+      if (lowerTitle.includes('ultra')) specs.push('49mm');
+      else if (lowerTitle.includes('se')) specs.push('40mm', '44mm');
+      else specs.push('42mm', '46mm');
+    }
 
-  // 6. Apple Watch
-  if (lowerCat.includes('watch') || lowerTitle.includes('watch')) {
-    return ['Always-On Retina', 'S10 SiP', '50m Water Resistant', 'Blood Oxygen'];
+    // Connectivity (GPS, GPS + Cellular)
+    const rawConn = [
+      ...(Array.isArray(prod.connectivities) ? prod.connectivities : []),
+      ...(Array.isArray(prod.connectivity) ? prod.connectivity : (prod.connectivity ? [prod.connectivity] : [])),
+      ...((prod.variants || []).map(v => v.connectivity).filter(Boolean))
+    ];
+    const uniqueConn = Array.from(new Set(rawConn.map(c => String(c).trim()).filter(Boolean)));
+    if (uniqueConn.length > 0) {
+      specs.push(uniqueConn.join(' / '));
+    } else {
+      if (lowerTitle.includes('cellular')) specs.push('GPS + Cellular');
+      else if (lowerTitle.includes('gps')) specs.push('GPS');
+      else specs.push('GPS + Cellular');
+    }
+
+    return specs;
   }
 
   // 7. AirPods
-  if (lowerCat.includes('airpod') || lowerTitle.includes('airpod')) {
+  if (!isAccessory && (lowerCat.includes('airpod') || lowerTitle.includes('airpod'))) {
+    if (lowerTitle.includes('airpods 4') && (lowerTitle.includes('noise cancellation') || lowerTitle.includes('anc') || lowerTitle.includes('cancellation'))) {
+      return ['Active Noise Cancellation', 'Spatial Audio', 'Transparency Mode', 'USB-C'];
+    }
+    if (lowerTitle.includes('airpods 4') || lowerTitle.includes('airpod 4')) {
+      return ['USB-C'];
+    }
+    if (lowerTitle.includes('airpods max') || lowerTitle.includes('airpod max')) {
+      return ['Advanced Noise Cancellation', 'Active Noise Cancellation', 'Adaptive Audio', 'Transparency Mode', 'USB-C'];
+    }
+    if (lowerTitle.includes('airpods pro') || lowerTitle.includes('airpod pro')) {
+      return ['Active Noise Cancellation', 'Adaptive Audio', 'Transparency Mode', 'USB-C'];
+    }
+    if (lowerTitle.includes('airpods 5') || lowerTitle.includes('airpod 5')) {
+      return ['Active Noise Cancellation', 'USB-C'];
+    }
     return ['Active Noise Cancellation', 'Spatial Audio', 'Transparency Mode', 'USB-C'];
   }
 
-  // 8. Apple TV
-  if (lowerCat.includes('tv') || lowerTitle.includes('apple tv') || lowerTitle.includes('homepod')) {
-    return ['4K High Frame Rate', 'Dolby Vision', 'A15 Bionic', 'Siri Remote'];
+  // 8. Apple TV & HomePod
+  if (lowerTitle.includes('homepod')) {
+    if (Array.isArray(prod.features) && prod.features.length > 0 && !prod.features.some(f => (f || '').toLowerCase().includes('room-filling') || (f || '').toLowerCase().includes('room felling') || (f || '').toLowerCase().includes('siri smart'))) {
+      return prod.features;
+    }
+    if (lowerTitle.includes('mini')) {
+      return ['Room-filling sound', 'Siri smart assistant', 'Smart home hub'];
+    }
+    return ['Audio', 'Smart Home Hub', 'Safety'];
+  }
+  if (lowerCat.includes('tv') || lowerTitle.includes('apple tv') || lowerTitle.includes('tv 4k')) {
+    if (Array.isArray(prod.features) && prod.features.length > 0 && !prod.features.some(f => (f || '').toLowerCase().includes('4k high') || (f || '').toLowerCase().includes('bionic'))) {
+      return prod.features;
+    }
+    return ['Siri Remote', 'USB-C', 'iPhone tracking'];
   }
 
   return ['Official Apple Warranty', 'Fast Shipping', '100% Genuine'];
@@ -283,6 +455,23 @@ export const cleanAppleTitle = (rawTitle) => {
   return t;
 };
 
+const resolveCardSwatchBackground = (cName, swatchImg, title) => {
+  if (swatchImg) return `url(${swatchImg})`;
+  const nameLower = (cName || '').toLowerCase().trim();
+  const titleLower = (title || '').toLowerCase().trim();
+  const isImac = titleLower.includes('imac');
+  if (isImac) {
+    if (nameLower.includes('blue')) return 'url(/imac_blue_swatch.svg)';
+    if (nameLower.includes('pink')) return 'url(/imac_pink_swatch.svg)';
+    if (nameLower.includes('purple') || nameLower.includes('lavender')) return 'url(/imac_purple_swatch.svg)';
+    if (nameLower.includes('green')) return 'url(/imac_green_swatch.svg)';
+    if (nameLower.includes('yellow') || nameLower.includes('citrus')) return 'url(/imac_yellow_swatch.svg)';
+    if (nameLower.includes('orange')) return 'url(/imac_orange_swatch.svg)';
+    if (nameLower.includes('silver') || nameLower.includes('white')) return 'url(/imac_silver_swatch.svg)';
+  }
+  return 'none';
+};
+
 export default function AppleProductCard({
   product,
   selectedColor: controlledColor,
@@ -307,32 +496,69 @@ export default function AppleProductCard({
   const discountPercent = pricing.discountPercent || (hasDiscount ? Math.round(((originalMrp - sellingPrice) / originalMrp) * 100) : 0);
   const savingsAmount = hasDiscount ? (originalMrp - sellingPrice) : 0;
 
-  // Colors resolution: ONLY use colors if explicitly added in Admin Panel (product.colors or variant.color)
+  // Colors resolution: Prioritize explicit admin colors and variant definitions
   const rawColors = Array.isArray(product?.colors) && product.colors.length > 0
     ? product.colors
     : (Array.isArray(product?.variants) && product.variants.some(v => v.color)
       ? [...new Set(product.variants.map(v => v.color).filter(Boolean))].map(c => ({ name: c, value: c }))
       : []);
+
   const normalizedColors = rawColors.map(c => {
     const name = typeof c === 'string' ? c : (c.name || 'Standard');
-    const val = typeof c === 'string' ? c : (c.value || c.colorHex || c.name || '');
-    const colorHex = resolveColorValue(c?.colorHex || c?.value || val);
-    const img = typeof c === 'object' && c.image ? c.image : null;
-    return { name, colorHex, image: img };
+    const matchingVar = Array.isArray(product?.variants)
+      ? product.variants.find(v => (v.color || '').trim().toLowerCase() === name.trim().toLowerCase())
+      : null;
+
+    const val = typeof c === 'string' ? c : (c.value || c.colorHex || matchingVar?.colorHex || c.name || '');
+    const colorHex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+      ? normalizeHex(c.colorHex)
+      : (typeof c === 'object' && c.value && isValidHex(c.value))
+        ? normalizeHex(c.value)
+        : (matchingVar?.colorHex && isValidHex(matchingVar.colorHex))
+          ? normalizeHex(matchingVar.colorHex)
+          : resolveColorValue(val || name);
+
+    const img = (matchingVar?.images?.[0] || matchingVar?.image) || (typeof c === 'object' && c.image) || null;
+    const swatchBgImage = resolveCardSwatchBackground(name, c?.swatchImage || c?.swatch, rawTitle);
+
+    return { 
+      name, 
+      colorHex, 
+      image: img,
+      swatchBgImage
+    };
   });
 
   const hasColors = normalizedColors.length > 0;
 
-  // Color selection state: track if user explicitly selected a color
+  // Independent product-specific color selection state:
+  const isControlled = onColorChange !== undefined;
   const [internalColor, setInternalColor] = useState(null);
-  const [hasUserClickedColor, setHasUserClickedColor] = useState(false);
-  const hasUserSelectedColor = Boolean(controlledColor || hasUserClickedColor);
-  const activeColor = controlledColor || internalColor || (hasColors ? normalizedColors[0]?.name : '');
+
+  // Sync internal state if controlledColor changes
+  useEffect(() => {
+    setInternalColor(controlledColor || null);
+  }, [controlledColor]);
+
+  // Reset internal state if the product changes
+  useEffect(() => {
+    setInternalColor(controlledColor || null);
+  }, [prodId]);
+
+  // A color is selected ONLY if explicitly selected
+  const effectiveSelectedColor = isControlled
+    ? (typeof controlledColor === 'string' && controlledColor.trim() ? controlledColor.trim() : null)
+    : (typeof internalColor === 'string' && internalColor.trim() ? internalColor.trim() : null);
+
+  const hasExplicitSelection = Boolean(effectiveSelectedColor);
+
+  // Fallback color for labels/metadata (falls back to 1st color only for text display when needed)
+  const displayColorName = effectiveSelectedColor || (hasColors ? normalizedColors[0]?.name : '');
 
   // Active product image: Prioritize Admin Panel displayImage by default
   const resolveActiveImage = () => {
     // 1. If user has NOT explicitly selected a color swatch or product has no colors, ALWAYS return the Admin Panel displayImage!
-    if (!hasUserSelectedColor || !hasColors) {
+    if (!hasExplicitSelection || !hasColors) {
       if (product?.displayImage && typeof product.displayImage === 'string' && product.displayImage.trim()) {
         return product.displayImage.trim();
       }
@@ -345,25 +571,40 @@ export default function AppleProductCard({
     }
 
     // 2. If user specifically clicked a color swatch, search for an image specific to that color
-    if (hasUserSelectedColor && hasColors && activeColor) {
+    // Exactly matching ProductDetails.jsx: prioritize matching variant's 1st image (front view)
+    if (hasExplicitSelection && hasColors && effectiveSelectedColor) {
+      const normActive = effectiveSelectedColor.trim().toLowerCase();
+
+      // 2a. Check variants for matching color (Admin Panel uploaded gallery images)
+      if (Array.isArray(product?.variants) && product.variants.length > 0) {
+        const vMatch = product.variants.find(v => {
+          const vColor = (typeof v.color === 'object' ? v.color?.name : v.color || '').trim().toLowerCase();
+          return vColor === normActive && ((Array.isArray(v.images) && v.images.length > 0) || v.image);
+        });
+        if (vMatch) {
+          if (Array.isArray(vMatch.images) && vMatch.images.length > 0) {
+            return vMatch.images[0];
+          }
+          if (vMatch.image) {
+            return vMatch.image;
+          }
+        }
+      }
+
+      // 2b. Check product.colorImages map
       if (product?.colorImages && typeof product.colorImages === 'object') {
-        const directMatch = product.colorImages[activeColor];
+        const directMatch = product.colorImages[effectiveSelectedColor];
         if (directMatch) return directMatch;
-        const normActive = activeColor.trim().toLowerCase();
         const matchedKey = Object.keys(product.colorImages).find(k => k.trim().toLowerCase() === normActive);
         if (matchedKey && product.colorImages[matchedKey]) {
           return product.colorImages[matchedKey];
         }
       }
-      const matchedColorObj = normalizedColors.find(c => c.name.toLowerCase() === activeColor.toLowerCase());
+
+      // 2c. Check colors array
+      const matchedColorObj = normalizedColors.find(c => c.name.toLowerCase() === normActive);
       if (matchedColorObj?.image) {
         return matchedColorObj.image;
-      }
-      if (Array.isArray(product?.variants)) {
-        const vMatch = product.variants.find(v => (v.color || '').trim().toLowerCase() === activeColor.toLowerCase());
-        if (vMatch && Array.isArray(vMatch.images) && vMatch.images[0]) {
-          return vMatch.images[0];
-        }
       }
     }
 
@@ -400,9 +641,10 @@ export default function AppleProductCard({
 
   // Handlers
   const handleColorClick = (colorName, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setHasUserClickedColor(true);
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setInternalColor(colorName);
     if (onColorChange) {
       onColorChange(colorName);
@@ -431,7 +673,7 @@ export default function AppleProductCard({
     e.preventDefault();
     e.stopPropagation();
 
-    const cartColor = hasColors && activeColor ? activeColor : undefined;
+    const cartColor = hasColors ? (effectiveSelectedColor || normalizedColors[0]?.name) : undefined;
     const cartName = cartColor ? `${cleanTitle} (${cartColor})` : cleanTitle;
 
     if (controlledAddToCart) {
@@ -521,43 +763,69 @@ export default function AppleProductCard({
           </h3>
 
           {/* Key Specifications Row (Divided by |) */}
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-[13px] font-semibold text-zinc-500 mt-2">
-            {keySpecs.map((spec, sIdx) => (
-              <React.Fragment key={sIdx}>
-                <span>{spec}</span>
-                {sIdx < keySpecs.length - 1 && (
-                  <span className="text-zinc-300 font-normal select-none">|</span>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+          {keySpecs && keySpecs.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-[13px] font-semibold text-zinc-500 mt-2">
+              {keySpecs.map((spec, sIdx) => (
+                <React.Fragment key={sIdx}>
+                  <span>{spec}</span>
+                  {sIdx < keySpecs.length - 1 && (
+                    <span className="text-zinc-300 font-normal select-none">|</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
         </Link>
 
         {/* Divider Line */}
         <div className="border-t border-zinc-200/60 my-3.5 sm:my-4" />
 
         {/* Colours & In-Stock Status Row */}
-        <div className={`flex items-center ${hasColors ? 'justify-between' : 'justify-end'} gap-2 min-h-[32px]`}>
+        <div className={`flex items-center ${hasColors ? 'justify-between' : 'justify-end'} gap-2 min-h-[42px]`}>
           {/* Colours Selector (only shown if colors were added from Admin Panel) */}
           {hasColors && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <span className="text-sm sm:text-base font-bold text-zinc-900 tracking-tight">Colours:</span>
-              <div className="flex items-center gap-3 sm:gap-3.5 py-0.5">
+              <div className="flex items-center gap-1.5 sm:gap-2 py-0.5">
                 {normalizedColors.slice(0, 5).map((color, cIdx) => {
-                  const isSelected = activeColor && activeColor.toLowerCase() === color.name.toLowerCase();
+                  const isSelected = Boolean(
+                    hasExplicitSelection &&
+                    effectiveSelectedColor &&
+                    color.name &&
+                    color.name.toLowerCase() === effectiveSelectedColor.toLowerCase()
+                  );
                   return (
                     <button
-                      key={cIdx}
+                      key={color.name || cIdx}
                       type="button"
                       onClick={(e) => handleColorClick(color.name, e)}
-                      style={{ backgroundColor: color.colorHex }}
-                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-all duration-150 cursor-pointer shadow-xs border border-black/10 ${isSelected
-                        ? 'ring-2 ring-offset-2 ring-zinc-950 scale-110 z-10'
-                        : 'hover:scale-105 hover:shadow-sm opacity-90 hover:opacity-100'
-                        }`}
+                      className="relative w-9.5 h-9.5 sm:w-10 sm:h-10 flex items-center justify-center cursor-pointer group focus:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-0 bg-transparent p-0 transition-transform duration-200"
                       title={color.name}
                       aria-label={`Select ${color.name} colour`}
-                    />
+                    >
+                      {/* Black Outer Selection Ring when Selected */}
+                      {isSelected && (
+                        <span
+                          className="absolute rounded-full pointer-events-none transition-all duration-200"
+                          style={{
+                            inset: '0px',
+                            border: '2px solid #000000'
+                          }}
+                        />
+                      )}
+
+                      {/* Inner Swatch Circle */}
+                      <span
+                        className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-full shadow-xs border border-black/10 transition-transform duration-200 group-hover:scale-105"
+                        style={{
+                          backgroundColor: color.colorHex,
+                          backgroundImage: color.swatchBgImage,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat'
+                        }}
+                      />
+                    </button>
                   );
                 })}
               </div>
@@ -703,22 +971,49 @@ export default function AppleProductCard({
                 {hasColors && (
                   <div className="space-y-1.5 pt-1">
                     <span className="text-xs font-bold text-zinc-900 block">
-                      Colour: <span className="text-zinc-600 font-semibold">{activeColor}</span>
+                      Colour: <span className="text-zinc-600 font-semibold">{displayColorName}</span>
                     </span>
-                    <div className="flex items-center gap-2">
-                      {normalizedColors.map((color, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={(e) => handleColorClick(color.name, e)}
-                          style={{ backgroundColor: color.colorHex }}
-                          className={`w-7 h-7 rounded-full cursor-pointer transition-all border border-black/10 ${activeColor && activeColor.toLowerCase() === color.name.toLowerCase()
-                            ? 'ring-2 ring-offset-2 ring-black scale-110'
-                            : 'hover:scale-105 opacity-80 hover:opacity-100'
-                            }`}
-                          title={color.name}
-                        />
-                      ))}
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      {normalizedColors.map((color, idx) => {
+                        const isSelected = Boolean(
+                          hasExplicitSelection &&
+                          effectiveSelectedColor &&
+                          color.name &&
+                          color.name.toLowerCase() === effectiveSelectedColor.toLowerCase()
+                        );
+                        return (
+                          <button
+                            key={color.name || idx}
+                            type="button"
+                            onClick={(e) => handleColorClick(color.name, e)}
+                            className="relative w-9.5 h-9.5 sm:w-10 sm:h-10 flex items-center justify-center cursor-pointer group focus:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-0 bg-transparent p-0 transition-transform duration-200"
+                            title={color.name}
+                          >
+                            {/* Black Outer Selection Ring when Selected */}
+                            {isSelected && (
+                              <span
+                                className="absolute rounded-full pointer-events-none transition-all duration-200"
+                                style={{
+                                  inset: '0px',
+                                  border: '2px solid #000000'
+                                }}
+                              />
+                            )}
+
+                            {/* Inner Swatch Circle */}
+                            <span
+                              className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-full shadow-xs border border-black/10 transition-transform duration-200 group-hover:scale-105"
+                              style={{
+                                backgroundColor: color.colorHex,
+                                backgroundImage: color.swatchBgImage,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                backgroundRepeat: 'no-repeat'
+                              }}
+                            />
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

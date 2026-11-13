@@ -105,73 +105,15 @@ const router = createBrowserRouter([
       { path: 'product/:id', element: <ProductDetails /> },
       { path: 'cart', element: <Cart /> },
       { path: 'checkout', element: <Checkout /> },
-      {
-        path: 'profile',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper message="Loading Profile...">
-              <Profile />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: 'orders',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper message="Loading Orders...">
-              <Orders />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: 'orders/:id',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper message="Loading Order Details...">
-              <OrderDetails />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: 'reset-password',
-        element: (
-          <SuspenseWrapper message="Loading Password Reset...">
-            <ResetPassword />
-          </SuspenseWrapper>
-        )
-      },
-      {
-        path: 'forgot-password',
-        element: (
-          <SuspenseWrapper message="Loading Forgot Password...">
-            <ForgotPassword />
-          </SuspenseWrapper>
-        )
-      },
-      {
-        path: 'login',
-        element: (
-          <SuspenseWrapper message="Loading Sign In...">
-            <Login />
-          </SuspenseWrapper>
-        )
-      },
-      {
-        path: 'signup',
-        element: (
-          <SuspenseWrapper message="Loading Sign Up...">
-            <Signup />
-          </SuspenseWrapper>
-        )
-      },
+      { path: 'profile', element: <Navigate to="/" replace /> },
+      { path: 'orders', element: <Navigate to="/" replace /> },
+      { path: 'orders/:id', element: <Navigate to="/" replace /> },
+      { path: 'reset-password', element: <Navigate to="/" replace /> },
+      { path: 'forgot-password', element: <Navigate to="/" replace /> },
+      { path: 'login', element: <Navigate to="/" replace /> },
+      { path: 'signup', element: <Navigate to="/" replace /> },
       { path: 'addresses', element: <Navigate to="/checkout" replace /> },
-      {
-        path: 'wishlist',
-        element: <ProtectedRoute><Wishlist /></ProtectedRoute>
-      },
+      { path: 'wishlist', element: <Wishlist /> },
       { path: 'about', element: <About /> },
       { path: 'search', element: <SuspenseWrapper><Search /></SuspenseWrapper> },
       { path: 'contact', element: <SuspenseWrapper><Contact /></SuspenseWrapper> },

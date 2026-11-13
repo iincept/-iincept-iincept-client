@@ -17,10 +17,10 @@ const DEFAULT_CATEGORY_STRIP = [
   { name: 'iPad', label: 'iPad', icon: '📱', image: '/ipad_category_uploaded.png', path: '/ipad', isActive: true },
   { name: 'Watch', label: 'Watch', icon: '⌚', image: '/watch_category_uploaded.png', path: '/watch', isActive: true },
   { name: 'AirPods', label: 'AirPods', icon: '🎧', image: '/airpods_category_uploaded.png', path: '/airpods', isActive: true },
-  { name: 'AirTag', label: 'AirTag', icon: '📍', image: '/airtag_category_uploaded.png', path: '/accessories', isActive: true },
+  { name: 'AirTag', label: 'AirTag', icon: '📍', image: '/airtag_category_uploaded.png', path: '/accessories?product=airtag', isActive: true },
   { name: 'Apple TV 4K', label: 'Apple TV 4K', icon: '📺', image: '/appletv_category_uploaded.png', path: '/tv-home', isActive: true },
   { name: 'HomePod', label: 'HomePod', icon: '🔊', image: '/homepod_category_uploaded.png', path: '/tv-home?search=HomePod', isActive: true },
-  { name: 'Accessories', label: 'Accessories', icon: '🔌', image: '/accessories_category_uploaded.png', path: '/accessories', isActive: true },
+  { name: 'Accessories', label: 'Accessories', icon: '🔌', image: '/accessories_category_uploaded.png', path: '/accessories?product=iphone', isActive: true },
 ];
 
 const DEFAULT_HERO_IMAGE = 'https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card-40-iphone-18-pro-202609?wid=800&hei=1000&fmt=p-jpg&qlt=80';
@@ -363,7 +363,7 @@ export default function Home() {
   // Hero Banner Slider States
   const [heroSlides, setHeroSlides] = useState(() => {
     try {
-      const cached = localStorage.getItem('iincept_home_hero_slides_v7');
+      const cached = localStorage.getItem('iincept_home_hero_slides_v8');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -482,7 +482,9 @@ export default function Home() {
 
     let path = item.path;
     if (key.toLowerCase().includes('airtag') || (path && path.toLowerCase() === '/airtag')) {
-      path = '/accessories';
+      path = '/accessories?product=airtag';
+    } else if (key.toLowerCase().includes('accessories') || path === '/accessories') {
+      path = '/accessories?product=iphone';
     }
 
     return { ...item, image: img || fallbackImg, path: path || item.path };
@@ -520,7 +522,7 @@ export default function Home() {
       { name: 'Watch', startingPrice: '₹29,900', actionText: 'Shop all models →', link: '/watch', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/watch/home-img-1757682221_3904.jpg', icon: '⌚' },
       { name: 'AirPods', startingPrice: '₹12,900', actionText: 'Shop all models →', link: '/airpods', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/music/home-img-1757682200_3577.jpg', icon: '🎧' },
       { name: 'TV & Home', startingPrice: '₹14,900', actionText: 'Shop all models →', link: '/tv-home', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/tv/home-img-1694070636_757.png', icon: '📺' },
-      { name: 'Accessories', startingPrice: '₹1,900', actionText: 'Shop all models →', link: '/accessories', image: '/accessories_category.png', icon: '🔌' },
+      { name: 'Accessories', startingPrice: '₹1,900', actionText: 'Shop all models →', link: '/accessories?product=iphone', image: '/accessories_category.png', icon: '🔌' },
       { name: 'AppleCare+', startingPrice: '₹2,900', actionText: 'Explore coverage →', link: '/applecare', image: '/applecare_official_hero.png', icon: '🛡️' },
     ];
   });
@@ -688,7 +690,7 @@ export default function Home() {
           setHeroSlides(prev => {
             if (JSON.stringify(prev) !== JSON.stringify(activeSlides)) {
               try {
-                localStorage.setItem('iincept_home_hero_slides_v7', JSON.stringify(activeSlides));
+                localStorage.setItem('iincept_home_hero_slides_v8', JSON.stringify(activeSlides));
               } catch (e) { }
               return activeSlides;
             }
@@ -928,8 +930,8 @@ export default function Home() {
       return item.path;
     }
 
-    // 4. Default path or fallback to /accessories (never /shop)
-    return (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? item.path : '/accessories';
+    // 4. Default path or fallback to /accessories?product=iphone (never /shop)
+    return (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? (item.path === '/accessories' ? '/accessories?product=iphone' : item.path) : '/accessories?product=iphone';
   };
 
   const activeHomeArrivals = (homeNewArrivals && Array.isArray(homeNewArrivals))
@@ -3400,16 +3402,26 @@ export default function Home() {
                 const rawPrimaryBtnLink = (slide.buttonLink || '').trim();
                 let cleanHeroLink = (rawPrimaryBtnLink && rawPrimaryBtnLink !== '#' && rawPrimaryBtnLink !== '') ? rawPrimaryBtnLink : '';
                 if (cleanHeroLink === '/shop' || cleanHeroLink.startsWith('/shop')) {
-                  cleanHeroLink = (slide.title?.toLowerCase().includes('home') || slide.image?.includes('1793607263289')) ? '/tv-home' : '/accessories';
+                  cleanHeroLink = (slide.title?.toLowerCase().includes('home') || slide.image?.includes('1793607263289')) ? '/tv-home' : '/accessories?product=iphone';
                 }
                 const slideTitleLower = (slide.title || '').toLowerCase();
                 const slideImgStr = (slide.image || '');
-                if (slideImgStr.includes('1792058368844_855') || slideTitleLower.includes('duo')) {
+                if (slideImgStr.includes('1794227977229_697') || slideTitleLower.includes('m6') || (slideTitleLower.includes('macbook') && slideTitleLower.includes('14')) || (idx === 0 && !slideTitleLower.includes('airpods') && !slideTitleLower.includes('watch') && !slideTitleLower.includes('tv') && !slideTitleLower.includes('mini') && !slideTitleLower.includes('ipad') && !slideTitleLower.includes('homepod'))) {
+                  cleanHeroLink = '/product/6af420b66d3619deadcae6b3';
+                } else if (slideImgStr.includes('1794499181522_483') || slideTitleLower.includes('homepod') || slideTitleLower.includes('home pod') || (slideTitleLower.includes('pod') && slideTitleLower.includes('mini'))) {
+                  cleanHeroLink = '/product/6a44ca05101e1328003fbb11';
+                } else if (slideImgStr.includes('1794499188943_422') || slideTitleLower.includes('apple tv') || slideTitleLower.includes('tv 4k') || slideTitleLower.includes('appletv')) {
+                  cleanHeroLink = '/product/6a437eb3345ade0885f68a5e';
+                } else if (slideImgStr.includes('1794499286533_449') || slideImgStr.includes('1794498896275_927') || slideImgStr.includes('1794499202312_50') || (slideTitleLower.includes('ipad') && slideTitleLower.includes('mini')) || (slideTitleLower.includes('mini') && !slideTitleLower.includes('homepod') && !slideTitleLower.includes('home pod') && !slideTitleLower.includes('pod')) || (idx === 3 && (slideTitleLower.includes('ipad') || slideImgStr.includes('mini')))) {
+                  cleanHeroLink = '/product/6af33c21a41018d9c8dce61b';
+                } else if (slideImgStr.includes('1792058368844_855') || slideTitleLower.includes('duo')) {
                   cleanHeroLink = '/product/6aa25bb453b793bd9d5009ac';
-                } else if (slideImgStr.includes('1792058375185_444') || slideTitleLower.includes('airpods 5') || (slideTitleLower.includes('airpods') && !slideTitleLower.includes('max') && !slideTitleLower.includes('pro'))) {
+                } else if (slideImgStr.includes('1792058375185_444') || slideImgStr.includes('1794498874200_716') || slideImgStr.includes('1794499302828_507') || slideTitleLower.includes('airpods 5') || (slideTitleLower.includes('airpods') && !slideTitleLower.includes('max') && !slideTitleLower.includes('pro'))) {
                   cleanHeroLink = '/product/6aa7d0f5a6548b642226e185';
-                } else if (slideImgStr.includes('1792058382295_674') || slideImgStr.includes('1792822488692_974') || slideTitleLower.includes('series 12') || slideTitleLower.includes('watch 12')) {
+                } else if (slideImgStr.includes('1792058382295_674') || slideImgStr.includes('1792822488692_974') || slideImgStr.includes('1794498883452_348') || slideImgStr.includes('1794499294794_314') || slideTitleLower.includes('series 12') || slideTitleLower.includes('watch 12')) {
                   cleanHeroLink = '/product/6ab37d0a04c4572f8814616f';
+                } else if (slideImgStr.includes('1793607263289') || slideTitleLower.includes('homeview') || (slideTitleLower.includes('home') && !slideTitleLower.includes('homepod') && !slideTitleLower.includes('home pod')) || (slideTitleLower.includes('tv') && !slideTitleLower.includes('apple tv') && !slideTitleLower.includes('tv 4k'))) {
+                  cleanHeroLink = '/tv-home';
                 }
                 const primaryBtnLink = cleanHeroLink || '#shop-by-category';
                 const secondaryBtnText = slide.secondaryButtonText || 'Find Nearest Store';
@@ -3618,9 +3630,9 @@ export default function Home() {
               const item = sanitizeCategoryItem(rawItem);
               if (!item) return null;
               const hasImg = Boolean(item.image && item.image.trim());
-              let targetPath = (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? item.path : '/accessories';
+              let targetPath = (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? (item.path === '/accessories' ? '/accessories?product=iphone' : item.path) : '/accessories?product=iphone';
               if ((item.name || item.label || '').toLowerCase().includes('airtag') || targetPath === '/airtag') {
-                targetPath = '/accessories';
+                targetPath = '/accessories?product=airtag';
               }
               return (
                 <Link key={idx} to={targetPath} className="strip-item">
@@ -3814,7 +3826,7 @@ export default function Home() {
               const displayPrice = cat.startingPrice || cat.price || (cat.name === 'Mac' ? '₹89,900' : cat.name === 'iPhone' ? '₹59,900' : cat.name === 'iPad' ? '₹34,900' : cat.name === 'Watch' ? '₹29,900' : cat.name === 'AirPods' ? '₹12,900' : cat.name === 'TV & Home' ? '₹14,900' : cat.name === 'Accessories' ? '₹1,900' : cat.name === 'AppleCare+' ? '₹2,900' : '');
 
               return (
-                <Link key={idx} to={(cat.link && cat.link !== '/shop' && !cat.link.startsWith('/shop')) ? cat.link : '/accessories'} className="category-card">
+                <Link key={idx} to={(cat.link && cat.link !== '/shop' && !cat.link.startsWith('/shop')) ? (cat.link === '/accessories' ? '/accessories?product=iphone' : cat.link) : '/accessories?product=iphone'} className="category-card">
                   <div className="category-card-body">
                     <div className="category-card-eyebrow">{cat.name}</div>
                   </div>
@@ -3928,7 +3940,6 @@ export default function Home() {
             speed={800}
             grabCursor={true}
             autoHeight={false}
-            updateOnImagesReady={true}
             navigation={true}
             pagination={dealBanners.length > 1 ? { clickable: true } : false}
             modules={[Navigation, Pagination, Autoplay]}
@@ -3948,7 +3959,18 @@ export default function Home() {
               const rawTarget = banner.productId 
                 ? `/product/${banner.productId}` 
                 : (banner.buttonLink || banner.dealButtonLink || '');
-              const productTarget = (rawTarget && rawTarget !== '/shop' && rawTarget !== '#') ? rawTarget : '';
+              let productTarget = (rawTarget && rawTarget !== '/shop' && rawTarget !== '#') ? rawTarget : '';
+              const dealTitleLower = (banner.dealTitle || banner.title || banner.internalName || '').toLowerCase();
+              const dealImgStr = (banner.dealImage || banner.productImage || '');
+              if (!productTarget || productTarget === '/shop' || productTarget === '/tv-home' || productTarget === '/ipad') {
+                if (dealImgStr.includes('1794499181522_483') || dealTitleLower.includes('homepod') || dealTitleLower.includes('home pod')) {
+                  productTarget = '/product/6a44ca05101e1328003fbb11';
+                } else if (dealImgStr.includes('1794499188943_422') || dealTitleLower.includes('apple tv') || dealTitleLower.includes('tv 4k')) {
+                  productTarget = '/product/6a437eb3345ade0885f68a5e';
+                } else if (dealImgStr.includes('1793604220097_988') || (dealTitleLower.includes('ipad') && dealTitleLower.includes('mini'))) {
+                  productTarget = '/product/6af33c21a41018d9c8dce61b';
+                }
+              }
               const formattedFinal = formatRupee(banner.finalPrice !== undefined && banner.finalPrice !== null ? banner.finalPrice : banner.dealPrice);
               const formattedMrp = formatRupee(banner.originalMrp !== undefined && banner.originalMrp !== null ? banner.originalMrp : banner.dealOldPrice);
               const displayImg = banner.productImage || banner.dealImage || '/mac_deal_fan.png';

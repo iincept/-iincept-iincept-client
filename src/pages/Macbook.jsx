@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, Check, ShieldCheck, Wrench, Headphones } from 'lucide-react';
 import { addToCart } from '../redux/cartSlice';
@@ -12,12 +12,12 @@ import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 import CleanProductImage from '../components/CleanProductImage';
 import AppleProductCard from '../components/AppleProductCard';
 import { subscribeToLiveSync } from '../services/liveSyncService';
-import { resolveColorValue } from '../utils/colorResolver';
+import { resolveColorValue, isValidHex, normalizeHex } from '../utils/colorResolver';
 
 const MAC_SUB_NAV_ITEMS = [
   { name: 'MacBook Neo', query: 'MacBook Neo', image: '/mac_nav/macbook_neo_clean.png', scale: 'scale-100' },
   { name: 'MacBook Air', query: 'MacBook Air', image: '/mac_nav/macbook_air.png', scale: 'scale-100' },
-  { name: 'MacBook Pro', query: 'MacBook Pro', image: '/mac_nav/macbook_pro.png', scale: 'scale-100' },
+  { name: 'MacBook Pro', query: 'MacBook Pro', image: '/uploads/upload_1794234227717_655.png', scale: 'scale-100' },
   { name: 'iMac', query: 'iMac', image: '/mac_nav/imac_clean.png', scale: 'scale-95' },
   { name: 'Mac mini', query: 'Mac mini', image: '/mac_nav/mac_mini_clean.png', scale: 'scale-100' },
   { name: 'Mac Studio', query: 'Mac Studio', image: '/uploads/upload_1788982031857_989.png', scale: 'scale-105' },
@@ -60,7 +60,17 @@ const getInitialSubItems = (categoryKey, defaultItems) => {
     if (cached) {
       const parsed = JSON.parse(cached);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return ensureAppleCareInSubItems(parsed);
+        const synced = parsed.map(item => {
+          const nameLower = (item.name || item.label || '').toLowerCase();
+          if (nameLower.includes('pro')) {
+            const defPro = defaultItems.find(d => (d.name || d.label || '').toLowerCase().includes('pro'));
+            if (defPro?.image && (item.image === '/mac_nav/macbook_pro.png' || !item.image)) {
+              return { ...item, image: defPro.image };
+            }
+          }
+          return item;
+        });
+        return ensureAppleCareInSubItems(synced);
       }
     }
   } catch (e) {
@@ -90,6 +100,9 @@ const resolveIconImage = (img, label) => {
     if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('data:') && !clean.startsWith('blob:') && !clean.startsWith('/')) {
       clean = '/' + clean;
     }
+    if (clean.includes('upload_1794234227717_655') && !clean.includes('?')) {
+      clean += '?v=v3';
+    }
     return clean;
   }
 
@@ -103,7 +116,7 @@ const resolveIconImage = (img, label) => {
   if (lblLower.includes('compare')) return '/mac_nav/mac_compare.png';
   if (lblLower.includes('display')) return '/mac_nav/displays_clean.png';
   if (lblLower.includes('air')) return '/mac_nav/macbook_air.png';
-  if (lblLower.includes('pro')) return '/mac_nav/macbook_pro.png';
+  if (lblLower.includes('pro')) return '/uploads/upload_1794234227717_655.png';
 
   const matched = MAC_SUB_NAV_ITEMS.find(m => {
     const mLower = m.name.toLowerCase().trim();
@@ -123,6 +136,9 @@ const resolveSubItemPath = (item) => {
   }
   if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
     return '/compare?category=mac';
+  }
+  if (nameLower.includes('accessori') || queryLower.includes('accessori') || pathLower.includes('accessori')) {
+    return '/accessories?product=mac';
   }
   if (item?.path && item.path.trim()) {
     const normalized = normalizeTargetPath(item.path.trim());
@@ -540,7 +556,7 @@ const DEFAULT_MAC_PRODUCTS = [
       },
       {
         "name": "Indigo",
-        "value": "#4B0082",
+        "value": "#66728A",
         "image": null
       }
     ],
@@ -595,7 +611,8 @@ const getCachedMacProducts = () => {
 
 export default function Macbook() {
   const dispatch = useDispatch();
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { products } = useSelector((state) => state.products);
   const [viewCols, setViewCols] = useState(4); // 2, 3, or 4 columns
   const [showLimit, setShowLimit] = useState(16); // 16, 32, 64
@@ -844,13 +861,14 @@ export default function Macbook() {
   };
 
   const handleColorChange = (productId, colorVal) => {
-    setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
+    setSelectedColors({ [productId]: colorVal });
   };
 
   const getProductImage = (prod) => {
     if (!prod) return '/mac_nav/macbook_air.png';
 
-    const hasUserSelectedColor = Boolean(selectedColors[prod.id]);
+    const pId = prod.id || prod._id;
+    const hasUserSelectedColor = Boolean(selectedColors[pId]);
     
     // When no color is explicitly selected by user interaction, ALWAYS return the primary product image
     if (!hasUserSelectedColor) {
@@ -873,9 +891,26 @@ export default function Macbook() {
       return '/mac_nav/macbook_air.png';
     }
 
-    const selectedColorName = selectedColors[prod.id];
+    const selectedColorName = selectedColors[pId];
     if (selectedColorName) {
       const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
+
+      // 1. Match in prod.variants directly (Front-facing gallery image from Admin)
+      if (prod.variants && Array.isArray(prod.variants)) {
+        const foundVariant = prod.variants.find(v => {
+          if (!v.color) return false;
+          const vCol = (typeof v.color === 'object' ? v.color?.name : v.color || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          return vCol === targetNorm && ((Array.isArray(v.images) && v.images.length > 0) || v.image);
+        });
+        if (foundVariant) {
+          if (foundVariant.images && foundVariant.images[0]) {
+            return foundVariant.images[0];
+          }
+          if (foundVariant.image) {
+            return foundVariant.image;
+          }
+        }
+      }
 
       if (prod.colorImages && typeof prod.colorImages === 'object') {
         const matchedKey = Object.keys(prod.colorImages).find(k => k.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm);
@@ -884,7 +919,7 @@ export default function Macbook() {
         }
       }
 
-      // 1. Match in prod.colors by name or rawName
+      // 2. Match in prod.colors by name or rawName
       const foundColor = prod.colors?.find((c) => {
         const cNorm = (c.name || c.rawName || c).replace(/\s+/g, ' ').trim().toLowerCase();
         return cNorm === targetNorm;
@@ -892,17 +927,6 @@ export default function Macbook() {
       if (foundColor) {
         const colImg = Array.isArray(foundColor.images) && foundColor.images.length > 0 ? foundColor.images[0] : (foundColor.image || foundColor.url);
         if (colImg) return colImg;
-      }
-
-      // 2. Match in prod.variants directly!
-      if (prod.variants && Array.isArray(prod.variants)) {
-        const foundVariant = prod.variants.find(v => {
-          if (!v.color) return false;
-          return v.color.replace(/\s+/g, ' ').trim().toLowerCase() === targetNorm;
-        });
-        if (foundVariant && foundVariant.images && foundVariant.images[0]) {
-          return foundVariant.images[0];
-        }
       }
 
       // 3. Match index of color in prod.colors with index in prod.images
@@ -940,9 +964,10 @@ export default function Macbook() {
   };
 
   const handleAddToCart = (prod) => {
-    const selectedColor = selectedColors[prod.id] || prod.colors[0]?.name || 'Standard';
+    const pId = prod.id || prod._id;
+    const selectedColor = selectedColors[pId] || prod.colors[0]?.name || 'Standard';
     dispatch(addToCart({
-      id: prod.id,
+      id: pId,
       name: `${prod.name} (${selectedColor})`,
       price: prod.price,
       image: getProductImage(prod),
@@ -951,9 +976,10 @@ export default function Macbook() {
   };
 
   const handleAddToWishlist = (prod) => {
-    setLocalWishlist((prev) => ({ ...prev, [prod.id]: !prev[prod.id] }));
+    const pId = prod.id || prod._id;
+    setLocalWishlist((prev) => ({ ...prev, [pId]: !prev[pId] }));
     dispatch(addToWishlist({
-      id: prod.id,
+      id: pId,
       name: prod.name,
       price: prod.price,
       image: getProductImage(prod),
@@ -1051,8 +1077,10 @@ export default function Macbook() {
     const varPrices = (p.variants && Array.isArray(p.variants)) ? p.variants.map(v => v.price).filter(pr => typeof pr === 'number' && pr > 0) : [];
     const effectivePrice = varPrices.length > 0 ? Math.min(...varPrices) : (p.price || 0);
 
+    const pId = p._id || p.id;
     return {
-      id: p._id || p.id,
+      id: pId,
+      _id: pId,
       name: p.title || p.name,
       price: effectivePrice,
       priceStr: `₹${effectivePrice.toLocaleString('en-IN')}`,
@@ -1073,22 +1101,31 @@ export default function Macbook() {
         const val = typeof c === 'string' ? c : (c.value || c.name || '');
 
         let variantImage = typeof c === 'object' && c.image ? c.image : null;
-        if (!variantImage && p.variants && Array.isArray(p.variants)) {
-          const matchedVariant = p.variants.find(v => {
+        let matchedVariant = null;
+        if (p.variants && Array.isArray(p.variants)) {
+          matchedVariant = p.variants.find(v => {
             if (!v.color) return false;
             const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
             return vColor === normName.toLowerCase();
           });
-          if (matchedVariant && matchedVariant.images && matchedVariant.images[0]) {
+          if (!variantImage && matchedVariant && matchedVariant.images && matchedVariant.images[0]) {
             variantImage = matchedVariant.images[0];
           }
         }
 
+        const effectiveHex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+          ? normalizeHex(c.colorHex)
+          : (typeof c === 'object' && c.value && isValidHex(c.value))
+            ? normalizeHex(c.value)
+            : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+              ? normalizeHex(matchedVariant.colorHex)
+              : resolveColorValue(c?.colorHex || c?.value || val || normName);
+
         return { 
           name: normName, 
           rawName: rawName,
-          value: resolveColorValue(c?.colorHex || c?.value || val),
-          colorHex: c?.colorHex || resolveColorValue(val),
+          value: effectiveHex,
+          colorHex: effectiveHex,
           image: variantImage 
         };
       }) : [],
@@ -1182,7 +1219,9 @@ export default function Macbook() {
             {subItems.map((item, idx) => {
               const currentTab = searchParams.get('tab') || '';
               const currentSearch = searchParams.get('search') || '';
-              const isAppleCareItem = (item.name || item.label || '').toLowerCase().includes('care');
+              const nameLower = (item.name || item.label || '').toLowerCase();
+              const isAppleCareItem = nameLower.includes('care');
+              const isMacBookPro = nameLower.includes('pro');
               const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
               const isActive = isAppleCareActive
                 ? isAppleCareItem
@@ -1206,12 +1245,14 @@ export default function Macbook() {
                         const lower = (item.name || '').toLowerCase();
                         if (lower.includes('care')) {
                           e.currentTarget.src = '/uploads/upload_1792413061470_102.png';
+                        } else if (lower.includes('pro')) {
+                          e.currentTarget.src = '/uploads/upload_1794234227717_655.png';
                         } else {
                           e.currentTarget.src = '/mac_nav/macbook_air.png';
                         }
                       }}
                       className={`max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 ease-out group-hover:scale-112 group-hover:-translate-y-1 ${
-                        isAppleCareItem ? 'scale-[1.32] sm:scale-[1.4]' : ''
+                        isAppleCareItem ? 'scale-[1.32] sm:scale-[1.4]' : (item.scale || '')
                       }`}
                     />
                   </div>
@@ -1275,8 +1316,8 @@ export default function Macbook() {
                                     
                                     {/* Top Left Badge */}
                                     <div className="w-full flex items-center justify-start z-10 mb-1">
-                                      <span className="bg-[#FF2D55] text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide">
-                                        Apple Care+
+                                      <span className="bg-[#FF2D55] text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide whitespace-nowrap">
+                                        AppleCare+ (3 Years)
                                       </span>
                                     </div>
                                     {/* Main Product Image */}
@@ -1461,7 +1502,17 @@ export default function Macbook() {
             {currentSearchVal && (
               <div className="flex items-center justify-between gap-4 pb-1 mb-3 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
                 <button
-                  onClick={() => setSearchParams({})}
+                  type="button"
+                  onClick={() => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.delete('search');
+                    if (newParams.toString()) {
+                      setSearchParams(newParams);
+                    } else {
+                      setSearchParams({});
+                      navigate('/macbook', { replace: true });
+                    }
+                  }}
                   className="text-xs font-semibold text-[#0071e3] hover:underline cursor-pointer flex items-center gap-1"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1525,17 +1576,20 @@ export default function Macbook() {
 
       {/* Grid of MacBook models (Matching Apple Store Layout) */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProducts.slice(0, visibleCount).map((prod) => (
-          <AppleProductCard
-            key={prod.id}
-            product={prod}
-            selectedColor={selectedColors[prod.id]}
-            onColorChange={(colorName) => handleColorChange(prod.id, colorName)}
-            isWishlisted={Boolean(localWishlist[prod.id])}
-            onToggleWishlist={() => handleAddToWishlist(prod)}
-            onAddToCart={() => handleAddToCart(prod)}
-          />
-        ))}
+        {filteredProducts.slice(0, visibleCount).map((prod) => {
+          const pId = prod.id || prod._id;
+          return (
+            <AppleProductCard
+              key={pId}
+              product={prod}
+              selectedColor={selectedColors[pId]}
+              onColorChange={(colorName) => handleColorChange(pId, colorName)}
+              isWishlisted={Boolean(localWishlist[pId])}
+              onToggleWishlist={() => handleAddToWishlist(prod)}
+              onAddToCart={() => handleAddToCart(prod)}
+            />
+          );
+        })}
       </div>
 
       {/* Infinite Scroll Indicator */}

@@ -196,7 +196,7 @@ export default function Checkout() {
     message += `• *Grand Total:* ₹${Number(finalTotal).toLocaleString('en-IN')}\n`;
     message += `• *Payment Method:* ${paymentMethod || 'Cash on Delivery (COD)'}\n\n`;
 
-    message += `Thank you for shopping with iiNCEPT! Hum aapka order jald hi verify karke dispatch kar denge.`;
+    message += `Thank you for shopping with iiNCEPT! We will verify and dispatch your order shortly.`;
     return message;
   };
 
@@ -483,7 +483,7 @@ export default function Checkout() {
           </div>
 
           <p className="text-xs text-zinc-500 max-w-md mx-auto">
-            Aapka order details ke sath WhatsApp par bhej diya gya hai. Agar WhatsApp apne-aap nahi khula, to niche diye gaye button par click karein:
+            Your order details have been prepared for WhatsApp. If WhatsApp didn't open automatically, please click the button below:
           </p>
 
           {/* Prominent WhatsApp Button */}
@@ -497,7 +497,7 @@ export default function Checkout() {
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                 <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.99.54 1.761.817 2.796.818 3.182 0 5.768-2.587 5.768-5.766.001-3.181-2.585-5.77-5.768-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.144.39-.086s1.011.477 1.184.564.289.13.332.203c.043.072.043.419-.101.824z" />
               </svg>
-              <span>Open in WhatsApp (व्हॉट्सऐप पर भेजें)</span>
+              <span>Open in WhatsApp</span>
             </a>
           </div>
 

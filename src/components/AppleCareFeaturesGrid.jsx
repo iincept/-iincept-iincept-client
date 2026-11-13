@@ -1,9 +1,9 @@
 import React from 'react';
 import { MessageSquare } from 'lucide-react';
 
-const AppleCareFeaturesGrid = ({ years = '3' }) => {
+const AppleCareFeaturesGrid = ({ years = '3', className = '' }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 py-4 my-4 border-y border-zinc-100 text-center">
+    <div className={`grid grid-cols-2 md:grid-cols-4 gap-2.5 py-4 my-4 text-center ${className || 'border-y border-zinc-100'}`}>
       <div className="flex flex-col items-center gap-3 p-2.5 md:border-r border-zinc-100">
         <div className="w-11 h-11 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
           <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-[#FF2D55]" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -11,7 +11,7 @@ const AppleCareFeaturesGrid = ({ years = '3' }) => {
           </svg>
         </div>
         <span className="text-[10px] sm:text-[11px] font-bold text-zinc-700 leading-tight text-center line-clamp-3 min-h-[36px]">
-          {years} Years Peace of Mind with AppleCare+
+          {years.toString().replace(/years?/i, '').trim()} {years.toString().trim() === '1' ? 'Year' : 'Years'} Peace of Mind with AppleCare+
         </span>
       </div>
 

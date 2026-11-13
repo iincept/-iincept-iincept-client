@@ -559,7 +559,7 @@ export default function Profile() {
                                 
                                 let message = `🎉 *ORDER CONFIRMATION RECEIPT - iiNCEPT Electronics* 🎉\n\n`;
                                 message += `Hello ${custName}! 👋\n`;
-                                message += `Aapka order successfully place ho gaya hai. Yahan aapke order ki details hain:\n\n`;
+                                message += `Your order has been placed successfully. Here are your order details:\n\n`;
                                 message += `🆔 *Order ID:* #${orderIdStr}\n`;
                                 if (custPhone) message += `📞 *Mobile:* ${custPhone}\n`;
                                 message += `💳 *Payment Method:* ${order.paymentMethod || 'COD'}\n\n`;

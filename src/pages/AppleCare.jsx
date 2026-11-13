@@ -691,9 +691,9 @@ const DEFAULT_PRICING_TABLES = [
       },
       {
         "model": "Macbook Neo",
-        "title": "",
-        "description": "",
-        "sku": "",
+        "title": "AppleCare+ for Macbook Neo",
+        "description": "1 Year & 2 Years Apple-certified coverage for Macbook Neo",
+        "sku": "N/A",
         "mrp": "16900",
         "discount": "24",
         "salePrice": "\u20b912,844",
@@ -792,6 +792,51 @@ const DEFAULT_PRICING_TABLES = [
         "planType": "APPLE CARE+",
         "duration": "1 Year & 2 Years",
         "image": "/uploads/upload_1790049556385_582.jpeg",
+        "isActive": true
+      },
+      {
+        "model": "14-inch MacBook Pro (M6)",
+        "title": "AppleCare+ for 14-inch MacBook Pro (M6)",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SGKE3HN/A",
+        "mrp": "₹36,900",
+        "discount": "24",
+        "salePrice": "₹28,044",
+        "monthly": "",
+        "yearly": "₹28,044",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/macbook_pro.png",
+        "isActive": true
+      },
+      {
+        "model": "14-inch MBP PROLED XDR",
+        "title": "AppleCare+ for 14-inch MacBook Pro with PROLED XDR display",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SGLX3HN/A",
+        "mrp": "₹49,900",
+        "discount": "24",
+        "salePrice": "₹37,924",
+        "monthly": "",
+        "yearly": "₹37,924",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/macbook_pro.png",
+        "isActive": true
+      },
+      {
+        "model": "16-inch MBP PROLED XDR",
+        "title": "AppleCare+ for 16-inch MacBook Pro with PROLED XDR display",
+        "description": "Enjoy 3 years of peace of mind when you buy AppleCare+ for Mac",
+        "sku": "SGNJ3HN/A",
+        "mrp": "₹59,900",
+        "discount": "24",
+        "salePrice": "₹45,524",
+        "monthly": "",
+        "yearly": "₹45,524",
+        "planType": "APPLE CARE+",
+        "duration": "1 Year & 2 Years",
+        "image": "/mac_nav/macbook_pro.png",
         "isActive": true
       }
     ]
@@ -1022,6 +1067,21 @@ const DEFAULT_PRICING_TABLES = [
         "planType": "APPLE CARE+",
         "duration": "2 years",
         "image": "/uploads/upload_1790430407641_22.webp",
+        "isActive": true
+      },
+      {
+        "model": "iPad mini (A20 Pro)",
+        "title": "AppleCare+ iPad mini (A20 Pro)",
+        "description": "2 Years Apple-certified coverage for iPad mini (A20 Pro)",
+        "sku": "SGXF3HN/A",
+        "mrp": "₹19900",
+        "discount": "10% OFF",
+        "salePrice": "₹17,910",
+        "monthly": "₹899.00",
+        "yearly": "₹17,910",
+        "planType": "APPLE CARE+",
+        "duration": "2 years",
+        "image": "/uploads/upload_1794395541674_391.png",
         "isActive": true
       }
     ]

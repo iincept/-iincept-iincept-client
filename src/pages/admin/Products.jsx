@@ -49,6 +49,10 @@ export default function Products() {
   const [stockLogs, setStockLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
 
+  // Table Category & Accessories Filter Tabs
+  const [selectedCategoryTab, setSelectedCategoryTab] = useState('all');
+  const [selectedAccessoryFilter, setSelectedAccessoryFilter] = useState('all');
+
   const fetchStockLogs = async () => {
     setLoadingLogs(true);
     setShowStockLogsModal(true);
@@ -76,6 +80,46 @@ export default function Products() {
   };
 
   const filteredProducts = products.filter(prod => {
+    // 1. Category Tab Filter
+    if (selectedCategoryTab !== 'all') {
+      const catSlug = (prod.category?.slug || prod.category?.name || prod.category || '').toString().toLowerCase();
+      if (!catSlug.includes(selectedCategoryTab)) {
+        return false;
+      }
+    }
+
+    // 2. Accessory Device Sub-Filter (when Accessories tab is active)
+    if (selectedCategoryTab === 'accessories' && selectedAccessoryFilter !== 'all') {
+      const dev = (prod.accessoryDevice || '').toString().toLowerCase().trim();
+      const titleLower = (prod.title || prod.name || '').toLowerCase();
+      const target = selectedAccessoryFilter.toLowerCase().trim();
+
+      if (dev) {
+        const isWatchMatch = (target === 'watch' || target === 'apple watch') && (dev === 'watch' || dev === 'apple watch');
+        const isHomeMatch = (target === 'home' || target === 'tv') && (dev === 'home' || dev === 'tv');
+        const isTagMatch = (target === 'airtag' || target === 'tag') && (dev === 'airtag' || dev === 'tag');
+        if (dev !== target && !isWatchMatch && !isHomeMatch && !isTagMatch) return false;
+      } else {
+        if (target === 'watch') {
+          if (!titleLower.includes('watch') && !titleLower.includes('band') && !titleLower.includes('loop') && !titleLower.includes('strap')) return false;
+        } else if (target === 'iphone') {
+          if (!titleLower.includes('iphone') && !titleLower.includes('case') && !titleLower.includes('wallet') && !titleLower.includes('magsafe')) return false;
+        } else if (target === 'ipad') {
+          if (!titleLower.includes('ipad') && !titleLower.includes('pencil') && !titleLower.includes('folio')) return false;
+        } else if (target === 'mac') {
+          if (!titleLower.includes('mac') && !titleLower.includes('mouse') && !titleLower.includes('trackpad') && !titleLower.includes('adapter') && !titleLower.includes('cable')) return false;
+        } else if (target === 'airpods') {
+          if (!titleLower.includes('airpod') && !titleLower.includes('earbuds')) return false;
+        } else if (target === 'home') {
+          if (!titleLower.includes('home') && !titleLower.includes('tv') && !titleLower.includes('pod')) return false;
+        } else if (target === 'airtag') {
+          if (!titleLower.includes('airtag') && !titleLower.includes('tag')) return false;
+        } else if (target === 'beats') {
+          if (!titleLower.includes('beats') && !titleLower.includes('solo') && !titleLower.includes('studio') && !titleLower.includes('pill')) return false;
+        }
+      }
+    }
+
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase().trim();
     
@@ -123,6 +167,7 @@ export default function Products() {
     stock: '',
     brand: 'Apple',
     category: '',
+    accessoryDevice: '',
     sizes: [],
     colors: [],
     storage: [],
@@ -389,10 +434,30 @@ export default function Products() {
     // Combine manual tag inputs and variant-extracted configurations
     const finalColors = [...(productForm.colors || [])];
     variantColors.forEach(vc => {
-      const vcName = typeof vc === 'object' ? vc.name : vc;
-      if (!finalColors.find(c => (c.name || c) === vcName)) {
+      const vcName = (typeof vc === 'object' ? vc.name : vc).trim().toLowerCase();
+      const existingIdx = finalColors.findIndex(c => (typeof c === 'object' ? (c.name || '') : c).trim().toLowerCase() === vcName);
+      if (existingIdx === -1) {
         finalColors.push(vc);
+      } else {
+        const existing = finalColors[existingIdx];
+        finalColors[existingIdx] = typeof existing === 'object'
+          ? { ...existing, colorHex: vc.colorHex || existing.colorHex, value: vc.colorHex || existing.value || existing.colorHex }
+          : { name: existing, colorHex: vc.colorHex, value: vc.colorHex };
       }
+    });
+
+    finalVariants = finalVariants.map(v => {
+      const vColorName = (v.color || '').trim().toLowerCase();
+      const matchedColor = finalColors.find(c => (typeof c === 'object' ? (c.name || '') : c).trim().toLowerCase() === vColorName);
+      const hexFromColor = typeof matchedColor === 'object' ? (matchedColor.colorHex || matchedColor.value) : null;
+      return {
+        ...v,
+        colorHex: (v.colorHex && isValidHex(v.colorHex))
+          ? normalizeHex(v.colorHex)
+          : (hexFromColor && isValidHex(hexFromColor))
+            ? normalizeHex(hexFromColor)
+            : resolveColorHex(v.color || '')
+      };
     });
 
     const finalSizes = [...(productForm.sizes || [])];
@@ -526,6 +591,7 @@ export default function Products() {
       stock: prod.stock || '',
       brand: prod.brand || 'Apple',
       category: prod.category?._id || prod.category || '',
+      accessoryDevice: prod.accessoryDevice || '',
       sizes: Array.isArray(prod.sizes) ? prod.sizes : (prod.sizes ? [prod.sizes] : []),
       colors: Array.isArray(prod.colors) ? prod.colors : (prod.colors ? [prod.colors] : []),
       storage: Array.isArray(prod.storage) ? prod.storage : (prod.storage ? [prod.storage] : []),
@@ -581,6 +647,7 @@ export default function Products() {
       stock: '',
       brand: 'Apple',
       category: '',
+      accessoryDevice: '',
       sizes: [],
       colors: [],
       storage: [],
@@ -656,11 +723,37 @@ export default function Products() {
     setProductForm(prev => {
       const variants = [...(prev.variants || [])];
       if (index < 0 || index >= variants.length) return prev;
-      variants[index] = {
+      const updatedVariant = {
         ...variants[index],
         ...(typeof updates === 'function' ? updates(variants[index]) : updates)
       };
-      return { ...prev, variants };
+      variants[index] = updatedVariant;
+
+      let colors = [...(prev.colors || [])];
+      if (updatedVariant.color && updatedVariant.colorHex) {
+        const vColorName = updatedVariant.color.trim().toLowerCase();
+        let colorFound = false;
+        colors = colors.map(c => {
+          const cName = (typeof c === 'object' ? (c.name || '') : c).trim().toLowerCase();
+          if (cName === vColorName) {
+            colorFound = true;
+            return typeof c === 'object'
+              ? { ...c, colorHex: updatedVariant.colorHex, value: updatedVariant.colorHex }
+              : { name: c, colorHex: updatedVariant.colorHex, value: updatedVariant.colorHex };
+          }
+          return c;
+        });
+        if (!colorFound && updatedVariant.color) {
+          colors.push({
+            name: updatedVariant.color,
+            colorHex: updatedVariant.colorHex,
+            value: updatedVariant.colorHex,
+            images: updatedVariant.images || []
+          });
+        }
+      }
+
+      return { ...prev, variants, colors };
     });
   };
 
@@ -772,6 +865,133 @@ export default function Products() {
             </div>
           </header>
 
+          {/* Category Filter Tabs & Accessories Sub-Filter Bar */}
+          <div className="mb-5 space-y-3">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {[
+                { key: 'all', label: 'All Products' },
+                { key: 'mac', label: 'Mac' },
+                { key: 'ipad', label: 'iPad' },
+                { key: 'iphone', label: 'iPhone' },
+                { key: 'watch', label: 'Watch' },
+                { key: 'airpods', label: 'AirPods' },
+                { key: 'accessories', label: 'Accessories' },
+                { key: 'tv', label: 'TV & Home' },
+              ].map(cat => {
+                const isActive = selectedCategoryTab === cat.key;
+                const count = cat.key === 'all'
+                  ? products.length
+                  : products.filter(p => {
+                      const cSlug = (p.category?.slug || p.category?.name || p.category || '').toString().toLowerCase();
+                      return cSlug.includes(cat.key);
+                    }).length;
+
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategoryTab(cat.key);
+                      if (cat.key !== 'accessories') {
+                        setSelectedAccessoryFilter('all');
+                      }
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border shrink-0 ${
+                      isActive
+                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
+                        : 'bg-white text-zinc-600 hover:text-zinc-900 border-zinc-200 hover:border-zinc-300 shadow-xs'
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      isActive ? 'bg-zinc-850 text-zinc-200' : 'bg-zinc-100 text-zinc-500'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Accessories Sub-Filter Pills (Active when Accessories tab is selected) */}
+            {selectedCategoryTab === 'accessories' && (
+              <div className="p-3.5 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white rounded-2xl border border-blue-150">
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <span className="text-[11px] font-bold text-zinc-700 flex items-center gap-1.5">
+                    <span>🎯</span> Filter Accessories by Device Icon:
+                  </span>
+                  {selectedAccessoryFilter !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAccessoryFilter('all')}
+                      className="text-[11px] text-[#0071e3] hover:underline font-semibold cursor-pointer"
+                    >
+                      Show All Accessories
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                  {[
+                    { id: 'all', label: 'All Accessories', emoji: '✨' },
+                    { id: 'iphone', label: 'iPhone', emoji: '📱' },
+                    { id: 'ipad', label: 'iPad', emoji: '📱' },
+                    { id: 'mac', label: 'Mac', emoji: '💻' },
+                    { id: 'watch', label: 'Apple Watch', emoji: '⌚' },
+                    { id: 'airpods', label: 'AirPods', emoji: '🎧' },
+                    { id: 'home', label: 'Home', emoji: '🏠' },
+                    { id: 'airtag', label: 'AirTag', emoji: '🏷️' },
+                    { id: 'beats', label: 'Beats', emoji: '🎵' },
+                  ].map(dev => {
+                    const isSelected = selectedAccessoryFilter === dev.id;
+                    const devCount = products.filter(p => {
+                      const cSlug = (p.category?.slug || p.category?.name || p.category || '').toString().toLowerCase();
+                      if (!cSlug.includes('accessori')) return false;
+                      if (dev.id === 'all') return true;
+                      const pDev = (p.accessoryDevice || '').toString().toLowerCase().trim();
+                      if (pDev) {
+                        const isW = (dev.id === 'watch' || dev.id === 'apple watch') && (pDev === 'watch' || pDev === 'apple watch');
+                        const isH = (dev.id === 'home' || dev.id === 'tv') && (pDev === 'home' || pDev === 'tv');
+                        const isT = (dev.id === 'airtag' || dev.id === 'tag') && (pDev === 'airtag' || pDev === 'tag');
+                        return pDev === dev.id || isW || isH || isT;
+                      }
+                      const tLower = (p.title || p.name || '').toLowerCase();
+                      if (dev.id === 'watch') return tLower.includes('watch') || tLower.includes('band') || tLower.includes('loop') || tLower.includes('strap');
+                      if (dev.id === 'iphone') return tLower.includes('iphone') || tLower.includes('case') || tLower.includes('wallet') || tLower.includes('magsafe');
+                      if (dev.id === 'ipad') return tLower.includes('ipad') || tLower.includes('pencil') || tLower.includes('folio');
+                      if (dev.id === 'mac') return tLower.includes('mac') || tLower.includes('mouse') || tLower.includes('trackpad') || tLower.includes('adapter') || tLower.includes('cable');
+                      if (dev.id === 'airpods') return tLower.includes('airpod') || tLower.includes('earbuds');
+                      if (dev.id === 'home') return tLower.includes('home') || tLower.includes('tv') || tLower.includes('pod');
+                      if (dev.id === 'airtag') return tLower.includes('airtag') || tLower.includes('tag');
+                      if (dev.id === 'beats') return tLower.includes('beats') || tLower.includes('solo') || tLower.includes('studio') || tLower.includes('pill');
+                      return false;
+                    }).length;
+
+                    return (
+                      <button
+                        key={dev.id}
+                        type="button"
+                        onClick={() => setSelectedAccessoryFilter(dev.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border shrink-0 ${
+                          isSelected
+                            ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                            : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                        }`}
+                      >
+                        <span>{dev.emoji}</span>
+                        <span>{dev.label}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-500'
+                        }`}>
+                          {devCount}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Search Input Bar */}
           <div className="mb-6 relative max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
@@ -874,7 +1094,12 @@ export default function Products() {
                           </div>
                         </td>
                         <td className="py-4 px-6 text-zinc-500 font-medium font-sans">
-                          {prod.category?.name || 'Unassigned'}
+                          <div>{prod.category?.name || 'Unassigned'}</div>
+                          {prod.accessoryDevice && (
+                            <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase">
+                              {prod.accessoryDevice}
+                            </span>
+                          )}
                         </td>
                         <td className="py-4 px-6 font-semibold text-zinc-800 font-sans">
                           ₹{prod.price?.toLocaleString()}
@@ -1096,6 +1321,76 @@ export default function Products() {
                     </select>
                   </div>
                 </div>
+
+                {/* Accessory Device / Icon Selector */}
+                {(() => {
+                  const selectedCatObj = categories.find(c => c._id === productForm.category || c.slug === productForm.category || c.name === productForm.category);
+                  const selectedCatSlug = (selectedCatObj?.slug || selectedCatObj?.name || productForm.category || '').toString().toLowerCase();
+                  const isAccessoriesCategory = selectedCatSlug.includes('accessori');
+
+                  if (!isAccessoriesCategory) return null;
+
+                  return (
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-zinc-50 to-blue-50/20 border border-blue-150 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+                            <span>🎯</span> Accessory Device / Category Icon
+                          </span>
+                          <p className="text-[11px] text-zinc-500 mt-0.5">
+                            Select which icon on the Accessories page this product belongs to (iPhone, iPad, Mac, etc.)
+                          </p>
+                        </div>
+                        {productForm.accessoryDevice && (
+                          <button
+                            type="button"
+                            onClick={() => setProductForm(prev => ({ ...prev, accessoryDevice: '' }))}
+                            className="text-[11px] font-semibold text-rose-600 hover:underline cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                        {[
+                          { id: 'iphone', label: 'iPhone', emoji: '📱' },
+                          { id: 'ipad', label: 'iPad', emoji: '📱' },
+                          { id: 'mac', label: 'Mac', emoji: '💻' },
+                          { id: 'watch', label: 'Apple Watch', emoji: '⌚' },
+                          { id: 'airpods', label: 'AirPods', emoji: '🎧' },
+                          { id: 'home', label: 'Home', emoji: '🏠' },
+                          { id: 'airtag', label: 'AirTag', emoji: '🏷️' },
+                          { id: 'beats', label: 'Beats', emoji: '🎵' },
+                        ].map((dev) => {
+                          const isSelected = (productForm.accessoryDevice || '').toLowerCase() === dev.id;
+                          return (
+                            <button
+                              key={dev.id}
+                              type="button"
+                              onClick={() => {
+                                const next = isSelected ? '' : dev.id;
+                                setProductForm(prev => ({ ...prev, accessoryDevice: next }));
+                              }}
+                              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                                  : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                              }`}
+                            >
+                              <span>{dev.emoji}</span>
+                              <span>{dev.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {productForm.accessoryDevice && (
+                        <p className="text-[11px] text-zinc-600">
+                          Selected icon: <span className="font-bold text-[#0071e3] uppercase">{productForm.accessoryDevice}</span>
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Model Number & Part Number / MPN side-by-side */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1478,7 +1773,7 @@ export default function Products() {
                               <GripVertical className="h-4 w-4 text-zinc-400 cursor-grab" />
                               <span className="text-[11px] font-extrabold text-zinc-800 uppercase tracking-wide flex items-center gap-2 font-mono">
                                 <span className="inline-block w-3.5 h-3.5 rounded-full border border-zinc-300 shrink-0 shadow-2xs" style={{ backgroundColor: resolveColorValue(v.colorHex || v.color) }} />
-                                <span>#{vIdx + 1}: {v.color || 'Color'} {v.colorHex ? `(${v.colorHex})` : ''} {v.ram ? `| ${v.ram}` : ''} {v.storage ? `| ${v.storage}` : ''} {v.partNumber ? `| MPN: ${v.partNumber}` : ''} {v.price ? `| ₹${Number(v.price).toLocaleString('en-IN')}` : ''}</span>
+                                <span>#{vIdx + 1}: {v.color || 'Color'} {v.colorHex ? `(${v.colorHex})` : ''} {v.ram ? `| ${v.ram}` : ''} {v.storage ? `| ${v.storage}` : ''} {(v.processor || v.chip) ? `| ${v.processor || v.chip}` : ''} {v.partNumber ? `| MPN: ${v.partNumber}` : ''} {v.price ? `| ₹${Number(v.price).toLocaleString('en-IN')}` : ''}</span>
                                 {vIdx === 0 && <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-sans">Default</span>}
                               </span>
                             </div>
@@ -1609,10 +1904,36 @@ export default function Products() {
                             </div>
 
                             <div>
-                              <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1.5">Chip & Processor</label>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Chip & Processor</label>
+                                <select
+                                  className="text-[10px] bg-zinc-50 border border-zinc-200 text-zinc-600 rounded px-1.5 py-0.5 outline-none cursor-pointer hover:border-[#0071e3]"
+                                  value={v.processor || v.chip || ''}
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      handleUpdateVariant(vIdx, { processor: e.target.value, chip: e.target.value });
+                                    }
+                                  }}
+                                >
+                                  <option value="">⚡ Quick Select</option>
+                                  {(productForm.processors || []).map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                  ))}
+                                  <optgroup label="Presets">
+                                    <option value="Apple M6 chip with 10‑core CPU and 10‑core GPU">M6 10-core CPU & 10-core GPU</option>
+                                    <option value="Apple M6 chip with 12‑core CPU and 12‑core GPU">M6 12-core CPU & 12-core GPU</option>
+                                    <option value="Apple M5 Pro chip with 15‑core CPU and 16‑core GPU">M5 Pro 15-core CPU & 16-core GPU</option>
+                                    <option value="Apple M5 Pro chip with 18‑core CPU and 20‑core GPU">M5 Pro 18-core CPU & 20-core GPU</option>
+                                    <option value="Apple M5 Max chip with 18‑core CPU and 32‑core GPU">M5 Max 18-core CPU & 32-core GPU</option>
+                                    <option value="Apple M5 Max chip with 18‑core CPU and 40‑core GPU">M5 Max 18-core CPU & 40-core GPU</option>
+                                    <option value="Apple M4 chip with 8‑core CPU and 8‑core GPU">M4 8-core CPU & 8-core GPU</option>
+                                    <option value="Apple M4 chip with 10‑core CPU and 10‑core GPU">M4 10-core CPU & 10-core GPU</option>
+                                  </optgroup>
+                                </select>
+                              </div>
                               <input
                                 type="text"
-                                placeholder="e.g. Apple M5 chip with 10-core CPU"
+                                placeholder="e.g. Apple M6 chip with 10-core CPU"
                                 value={v.processor || v.chip || ''}
                                 onChange={(e) => handleUpdateVariant(vIdx, { processor: e.target.value, chip: e.target.value })}
                                 className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 focus:border-[#0071e3] outline-none text-xs bg-white font-medium text-zinc-900 font-sans"

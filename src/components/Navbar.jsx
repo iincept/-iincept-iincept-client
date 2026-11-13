@@ -14,6 +14,27 @@ import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import { normalizeTargetPath } from '../utils/searchUtils';
 
+export const resolveNavbarImageUrl = (img) => {
+  if (!img || typeof img !== 'string') return '';
+  const trimmed = img.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  const cleanPath = trimmed.startsWith('/') ? trimmed : '/' + trimmed;
+  
+  const apiUrl = import.meta.env.VITE_API_URL || '';
+  if (cleanPath.startsWith('/uploads') && apiUrl && apiUrl.startsWith('http')) {
+    try {
+      const serverOrigin = new URL(apiUrl).origin;
+      return `${serverOrigin}${cleanPath}`;
+    } catch (e) {
+      // fallback
+    }
+  }
+  return cleanPath;
+};
+
 const AppleIcon = (props) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.12.09 2.27-.58 2.95-1.39z" />
@@ -392,6 +413,35 @@ export default function Navbar() {
     clearAllTimeouts();
   }, [location.pathname]);
 
+  const getCategoryInitialPreview = (catKey, defaultKey, defaultFallbackImg) => {
+    const kLower = (catKey || '').toLowerCase();
+    const navItems = dynamicNavItems || dynamicNavItemsRef.current || [];
+    const matched = navItems.find(item => {
+      const nLower = (item.name || '').toLowerCase();
+      if (kLower === 'mac') return nLower.includes('mac');
+      if (kLower === 'ipad') return nLower.includes('ipad');
+      if (kLower === 'iphone') return nLower.includes('iphone');
+      if (kLower === 'watch') return nLower.includes('watch');
+      if (kLower === 'airpods') return nLower.includes('airpod');
+      if (kLower === 'tv-home' || kLower === 'tv') return nLower.includes('tv') || nLower.includes('home');
+      if (kLower === 'accessories') return nLower.includes('accessori');
+      if (kLower === 'applecare') return nLower.includes('applecare');
+      return false;
+    });
+
+    const activeDropdown = matched?.dropdownItems?.filter(d => d.isActive !== false) || [];
+    const firstSub = activeDropdown.find(d => d.image && typeof d.image === 'string' && d.image.trim().length > 0);
+    if (firstSub) {
+      return {
+        name: firstSub.label || matched.name,
+        price: firstSub.price || '',
+        image: resolveNavbarImageUrl(firstSub.image)
+      };
+    }
+
+    return productPreviews[defaultKey] || { name: catKey, price: '', image: resolveNavbarImageUrl(defaultFallbackImg) };
+  };
+
   const handleMacMouseEnter = () => {
     if (scrollSuppressedRef.current) return;
     clearAllTimeouts();
@@ -401,7 +451,7 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(productPreviews['Explore All Mac']);
+    setHoveredProduct(getCategoryInitialPreview('mac', 'Explore All Mac', 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/mac/home-img-1776683069_8064.png'));
   };
 
   const handleMacMouseLeave = () => {
@@ -419,7 +469,7 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(productPreviews['Explore All iPad']);
+    setHoveredProduct(getCategoryInitialPreview('ipad', 'Explore All iPad', '/ipad_category_v3.png'));
   };
 
   const handleIpadMouseLeave = () => {
@@ -437,7 +487,7 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(productPreviews['Explore All iPhone']);
+    setHoveredProduct(getCategoryInitialPreview('iphone', 'Explore All iPhone', 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/iphone/home-img-1776683084_2967.png'));
   };
 
   const handleIphoneMouseLeave = () => {
@@ -455,7 +505,7 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(productPreviews['Explore All Apple Watch']);
+    setHoveredProduct(getCategoryInitialPreview('watch', 'Explore All Apple Watch', '/apple_watch_three_models.jpg'));
   };
 
   const handleWatchMouseLeave = () => {
@@ -473,7 +523,7 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(productPreviews['Explore All AirPods']);
+    setHoveredProduct(getCategoryInitialPreview('airpods', 'Explore All AirPods', 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/music/home-img-1757682200_3577.jpg'));
   };
 
   const handleAirpodsMouseLeave = () => {
@@ -491,7 +541,7 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(productPreviews['Explore TV & Home']);
+    setHoveredProduct(getCategoryInitialPreview('tv-home', 'Explore TV & Home', 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/tv/home-img-1694070636_757.png'));
   };
 
   const handleTvMouseLeave = () => {
@@ -526,18 +576,7 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-
-    const accItem = dynamicNavItems?.find(item => (item.name || '').toLowerCase().includes('accessori'));
-    const firstSub = accItem?.dropdownItems?.find(d => d.isActive !== false);
-    if (firstSub && (firstSub.image || firstSub.price || firstSub.label)) {
-      setHoveredProduct({
-        name: firstSub.label,
-        price: firstSub.price || '',
-        image: firstSub.image || '/accessories_category_uploaded.png'
-      });
-    } else {
-      setHoveredProduct(productPreviews['Explore All Accessories'] || productPreviews['Shop All Accessories']);
-    }
+    setHoveredProduct(getCategoryInitialPreview('accessories', 'Explore All Accessories', '/accessories_category_uploaded.png'));
   };
 
   const handleAccessoriesMouseLeave = () => {
@@ -745,7 +784,7 @@ export default function Navbar() {
     },
     accessories: {
       title: 'Explore Accessories',
-      mainLink: { label: 'Explore All Accessories', path: '/accessories' },
+      mainLink: { label: 'Explore All Accessories', path: '/accessories?product=iphone' },
       items: [
         { label: 'Mac Accessories', path: '/accessories?product=mac', query: 'Mac' },
         { label: 'iPad Accessories', path: '/accessories?product=ipad', query: 'iPad' },
@@ -773,8 +812,9 @@ export default function Navbar() {
     const key = getCategoryKey(label);
     if (!key) return null;
 
-    if (dynamicNavItems && Array.isArray(dynamicNavItems) && dynamicNavItems.length > 0) {
-      const matchedNavItem = dynamicNavItems.find(item => {
+    const navItems = dynamicNavItems || dynamicNavItemsRef.current || [];
+    if (navItems.length > 0) {
+      const matchedNavItem = navItems.find(item => {
         const nLower = (item.name || '').toLowerCase();
         if (key === 'mac') return nLower.includes('mac');
         if (key === 'ipad') return nLower.includes('ipad');
@@ -794,7 +834,8 @@ export default function Navbar() {
             mainLink: { label: `Explore All ${matchedNavItem.name}`, path: mainPath },
             items: activeItems.map(d => ({
               label: d.label,
-              path: d.path ? normalizeTargetPath(d.path) : (d.query ? `${mainPath}?search=${encodeURIComponent(d.query)}` : mainPath)
+              path: d.path ? normalizeTargetPath(d.path) : (d.query ? `${mainPath}?search=${encodeURIComponent(d.query)}` : mainPath),
+              image: d.image || ''
             }))
           };
         }
@@ -806,7 +847,8 @@ export default function Navbar() {
 
   const renderProductCategoryList = (catKey, catTitle, catPath, closeDropdown) => {
     // Find matching item in dynamicNavItems
-    const matchedNavItem = (dynamicNavItems || []).find(item => {
+    const navItems = dynamicNavItems || dynamicNavItemsRef.current || [];
+    const matchedNavItem = navItems.find(item => {
       const nLower = (item.name || '').toLowerCase();
       const kLower = (catKey || '').toLowerCase();
       if (kLower === 'mac') return nLower.includes('mac');
@@ -814,7 +856,7 @@ export default function Navbar() {
       if (kLower === 'iphone') return nLower.includes('iphone');
       if (kLower === 'watch') return nLower.includes('watch');
       if (kLower === 'airpods') return nLower.includes('airpod');
-      if (kLower === 'tv-home') return nLower.includes('tv') || nLower.includes('home');
+      if (kLower === 'tv-home' || kLower === 'tv') return nLower.includes('tv') || nLower.includes('home');
       if (kLower === 'accessories') return nLower.includes('accessori');
       if (kLower === 'applecare') return nLower.includes('applecare');
       return false;
@@ -851,40 +893,20 @@ export default function Navbar() {
     const catProds = getCategoryProducts(catKey);
 
     const handleItemHover = (queryStr, defaultLabel, customItem) => {
-      let name = defaultLabel;
+      let name = customItem?.label || defaultLabel;
       let price = customItem?.price || '';
       let rawImg = customItem?.image || null;
 
-      const isTinyIcon = (url) => {
-        if (!url) return true;
-        const u = url.toLowerCase();
-        return (
-          u.includes('chapternav') ||
-          u.includes('/small/') ||
-          u.includes('apple.com/assets-www') ||
-          u.endsWith('/ipad_nav/ipad.png') ||
-          u.endsWith('/ipad_nav/ipad_air.png') ||
-          u.endsWith('/ipad_nav/ipad_mini.png') ||
-          u.endsWith('/ipad_nav/ipad_pro.png') ||
-          u.endsWith('/ipad_nav/apple_pencil.png') ||
-          u.endsWith('/ipad_nav/keyboards.png') ||
-          u.endsWith('/ipad_nav/accessories.png') ||
-          u.endsWith('/iphone_nav/iphone_16.png') ||
-          u.endsWith('/iphone_nav/iphone_17.png') ||
-          u.endsWith('/iphone_nav/iphone_17e.png') ||
-          u.endsWith('/iphone_nav/iphone_air.png') ||
-          u.endsWith('/iphone_nav/accessories.png') ||
-          u.endsWith('/mac_nav/macbook_neo.png') ||
-          u.endsWith('/mac_nav/macbook_air.png') ||
-          u.endsWith('/mac_nav/macbook_pro.png') ||
-          u.endsWith('/mac_nav/imac.png') ||
-          u.endsWith('/mac_nav/mac_mini.png') ||
-          u.endsWith('/mac_nav/mac_studio.png') ||
-          u.endsWith('/mac_nav/mac_displays.png')
-        );
-      };
+      // 100% Priority to Admin Panel Image: If configured or uploaded in Admin Panel, use it directly!
+      let img = (rawImg && typeof rawImg === 'string' && rawImg.trim().length > 0) ? resolveNavbarImageUrl(rawImg.trim()) : null;
 
-      let img = isTinyIcon(rawImg) ? null : rawImg;
+      if (!img) {
+        const firstSubWithImg = matchedNavItem?.dropdownItems?.find(d => d.isActive !== false && d.image && typeof d.image === 'string' && d.image.trim().length > 0);
+        if (firstSubWithImg && (name.toLowerCase().includes('explore') || name.toLowerCase().includes(catKey.toLowerCase()))) {
+          img = resolveNavbarImageUrl(firstSubWithImg.image);
+          if (!price && firstSubWithImg.price) price = firstSubWithImg.price;
+        }
+      }
 
       if (!img) {
         const qLower = (queryStr || defaultLabel || '').toLowerCase();
@@ -989,7 +1011,7 @@ export default function Navbar() {
       setHoveredProduct({
         name: name || defaultLabel,
         price: price || '',
-        image: img
+        image: resolveNavbarImageUrl(img)
       });
     };
 
@@ -1036,7 +1058,7 @@ export default function Navbar() {
               <Link
                 key={prod._id || prod.id}
                 to={`/product/${prod._id || prod.id}`}
-                onMouseEnter={() => setHoveredProduct({ name: prod.title || prod.name, price: prod.price ? `₹${prod.price.toLocaleString('en-IN')}` : '', image: prod.images?.[0] || prod.image })}
+                onMouseEnter={() => setHoveredProduct({ name: prod.title || prod.name, price: prod.price ? `₹${prod.price.toLocaleString('en-IN')}` : '', image: resolveNavbarImageUrl(prod.images?.[0] || prod.image) })}
                 onClick={() => {
                   closeDropdown();
                   setHoveredProduct(null);
@@ -1198,7 +1220,7 @@ export default function Navbar() {
       } else if (query === 'tv' || query === 'apple tv' || query === 'homepod' || query === 'homepods' || query === 'tv-home' || query === 'tv & home') {
         navigate('/tv-home');
       } else if (query === 'accessories' || query === 'accessory' || query === 'case' || query === 'cases') {
-        navigate('/accessories');
+        navigate('/accessories?product=iphone');
       } else {
         navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       }
@@ -1299,14 +1321,24 @@ export default function Navbar() {
     'TV & Home Accessories': { name: 'Home Accessories', price: 'Mounts & smart plugs', image: '/tvhome_category_uploaded.png' }
   };
 
-  const renderProductPreview = () => {
+  const renderProductPreview = (catKey) => {
+    const getFallbackForCategory = () => {
+      if (catKey === 'watch') return '/apple_watch_three_models.jpg';
+      if (catKey === 'airpods') return '/airpods_category_uploaded.png';
+      if (catKey === 'tv-home') return '/tvhome_category_uploaded.png';
+      if (catKey === 'accessories') return '/accessories_category_uploaded.png';
+      if (catKey === 'ipad') return '/ipad_category_v3.png';
+      if (catKey === 'iphone') return '/iphone_category_v2.jpg';
+      return '/macbook_category_v3.jpg';
+    };
+
     return (
       <div className="hidden md:flex md:col-span-6 pl-4 flex-col text-left shrink-0 justify-center items-center">
         {hoveredProduct ? (
           <div className="w-full h-[420px] sm:h-[480px] rounded-3xl bg-white border border-zinc-200/80 p-4 shadow-xs overflow-hidden flex items-center justify-center transition-all duration-300 animate-in fade-in">
             <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-white p-1">
               <img
-                src={hoveredProduct.image}
+                src={resolveNavbarImageUrl(hoveredProduct.image)}
                 alt={hoveredProduct.name || 'Preview'}
                 className="w-full h-full object-contain object-center transition-all duration-300 hover:scale-105 select-none"
                 style={{
@@ -1318,7 +1350,7 @@ export default function Navbar() {
                 }}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = isAccessoriesDropdownOpen ? '/accessories_category_uploaded.png' : '/macbook_category_v3.jpg';
+                  e.currentTarget.src = getFallbackForCategory();
                 }}
               />
             </div>
@@ -1332,9 +1364,8 @@ export default function Navbar() {
     );
   };
 
-
-
   const [dynamicNavItems, setDynamicNavItems] = useState(null);
+  const dynamicNavItemsRef = useRef(null);
 
   useEffect(() => {
     fetchHeaderCategories();
@@ -1348,31 +1379,32 @@ export default function Navbar() {
   const fetchHeaderCategories = async () => {
     try {
       const response = await axiosClient.get('/settings');
+      let items = [];
       if (response.data && response.data.navbarMenuItems && response.data.navbarMenuItems.length > 0) {
-        setDynamicNavItems(response.data.navbarMenuItems.filter(c => c.isActive !== false));
+        items = response.data.navbarMenuItems.filter(c => c.isActive !== false);
       } else if (response.data && response.data.appleCategories && response.data.appleCategories.length > 0) {
-        setDynamicNavItems(response.data.appleCategories.filter(c => c.isActive !== false));
-      } else {
-        // API returned no items — fall back to defaults
-        setDynamicNavItems([]);
+        items = response.data.appleCategories.filter(c => c.isActive !== false);
       }
+      setDynamicNavItems(items);
+      dynamicNavItemsRef.current = items;
     } catch (err) {
       console.error('Failed to load header categories:', err);
       setDynamicNavItems([]);
+      dynamicNavItemsRef.current = [];
     }
   };
 
   const getCategoryPath = (name, customLink) => {
     const lower = (name || '').toLowerCase();
     if (lower.includes('applecare')) return '/applecare';
-    if (lower.includes('accessories')) return '/accessories';
+    if (lower.includes('accessories')) return '/accessories?product=iphone';
     if (lower.includes('iphone')) return '/iphone';
     if (lower.includes('mac')) return '/macbook';
     if (lower.includes('ipad')) return '/ipad';
     if (lower.includes('watch')) return '/watch';
     if (lower.includes('airpod')) return '/airpods';
     if (lower.includes('tv')) return '/tv-home';
-    return customLink || '/accessories';
+    return (customLink && customLink !== '/accessories') ? customLink : '/accessories?product=iphone';
   };
 
   const defaultMenuItems = [
@@ -1382,7 +1414,7 @@ export default function Navbar() {
     { label: 'Watch', path: '/watch' },
     { label: 'AirPods', path: '/airpods' },
     { label: 'TV & Home', path: '/tv-home' },
-    { label: 'Accessories', path: '/accessories' },
+    { label: 'Accessories', path: '/accessories?product=iphone' },
     { label: 'AppleCare+', path: '/applecare' }
   ];
 
@@ -1450,7 +1482,7 @@ export default function Navbar() {
                         { label: 'iPad Catalogue', path: '/ipad' },
                         { label: 'Watch Catalogue', path: '/watch' },
                         { label: 'AirPods Catalogue', path: '/airpods' },
-                        { label: 'Shop Accessories', path: '/accessories' }
+                        { label: 'Shop Accessories', path: '/accessories?product=iphone' }
                       ].map((link, idx) => (
                         <Link
                           key={idx}
@@ -1648,9 +1680,9 @@ export default function Navbar() {
                       onMouseLeave={handleAccessoriesMouseLeave}
                       onClick={() => {
                         closeAllDropdowns();
-                        navigate(item.path || '/accessories');
+                        navigate(item.path && item.path !== '/accessories' ? item.path : '/accessories?product=iphone');
                       }}
-                      className={getNavBtnClass((isAccessoriesDropdownOpen && !isDropdownClosing) || location.pathname === (item.path || '/accessories'))}
+                      className={getNavBtnClass((isAccessoriesDropdownOpen && !isDropdownClosing) || location.pathname.startsWith('/accessories'))}
                     >
                       {item.label}
                     </button>
@@ -1721,7 +1753,9 @@ export default function Navbar() {
                     }}
                     onClick={() => {
                       closeAllDropdowns();
-                      const targetPath = (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) ? item.path : '/accessories';
+                      const targetPath = (item.path && item.path !== '/shop' && !item.path.startsWith('/shop')) 
+                        ? (item.path === '/accessories' ? '/accessories?product=iphone' : item.path) 
+                        : '/accessories?product=iphone';
                       navigate(targetPath);
                     }}
                     className={getNavBtnClass(location.pathname === item.path)}
@@ -1749,20 +1783,7 @@ export default function Navbar() {
                 <Search className="h-5 w-5 stroke-[2]" />
               </button>
 
-              {/* Account / Profile Link */}
-              <Link
-                to={isAuthenticated || user ? "/profile" : "/login"}
-                onClick={closeAllDropdowns}
-                onMouseEnter={() => {
-                  clearAllTimeouts();
-                  closeAllDropdowns();
-                }}
-                className="p-1.5 rounded-full transition-colors cursor-pointer bg-transparent border-0 hover:text-black hover:bg-zinc-100 text-zinc-800"
-                aria-label={isAuthenticated || user ? "My Account" : "Sign In"}
-                title={isAuthenticated || user ? `Account (${user?.name || 'Customer'})` : "Sign In"}
-              >
-                <User className="h-5 w-5 stroke-[2]" />
-              </Link>
+
 
               {/* Cart Icon with Always-Visible Red Count Badge (Matching Image 2 / iTech style) */}
               <button
@@ -1807,7 +1828,7 @@ export default function Navbar() {
                 className={dropdownClass}>
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 font-sans items-start">
                   {renderProductCategoryList('mac', 'Explore Mac', '/macbook', () => setIsMacDropdownOpen(false))}
-                  {renderProductPreview()}
+                  {renderProductPreview('mac')}
                 </div>
               </div>
             </>
@@ -1825,7 +1846,7 @@ export default function Navbar() {
                 className={dropdownClass}>
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 font-sans items-start">
                   {renderProductCategoryList('ipad', 'Explore iPad', '/ipad', () => setIsIpadDropdownOpen(false))}
-                  {renderProductPreview()}
+                  {renderProductPreview('ipad')}
                 </div>
               </div>
             </>
@@ -1844,7 +1865,7 @@ export default function Navbar() {
               >
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 font-sans items-start">
                   {renderProductCategoryList('iphone', 'Explore iPhone', '/iphone', () => setIsIphoneDropdownOpen(false))}
-                  {renderProductPreview()}
+                  {renderProductPreview('iphone')}
                 </div>
               </div>
             </>
@@ -1863,7 +1884,7 @@ export default function Navbar() {
               >
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 font-sans items-start">
                   {renderProductCategoryList('watch', 'Explore Watch', '/watch', () => setIsWatchDropdownOpen(false))}
-                  {renderProductPreview()}
+                  {renderProductPreview('watch')}
                 </div>
               </div>
             </>
@@ -1882,7 +1903,7 @@ export default function Navbar() {
               >
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 font-sans items-start">
                   {renderProductCategoryList('airpods', 'Explore AirPods', '/airpods', () => setIsAirpodsDropdownOpen(false))}
-                  {renderProductPreview()}
+                  {renderProductPreview('airpods')}
                 </div>
               </div>
             </>
@@ -1901,7 +1922,7 @@ export default function Navbar() {
               >
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 font-sans items-start">
                   {renderProductCategoryList('tv-home', 'Explore TV & Home', '/tv-home', () => setIsTvDropdownOpen(false))}
-                  {renderProductPreview()}
+                  {renderProductPreview('tv-home')}
                 </div>
               </div>
             </>
@@ -1985,8 +2006,8 @@ export default function Navbar() {
                 className={dropdownClass}
               >
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 font-sans items-start">
-                  {renderProductCategoryList('accessories', 'Explore Accessories', '/accessories', () => setIsAccessoriesDropdownOpen(false))}
-                  {renderProductPreview()}
+                  {renderProductCategoryList('accessories', 'Explore Accessories', '/accessories?product=iphone', () => setIsAccessoriesDropdownOpen(false))}
+                  {renderProductPreview('accessories')}
                 </div>
               </div>
             </>
@@ -2229,26 +2250,7 @@ export default function Navbar() {
                   );
                 })}
 
-                <div className="pt-4 mt-4 border-t border-zinc-200">
-                  <Link
-                    to={isAuthenticated || user ? "/profile" : "/login"}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 text-[18px] font-semibold text-zinc-900 hover:text-blue-600 transition-colors py-2"
-                  >
-                    <User className="h-5 w-5" />
-                    <span>{isAuthenticated || user ? (user?.name ? `Account (${user.name})` : "My Account") : "Sign In / Register"}</span>
-                  </Link>
-                  {isAuthenticated || user ? (
-                    <Link
-                      to="/orders"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-3 text-[16px] font-medium text-zinc-600 hover:text-blue-600 transition-colors py-2 pl-8"
-                    >
-                      <Package className="h-4 w-4" />
-                      <span>My Orders</span>
-                    </Link>
-                  ) : null}
-                </div>
+
               </nav>
             </div>
           </div>

@@ -42,9 +42,12 @@ export const matchesProductSearch = (prod, query) => {
   if (!query || typeof query !== 'string' || !query.trim()) return true;
 
   const q = query.trim().toLowerCase();
+  const qNoSpace = q.replace(/[\s\-_]+/g, '');
 
   const title = (prod.title || prod.name || '').toLowerCase();
+  const titleNoSpace = title.replace(/[\s\-_]+/g, '');
   const description = (prod.description || '').toLowerCase();
+  const descriptionNoSpace = description.replace(/[\s\-_]+/g, '');
   const brand = (prod.brand || '').toLowerCase();
   const categoryName = (prod.category?.name || prod.category || '').toLowerCase();
   const sku = (prod.sku || '').toLowerCase();
@@ -53,7 +56,9 @@ export const matchesProductSearch = (prod, query) => {
 
   if (
     title.includes(q) ||
+    (qNoSpace && titleNoSpace.includes(qNoSpace)) ||
     description.includes(q) ||
+    (qNoSpace && descriptionNoSpace.includes(qNoSpace)) ||
     brand.includes(q) ||
     categoryName.includes(q) ||
     sku.includes(q) ||
@@ -71,6 +76,7 @@ export const matchesProductSearch = (prod, query) => {
       const vPartNumber = (v.partNumber || '').toLowerCase();
       const vModelNumber = (v.modelNumber || '').toLowerCase();
       const vTitle = (v.title || v.displayTitle || '').toLowerCase();
+      const vTitleNoSpace = vTitle.replace(/[\s\-_]+/g, '');
       const vSize = (v.size || '').toLowerCase();
       const vColor = (v.color || '').toLowerCase();
       const vStorage = (v.storage || '').toLowerCase();
@@ -80,6 +86,7 @@ export const matchesProductSearch = (prod, query) => {
         vPartNumber.includes(q) ||
         vModelNumber.includes(q) ||
         vTitle.includes(q) ||
+        (qNoSpace && vTitleNoSpace.includes(qNoSpace)) ||
         vSize.includes(q) ||
         vColor.includes(q) ||
         vStorage.includes(q)

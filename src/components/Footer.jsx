@@ -17,7 +17,7 @@ const DEFAULT_FOOTER_DATA = {
         { label: 'Watch', url: '/watch' },
         { label: 'AirPods', url: '/airpods' },
         { label: 'TV & Home', url: '/tv-home' },
-        { label: 'Accessories', url: '/accessories' },
+        { label: 'Accessories', url: '/accessories?product=iphone' },
         { label: 'AppleCare+', url: '/applecare' },
       ]
     },
@@ -26,7 +26,7 @@ const DEFAULT_FOOTER_DATA = {
       links: [
         { label: 'Request a Quote', url: '/bulk-orders' },
         { label: 'Bulk Pricing', url: '/bulk-orders' },
-        { label: 'Dealer Login', url: '/login' },
+        { label: 'Dealer Enquiries', url: '/bulk-orders' },
         { label: 'GST Invoicing', url: '/bulk-orders' },
       ]
     },
@@ -155,19 +155,6 @@ export default function Footer() {
           margin: 0 0 14px 0;
         }
 
-        .indiaistore-footer-trust-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 5px 12px;
-          background: #111113;
-          border: 1px solid #2c2c2e;
-          border-radius: 9999px;
-          font-size: 11px;
-          font-weight: 600;
-          color: #ffffff;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-        }
 
         .indiaistore-footer-col {
           display: block;
@@ -335,13 +322,6 @@ export default function Footer() {
             text-align: center !important;
           }
 
-          .indiaistore-footer-trust-badge {
-            background: #111113 !important;
-            border-color: #2c2c2e !important;
-            color: #ffffff !important;
-            font-size: 11px !important;
-            margin: 0 auto !important;
-          }
 
           /* Mobile Grid becomes 1-column Accordion */
           .indiaistore-footer-grid {
@@ -483,12 +463,7 @@ export default function Footer() {
             <p className="indiaistore-footer-brand-tagline">
               {footerData.brandTagline}
             </p>
-            <div className="indiaistore-footer-trust-badge">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2997ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              <span>Apple Authorised Resellers Across India</span>
-            </div>
+
           </div>
 
           {/* Dynamic Section Columns (SHOP, BUSINESS, COMPANY, POLICIES...) */}
@@ -512,7 +487,7 @@ export default function Footer() {
 
                 <div className={`indiaistore-footer-content ${isOpen ? 'open' : ''}`}>
                   <ul className="indiaistore-footer-link-list">
-                    {(col?.links || []).map((link, lIdx) => (
+                    {(col?.links || []).filter(l => l?.url !== '/login' && l?.url !== '/signup').map((link, lIdx) => (
                       <li key={lIdx} className="indiaistore-footer-link-item">
                         {link?.url?.startsWith('http') ? (
                           <a
@@ -524,7 +499,7 @@ export default function Footer() {
                             {link.label}
                           </a>
                         ) : (
-                          <Link to={(link?.url && link.url !== '/shop' && !link.url.startsWith('/shop')) ? link.url : '/accessories'} className="indiaistore-footer-link">
+                          <Link to={(link?.url && link.url !== '/shop' && !link.url.startsWith('/shop')) ? (link.url === '/accessories' ? '/accessories?product=iphone' : link.url) : '/accessories?product=iphone'} className="indiaistore-footer-link">
                             {link?.label || 'Link'}
                           </Link>
                         )}

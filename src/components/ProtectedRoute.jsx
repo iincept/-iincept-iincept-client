@@ -6,8 +6,7 @@ export default function ProtectedRoute({ children }) {
 
   // Verify that an active session token exists in local storage
   if (!token) {
-    // Redirect to login but store the current location so they can return
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

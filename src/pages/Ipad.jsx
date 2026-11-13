@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ShieldCheck, Wrench, Headphones, Check } from 'lucide-react';
 import { addToCart } from '../redux/cartSlice';
@@ -11,7 +11,7 @@ import axiosClient from '../services/axiosClient';
 import { subscribeToLiveSync } from '../services/liveSyncService';
 import CleanProductImage from '../components/CleanProductImage';
 import AppleProductCard from '../components/AppleProductCard';
-import { resolveColorValue } from '../utils/colorResolver';
+import { resolveColorValue, isValidHex, normalizeHex } from '../utils/colorResolver';
 import AppleCareFeaturesGrid from '../components/AppleCareFeaturesGrid';
 
 // Default iPad AppleCare rows fallback
@@ -130,6 +130,29 @@ const DEFAULT_IPAD_APPLECARE_ROWS = [
     yearly: '₹19,900.00', 
     image: '/ipad_nav/ipad_pro.png', 
     isActive: true 
+  },
+  { 
+    model: 'iPad mini (A20 Pro)', 
+    title: 'AppleCare+ iPad mini (A20 Pro)', 
+    description: '2 Years Apple-certified coverage for iPad mini (A20 Pro). Peace of mind for what\'s next.', 
+    description1yr: '1 Year Apple-certified coverage for iPad mini (A20 Pro).',
+    description2yr: '2 Years Apple-certified coverage for iPad mini (A20 Pro).',
+    sku: 'SGXF3HN/A', 
+    sku1yr: 'DHG32HN/A',
+    sku2yr: 'SGXF3HN/A',
+    mrp: '₹19,900.00', 
+    mrp1yr: '₹9,900.00',
+    mrp2yr: '₹19,900.00',
+    discount: '10% OFF', 
+    discount1yr: '10% OFF',
+    discount2yr: '10% OFF',
+    salePrice: '₹17,910.00', 
+    salePrice1yr: '₹8,910.00',
+    salePrice2yr: '₹17,910.00',
+    monthly: '₹899.00', 
+    yearly: '₹17,910.00', 
+    image: '/uploads/upload_1794395541674_391.png', 
+    isActive: true 
   }
 ];
 
@@ -140,7 +163,7 @@ const IPAD_SUB_NAV_ITEMS = [
   { name: 'iPad mini', query: 'iPad mini', image: '/ipad_nav/ipad_mini.png', scale: 'scale-95' },
   { name: 'Apple Pencil', query: 'Pencil', image: '/ipad_nav/apple_pencil.png', scale: 'scale-95' },
   { name: 'Keyboards', query: 'Keyboard', image: '/ipad_nav/keyboards.png', scale: 'scale-95' },
-  { name: 'Accessories', path: '/accessories', image: '/ipad_nav/accessories.png', scale: 'scale-95' },
+  { name: 'Accessories', path: '/accessories?product=ipad', image: '/ipad_nav/accessories.png', scale: 'scale-95' },
   { name: 'AppleCare+', path: '/ipad?tab=applecare', image: '/uploads/upload_1792413070647_667.png', scale: 'scale-100' }
 ];
 
@@ -154,6 +177,9 @@ const resolveSubItemPath = (item) => {
   }
   if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
     return '/compare?category=ipad';
+  }
+  if (nameLower.includes('accessori') || queryLower.includes('accessori') || pathLower.includes('accessori')) {
+    return '/accessories?product=ipad';
   }
   if (nameLower.includes('pencil') || queryLower.includes('pencil')) {
     return '/ipad?search=Pencil';
@@ -1079,7 +1105,8 @@ const getCachedIpadProducts = () => {
 
 export default function Ipad() {
   const dispatch = useDispatch();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { products } = useSelector((state) => state.products);
   const [viewCols, setViewCols] = useState(4);
   const [showLimit, setShowLimit] = useState(16);
@@ -1350,13 +1377,14 @@ export default function Ipad() {
   };
 
   const handleColorChange = (productId, colorVal) => {
-    setSelectedColors((prev) => ({ ...prev, [productId]: colorVal }));
+    setSelectedColors({ [productId]: colorVal });
   };
 
   const getProductImage = (prod) => {
     if (!prod) return '/ipad_nav/ipad.png';
 
-    const hasUserSelectedColor = Boolean(selectedColors[prod.id]);
+    const pId = prod.id || prod._id;
+    const hasUserSelectedColor = Boolean(selectedColors[pId]);
     
     // When no color is explicitly selected by user interaction, ALWAYS return the primary product image
     if (!hasUserSelectedColor) {
@@ -1367,7 +1395,7 @@ export default function Ipad() {
       return prod.image || '/ipad_nav/ipad.png';
     }
 
-    const selectedColorName = selectedColors[prod.id];
+    const selectedColorName = selectedColors[pId];
     if (selectedColorName) {
       const targetNorm = selectedColorName.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -1419,9 +1447,10 @@ export default function Ipad() {
   };
 
   const handleAddToCart = (prod) => {
-    const selectedColor = selectedColors[prod.id] || prod.colors[0]?.name || 'Standard';
+    const pId = prod.id || prod._id;
+    const selectedColor = selectedColors[pId] || prod.colors[0]?.name || 'Standard';
     dispatch(addToCart({
-      id: prod.id,
+      id: pId,
       name: `${prod.name} (${selectedColor})`,
       price: prod.price,
       image: getProductImage(prod),
@@ -1430,9 +1459,10 @@ export default function Ipad() {
   };
 
   const handleAddToWishlist = (prod) => {
-    setLocalWishlist((prev) => ({ ...prev, [prod.id]: !prev[prod.id] }));
+    const pId = prod.id || prod._id;
+    setLocalWishlist((prev) => ({ ...prev, [pId]: !prev[pId] }));
     dispatch(addToWishlist({
-      id: prod.id,
+      id: pId,
       name: prod.name,
       price: prod.price,
       image: getProductImage(prod),
@@ -1486,8 +1516,10 @@ export default function Ipad() {
   }).map(p => {
     const firstImg = extractFirstValidImage(p);
     const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/ipad_nav/ipad.png'));
+    const pId = p._id || p.id;
     return {
-      id: p._id || p.id,
+      id: pId,
+      _id: pId,
       name: p.title || p.name,
       price: p.price,
       priceStr: `₹${p.price.toLocaleString()}`,
@@ -1507,26 +1539,35 @@ export default function Ipad() {
         if (!variantImage && typeof c === 'object' && Array.isArray(c.images) && c.images[0]) {
           variantImage = c.images[0];
         }
-        if (!variantImage && p.variants && Array.isArray(p.variants)) {
-          const matchedVariant = p.variants.find(v => {
-            if (!v.color) return false;
-            const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
-            return vColor === normName.toLowerCase();
-          });
-          if (matchedVariant) {
-            if (matchedVariant.image) {
-              variantImage = matchedVariant.image;
-            } else if (matchedVariant.images && matchedVariant.images[0]) {
-              variantImage = matchedVariant.images[0];
-            }
+        const matchedVariant = p.variants && Array.isArray(p.variants)
+          ? p.variants.find(v => {
+              if (!v.color) return false;
+              const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
+              return vColor === normName.toLowerCase();
+            })
+          : null;
+
+        if (!variantImage && matchedVariant) {
+          if (matchedVariant.image) {
+            variantImage = matchedVariant.image;
+          } else if (matchedVariant.images && matchedVariant.images[0]) {
+            variantImage = matchedVariant.images[0];
           }
         }
+
+        const hex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+          ? normalizeHex(c.colorHex)
+          : (typeof c === 'object' && c.value && isValidHex(c.value))
+            ? normalizeHex(c.value)
+            : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+              ? normalizeHex(matchedVariant.colorHex)
+              : resolveColorValue(c?.colorHex || c?.value || val);
 
         return {
           name: normName,
           rawName: rawName,
-          value: resolveColorValue(c?.colorHex || c?.value || val),
-          colorHex: c?.colorHex || resolveColorValue(val),
+          value: hex,
+          colorHex: hex,
           image: variantImage
         };
       }) : [],
@@ -1994,8 +2035,30 @@ export default function Ipad() {
           );
         }
 
+        const currentSearchVal = searchParams.get('search') || '';
         return (
           <>
+            {currentSearchVal && (
+              <div className="flex items-center justify-between gap-4 pb-1 mb-3 text-sm font-sans uppercase font-bold text-zinc-500 tracking-wider">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.delete('search');
+                    if (newParams.toString()) {
+                      setSearchParams(newParams);
+                    } else {
+                      setSearchParams({});
+                      navigate('/ipad', { replace: true });
+                    }
+                  }}
+                  className="text-xs font-semibold text-[#0071e3] hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Clear Search Filter ("{currentSearchVal}")
+                </button>
+              </div>
+            )}
 
             {/* Filter Drawer */}
             {filterOpen && (
@@ -2051,17 +2114,20 @@ export default function Ipad() {
 
             {/* Grid (Matching Apple Store Layout) */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.slice(0, visibleCount).map((prod) => (
-                <AppleProductCard
-                  key={prod.id}
-                  product={prod}
-                  selectedColor={selectedColors[prod.id]}
-                  onColorChange={(colorName) => handleColorChange(prod.id, colorName)}
-                  isWishlisted={Boolean(localWishlist[prod.id])}
-                  onToggleWishlist={() => handleAddToWishlist(prod)}
-                  onAddToCart={() => handleAddToCart(prod)}
-                />
-              ))}
+              {filteredProducts.slice(0, visibleCount).map((prod) => {
+                const pId = prod.id || prod._id;
+                return (
+                  <AppleProductCard
+                    key={pId}
+                    product={prod}
+                    selectedColor={selectedColors[pId]}
+                    onColorChange={(colorName) => handleColorChange(pId, colorName)}
+                    isWishlisted={Boolean(localWishlist[pId])}
+                    onToggleWishlist={() => handleAddToWishlist(prod)}
+                    onAddToCart={() => handleAddToCart(prod)}
+                  />
+                );
+              })}
             </div>
 
             {/* Infinite Scroll Indicator */}

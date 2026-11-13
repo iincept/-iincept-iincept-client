@@ -647,19 +647,10 @@ export default function Compare() {
                             {prod.colors.map((col, cIdx) => {
                               const colName = typeof col === 'object' ? col.name : col;
                               const isSelected = activeColor === colName;
-                              const cNameLower = (colName || '').toLowerCase();
-                              const isSpaceBlack = cNameLower.includes('space black');
-                              const isPinkBlush = cNameLower.includes('pink') || cNameLower.includes('blush') || cNameLower.includes('rose');
-                              const isYellowCitrus = cNameLower.includes('yellow') || cNameLower.includes('citrus') || cNameLower.includes('lime') || cNameLower.includes('gold');
-                              const isBlueSlate = cNameLower.includes('sky blue') || cNameLower.includes('blue') || cNameLower.includes('slate') || cNameLower.includes('indigo');
-                              const isCloudWhite = cNameLower.includes('cloud white') || cNameLower.includes('silver') || (cNameLower.includes('white') && !cNameLower.includes('titanium'));
-
                               let swatchBgImage = 'none';
-                              if (isSpaceBlack) swatchBgImage = 'url(/space_black_swatch.png)';
-                              else if (isPinkBlush) swatchBgImage = 'url(/neo_pink.png)';
-                              else if (isYellowCitrus) swatchBgImage = 'url(/neo_yellow.png)';
-                              else if (isBlueSlate) swatchBgImage = 'url(/neo_blue.png)';
-                              else if (isCloudWhite) swatchBgImage = 'url(/neo_silver.png)';
+                              if (typeof col === 'object' && (col.swatchImage || col.swatch)) {
+                                swatchBgImage = `url(${col.swatchImage || col.swatch})`;
+                              }
 
                               return (
                                 <button
