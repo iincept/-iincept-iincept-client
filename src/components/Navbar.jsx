@@ -413,7 +413,27 @@ export default function Navbar() {
     clearAllTimeouts();
   }, [location.pathname]);
 
-  const getCategoryInitialPreview = (catKey, defaultKey, defaultFallbackImg) => {
+  const preloadedNavImagesRef = useRef(new Set());
+  const preloadNavImages = (items) => {
+    if (!items || !Array.isArray(items)) return;
+    items.forEach(category => {
+      if (category && category.dropdownItems && Array.isArray(category.dropdownItems)) {
+        category.dropdownItems.forEach(item => {
+          if (item && item.image && typeof item.image === 'string' && item.image.trim().length > 0) {
+            const url = resolveNavbarImageUrl(item.image.trim());
+            if (url && !preloadedNavImagesRef.current.has(url)) {
+              preloadedNavImagesRef.current.add(url);
+              const img = new Image();
+              img.decoding = 'async';
+              img.src = url;
+            }
+          }
+        });
+      }
+    });
+  };
+
+  const getCategoryInitialPreview = (catKey) => {
     const kLower = (catKey || '').toLowerCase();
     const navItems = dynamicNavItems || dynamicNavItemsRef.current || [];
     const matched = navItems.find(item => {
@@ -433,13 +453,13 @@ export default function Navbar() {
     const firstSub = activeDropdown.find(d => d.image && typeof d.image === 'string' && d.image.trim().length > 0);
     if (firstSub) {
       return {
-        name: firstSub.label || matched.name,
+        name: firstSub.label || matched?.name || catKey,
         price: firstSub.price || '',
         image: resolveNavbarImageUrl(firstSub.image)
       };
     }
 
-    return productPreviews[defaultKey] || { name: catKey, price: '', image: resolveNavbarImageUrl(defaultFallbackImg) };
+    return null;
   };
 
   const handleMacMouseEnter = () => {
@@ -451,7 +471,8 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(getCategoryInitialPreview('mac', 'Explore All Mac', 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/mac/home-img-1776683069_8064.png'));
+    preloadNavImages(dynamicNavItems || dynamicNavItemsRef.current);
+    setHoveredProduct(getCategoryInitialPreview('mac'));
   };
 
   const handleMacMouseLeave = () => {
@@ -469,7 +490,8 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(getCategoryInitialPreview('ipad', 'Explore All iPad', '/ipad_category_v3.png'));
+    preloadNavImages(dynamicNavItems || dynamicNavItemsRef.current);
+    setHoveredProduct(getCategoryInitialPreview('ipad'));
   };
 
   const handleIpadMouseLeave = () => {
@@ -487,7 +509,8 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(getCategoryInitialPreview('iphone', 'Explore All iPhone', 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/iphone/home-img-1776683084_2967.png'));
+    preloadNavImages(dynamicNavItems || dynamicNavItemsRef.current);
+    setHoveredProduct(getCategoryInitialPreview('iphone'));
   };
 
   const handleIphoneMouseLeave = () => {
@@ -505,7 +528,8 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(getCategoryInitialPreview('watch', 'Explore All Apple Watch', '/apple_watch_three_models.jpg'));
+    preloadNavImages(dynamicNavItems || dynamicNavItemsRef.current);
+    setHoveredProduct(getCategoryInitialPreview('watch'));
   };
 
   const handleWatchMouseLeave = () => {
@@ -523,7 +547,8 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(getCategoryInitialPreview('airpods', 'Explore All AirPods', 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/music/home-img-1757682200_3577.jpg'));
+    preloadNavImages(dynamicNavItems || dynamicNavItemsRef.current);
+    setHoveredProduct(getCategoryInitialPreview('airpods'));
   };
 
   const handleAirpodsMouseLeave = () => {
@@ -541,7 +566,8 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(getCategoryInitialPreview('tv-home', 'Explore TV & Home', 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/tv/home-img-1694070636_757.png'));
+    preloadNavImages(dynamicNavItems || dynamicNavItemsRef.current);
+    setHoveredProduct(getCategoryInitialPreview('tv-home'));
   };
 
   const handleTvMouseLeave = () => {
@@ -576,7 +602,8 @@ export default function Navbar() {
     setIsCategoriesOpen(false);
     setIsGiftOpen(false);
     setIsProfileOpen(false);
-    setHoveredProduct(getCategoryInitialPreview('accessories', 'Explore All Accessories', '/accessories_category_uploaded.png'));
+    preloadNavImages(dynamicNavItems || dynamicNavItemsRef.current);
+    setHoveredProduct(getCategoryInitialPreview('accessories'));
   };
 
   const handleAccessoriesMouseLeave = () => {
@@ -893,125 +920,27 @@ export default function Navbar() {
     const catProds = getCategoryProducts(catKey);
 
     const handleItemHover = (queryStr, defaultLabel, customItem) => {
-      let name = customItem?.label || defaultLabel;
+      const name = customItem?.label || defaultLabel;
       let price = customItem?.price || '';
       let rawImg = customItem?.image || null;
 
-      // 100% Priority to Admin Panel Image: If configured or uploaded in Admin Panel, use it directly!
-      let img = (rawImg && typeof rawImg === 'string' && rawImg.trim().length > 0) ? resolveNavbarImageUrl(rawImg.trim()) : null;
-
-      if (!img) {
+      // If no direct image and it's the main Explore link, fallback to first sub-item with an admin image
+      if ((!rawImg || typeof rawImg !== 'string' || !rawImg.trim()) && name && (name.toLowerCase().includes('explore') || name.toLowerCase().includes(catKey.toLowerCase()))) {
         const firstSubWithImg = matchedNavItem?.dropdownItems?.find(d => d.isActive !== false && d.image && typeof d.image === 'string' && d.image.trim().length > 0);
-        if (firstSubWithImg && (name.toLowerCase().includes('explore') || name.toLowerCase().includes(catKey.toLowerCase()))) {
-          img = resolveNavbarImageUrl(firstSubWithImg.image);
+        if (firstSubWithImg) {
+          rawImg = firstSubWithImg.image;
           if (!price && firstSubWithImg.price) price = firstSubWithImg.price;
         }
       }
 
-      if (!img) {
-        const qLower = (queryStr || defaultLabel || '').toLowerCase();
-        const combinedStr = `${queryStr || ''} ${defaultLabel || ''} ${customItem?.label || ''} ${customItem?.path || ''} ${customItem?.query || ''}`.toLowerCase();
-
-        if (combinedStr.includes('applecare')) {
-          img = '/applecare_official_hero.png';
-        } else if (combinedStr.includes('neo')) {
-          img = '/mac_nav/macbook_neo_dropdown.jpg';
-        } else if (combinedStr.includes('air') && (combinedStr.includes('mac') || combinedStr.includes('book'))) {
-          img = '/mac_nav/macbook_air_dropdown.jpg';
-        } else if (combinedStr.includes('pro') && (combinedStr.includes('mac') || combinedStr.includes('laptop') || combinedStr.includes('book'))) {
-          img = '/mac_nav/macbook_pro_nav.png';
-        } else if (combinedStr.includes('imac')) {
-          img = '/mac_nav/imac_user.jpg';
-        } else if (combinedStr.includes('mini') && !combinedStr.includes('ipad') && !combinedStr.includes('homepod')) {
-          img = '/mac_nav/mac_mini_user.jpg';
-        } else if (combinedStr.includes('studio') && !combinedStr.includes('display')) {
-          img = '/mac_nav/mac_studio_user.jpg';
-        } else if (combinedStr.includes('display')) {
-          img = '/mac_nav/mac_displays_user.jpg';
-        } else if (catKey === 'ipad' || combinedStr.includes('ipad')) {
-          if (combinedStr.includes('applecare')) img = '/applecare_official_hero.png';
-          else if (combinedStr.includes('pencil')) img = '/ipad_nav/dropdown_apple_pencil.png';
-          else if (combinedStr.includes('keyboard')) img = '/ipad_nav/keyboards_nav.jpg';
-          else if (combinedStr.includes('mini')) img = '/ipad_nav/dropdown_ipad_mini.png';
-          else if (combinedStr.includes('air')) img = '/ipad_nav/dropdown_ipad_air.png';
-          else if (combinedStr.includes('pro')) img = '/ipad_nav/ipad_pro_nav.jpg';
-          else if (combinedStr.includes('accessori')) img = '/ipad_nav/dropdown_ipad_accessories.jpg';
-          else if (combinedStr.includes('compare')) img = '/ipad_nav/ipad_compare.png';
-          else img = '/ipad_nav/dropdown_ipad.png';
-        } else if (catKey === 'iphone' || combinedStr.includes('iphone')) {
-          if (combinedStr.includes('applecare')) img = '/applecare_official_hero.png';
-          else if (combinedStr.includes('duo')) img = '/iphone_nav/dropdown_iphone_duo.png';
-          else if (combinedStr.includes('18')) img = '/iphone_nav/dropdown_iphone_18_pro.jpg';
-          else if (combinedStr.includes('pro')) img = '/iphone_nav/dropdown_iphone_17_pro.png';
-          else if (combinedStr.includes('air')) img = '/iphone_nav/dropdown_iphone_air.png';
-          else if (combinedStr.includes('17e')) img = '/iphone_nav/dropdown_iphone_17e.png';
-          else if (combinedStr.includes('17')) img = '/iphone_nav/dropdown_iphone_17.png';
-          else if (combinedStr.includes('16')) img = '/iphone_nav/dropdown_iphone_16.png';
-          else if (combinedStr.includes('compare')) img = '/iphone_nav/iphone_compare.png';
-          else if (combinedStr.includes('accessori')) img = '/iphone_nav/dropdown_iphone_accessories.png';
-          else img = '/iphone_nav/dropdown_iphone_17_pro.png';
-        } else if (catKey === 'watch' || combinedStr.includes('watch')) {
-          if (combinedStr.includes('applecare')) img = '/applecare_official_hero.png';
-          else if (combinedStr.includes('series 12') || combinedStr.includes('12')) img = '/apple_watch_series_12.png';
-          else if (combinedStr.includes('ultra')) img = '/apple_watch_ultra_2_single.png';
-          else if (combinedStr.includes('series 10') || combinedStr.includes('10')) img = '/apple_watch_three_models.jpg';
-          else if (combinedStr.includes('se')) img = '/apple_watch_three_models.jpg';
-          else if (combinedStr.includes('compare')) img = '/apple_watch_three_models.jpg';
-          else img = '/apple_watch_series_12.png';
-        } else if (catKey === 'airpods' || combinedStr.includes('airpod')) {
-          if (combinedStr.includes('pro')) img = '/airpods_pro_uploaded.jpg';
-          else if (combinedStr.includes('max')) img = '/airpods_pro_uploaded.jpg';
-          else if (combinedStr.includes('4')) img = '/airpods_category_uploaded.png';
-          else img = '/airpods_category_uploaded.png';
-        } else if (catKey === 'accessories' || combinedStr.includes('accessori')) {
-          if (combinedStr.includes('mac')) img = '/accessories_category_uploaded.png';
-          else if (combinedStr.includes('ipad')) img = '/ipad_nav/dropdown_ipad_accessories.jpg';
-          else if (combinedStr.includes('iphone')) img = '/iphone_nav/dropdown_iphone_accessories.png';
-          else if (combinedStr.includes('watch')) img = '/watch_category_uploaded.png';
-          else if (combinedStr.includes('airpod')) img = '/airpods_category_uploaded.png';
-          else if (combinedStr.includes('tv') || combinedStr.includes('home')) img = '/tvhome_category_uploaded.png';
-          else img = '/accessories_category_uploaded.png';
-        }
-      }
-
-      if (!img) {
-        const explicitPreview = productPreviews[defaultLabel] || productPreviews[queryStr];
-        const matched = products?.find(p => {
-          const title = (p.title || p.name || '').toLowerCase();
-          const q = (queryStr || defaultLabel || '').toLowerCase();
-          return title.includes(q);
-        });
-
-        if (matched) {
-          img = matched.images?.[0] || matched.image;
-          if (img?.includes('mock-cloud')) img = null;
-          if (!name) name = matched.title || matched.name;
-          if (!price && matched.price) price = `₹${matched.price.toLocaleString('en-IN')}`;
-        }
-
-        if (!img && explicitPreview) {
-          img = explicitPreview.image;
-          if (!price && explicitPreview.price) price = explicitPreview.price;
-          if (explicitPreview.name) name = explicitPreview.name;
-        }
-
-        if (!img) {
-          const qLower = (queryStr || defaultLabel || '').toLowerCase();
-          if (qLower.includes('neo')) img = '/mac_nav/macbook_neo_dropdown.jpg';
-          else if (qLower.includes('air')) img = '/mac_nav/macbook_air_dropdown.jpg';
-          else if (qLower.includes('pro')) img = '/mac_nav/macbook_pro_nav.png';
-          else if (qLower.includes('imac')) img = '/mac_nav/imac_user.jpg';
-          else if (qLower.includes('mini')) img = '/mac_nav/mac_mini_user.jpg';
-          else if (qLower.includes('studio') && !qLower.includes('display')) img = '/mac_nav/mac_studio_user.jpg';
-          else if (qLower.includes('display')) img = '/mac_nav/mac_displays_user.jpg';
-          else img = '/macbook_category_v3.jpg';
-        }
-      }
+      const img = (rawImg && typeof rawImg === 'string' && rawImg.trim().length > 0)
+        ? resolveNavbarImageUrl(rawImg.trim())
+        : null;
 
       setHoveredProduct({
         name: name || defaultLabel,
         price: price || '',
-        image: resolveNavbarImageUrl(img)
+        image: img
       });
     };
 
@@ -1236,128 +1165,41 @@ export default function Navbar() {
     { name: 'Wearable Devices', path: '/watch' }
   ];
 
-  const productPreviews = {
-    // Mac
-    'Explore All Mac': { name: 'Mac Workstations', price: 'Procure M3/M4 Series', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/mac/home-img-1776683069_8064.png' },
-    'MacBook Neo': { name: 'MacBook Neo', price: 'High Performance Laptop', image: '/mac_nav/macbook_neo_dropdown.jpg' },
-    'MacBook Air': { name: 'MacBook Air', price: 'Light & Powerful. From ₹1,14,900', image: '/mac_nav/macbook_air_dropdown.jpg' },
-    'MacBook Pro': { name: 'MacBook Pro', price: 'Pro Workflow Leader. From ₹1,69,900', image: '/mac_nav/macbook_pro_nav.png' },
-    'iMac': { name: 'iMac 24"', price: 'All-in-one Desktop. From ₹1,29,900', image: '/mac_nav/imac_user.jpg' },
-    'Mac Mini': { name: 'Mac Mini', price: 'Compact Powerhouse. From ₹54,900', image: '/mac_nav/mac_mini_user.jpg' },
-    'Mac mini': { name: 'Mac Mini', price: 'Compact Powerhouse. From ₹54,900', image: '/mac_nav/mac_mini_user.jpg' },
-    'Mac Studio': { name: 'Mac Studio', price: 'Creator Station. From ₹1,99,900', image: '/mac_nav/mac_studio_user.jpg' },
-    'Displays': { name: 'Studio & Pro Display', price: 'Retina 5K & 6K Panels', image: '/mac_nav/mac_displays_user.jpg' },
-    'Compare': { name: 'Compare Mac', price: 'Find the best Mac for you', image: '/mac_nav/mac_compare.png' },
-    'AppleCare+': { name: 'AppleCare+ Protection', price: 'Official Apple Warranty', image: '/applecare_official_hero.png' },
-    'AppleCare': { name: 'AppleCare+ Protection', price: 'Official Apple Warranty', image: '/applecare_official_hero.png' },
-
-    // iPad
-    'Explore All iPad': { name: 'iPad Catalogue', price: 'Compare all iPads', image: '/ipad_category_v3.png' },
-    'iPad Pro': { name: 'iPad Pro M4', price: 'Ultra Thin design. From ₹99,900', image: '/ipad_nav/ipad_pro_nav.jpg' },
-    'iPad Air': { name: 'iPad Air M2', price: 'Performance meets Value. From ₹59,900', image: '/ipad_nav/dropdown_ipad_air.png' },
-    'iPad': { name: 'iPad (10th Gen)', price: 'Daily Workhorse. From ₹34,900', image: '/ipad_nav/dropdown_ipad.png' },
-    'iPad Mini': { name: 'iPad mini', price: 'Pocket Sized Power. From ₹49,900', image: '/ipad_nav/dropdown_ipad_mini.png' },
-    'iPad mini': { name: 'iPad mini', price: 'Pocket Sized Power. From ₹49,900', image: '/ipad_nav/dropdown_ipad_mini.png' },
-    'Apple Pencil': { name: 'Apple Pencil Pro', price: 'Pixel perfect precision. From ₹11,900', image: '/ipad_nav/dropdown_apple_pencil.png' },
-    'Keyboards': { name: 'Magic Keyboard', price: 'Floating cantilever design', image: '/ipad_nav/keyboards_nav.jpg' },
-    'Accessories': { name: 'iPad Accessories', price: 'Cases, Pencils & Keyboards', image: '/ipad_nav/dropdown_ipad_accessories.jpg' },
-
-    // iPhone
-    'Explore All iPhone': { name: 'iPhone Catalogue', price: 'Compare all models', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/iphone/home-img-1776683084_2967.png' },
-    'iPhone Duo': { name: 'iPhone Duo', price: 'The Foldable Revolution. From ₹2,99,900', image: '/iphone_nav/dropdown_iphone_duo.png' },
-    'Iphone Duo': { name: 'iPhone Duo', price: 'The Foldable Revolution. From ₹2,99,900', image: '/iphone_nav/dropdown_iphone_duo.png' },
-    'iPhone 18 Pro Max': { name: 'iPhone 18 Pro Max', price: 'Crimson Titanium. From ₹1,64,900', image: '/iphone_nav/dropdown_iphone_18_pro.jpg' },
-    'iPhone 18 Pro': { name: 'iPhone 18 Pro', price: 'Crimson Titanium. From ₹1,44,900', image: '/iphone_nav/dropdown_iphone_18_pro.jpg' },
-    'Iphone 18 pro': { name: 'iPhone 18 Pro', price: 'Crimson Titanium. From ₹1,44,900', image: '/iphone_nav/dropdown_iphone_18_pro.jpg' },
-    'iPhone 17 Pro Max': { name: 'iPhone 17 Pro Max', price: 'Peak Performance. From ₹1,64,900', image: '/iphone_nav/dropdown_iphone_17_pro.png' },
-    'iPhone 17 Pro': { name: 'iPhone 17 Pro', price: 'Titanium Build. From ₹1,34,900', image: '/iphone_nav/dropdown_iphone_17_pro.png' },
-    'iPhone 17': { name: 'iPhone 17', price: 'Sleek & Durable. From ₹79,900', image: '/iphone_nav/dropdown_iphone_17.png' },
-    'iPhone 16 Pro Max': { name: 'iPhone 16 Pro Max', price: 'Camera Control. From ₹1,44,900', image: '/iphone_nav/dropdown_iphone_16.png' },
-    'iPhone 16 Pro': { name: 'iPhone 16 Pro', price: 'Studio Recording. From ₹1,19,900', image: '/iphone_nav/dropdown_iphone_16.png' },
-    'iPhone 16': { name: 'iPhone 16', price: 'Action Button. From ₹79,900', image: '/iphone_nav/dropdown_iphone_16.png' },
-    'iPhone SE': { name: 'iPhone SE', price: 'Great Value. From ₹49,900', image: '/iphone_category_v2.jpg' },
-    'iPhone 17e': { name: 'iPhone 17e', price: 'Value Champion. From ₹59,900', image: '/iphone_nav/dropdown_iphone_17e.png' },
-    'iPhone Air': { name: 'iPhone Air', price: 'Ultra Thin. From ₹89,900', image: '/iphone_nav/dropdown_iphone_air.png' },
-
-    // Watch
-    'Explore All Apple Watch': { name: 'Apple Watch Lineup', price: 'Browse All Apple Watches', image: '/apple_watch_three_models.jpg' },
-    'Apple Watch Series 12': { name: 'Apple Watch Series 12', price: 'Advanced heart & health tracking. From ₹56,900', image: '/apple_watch_series_12.png' },
-    'Apple Watch Series 11': { name: 'Apple Watch Series 11', price: 'Advanced fitness tracking. From ₹49,900', image: '/apple_watch_three_models.jpg' },
-    'Apple Watch Series 10': { name: 'Apple Watch Series 10', price: 'Thinnest watch with biggest display. From ₹46,900', image: '/apple_watch_three_models.jpg' },
-    'Apple Watch SE': { name: 'Apple Watch SE', price: 'Essential features to stay connected. From ₹24,900', image: '/apple_watch_three_models.jpg' },
-    'Apple Watch SE 3': { name: 'Apple Watch SE 3', price: 'Essential features. From ₹29,900', image: '/apple_watch_three_models.jpg' },
-    'Apple Watch Ultra 4': { name: 'Apple Watch Ultra 4', price: 'Ultimate adventure watch. From ₹99,900', image: '/apple_watch_ultra_2_single.png' },
-    'Apple Watch Ultra 3': { name: 'Apple Watch Ultra 3', price: 'Rugged capability. From ₹89,900', image: '/apple_watch_ultra_2_single.png' },
-    'Apple Watch Ultra 2': { name: 'Apple Watch Ultra 2', price: 'Rugged capability & adventure. From ₹89,900', image: '/apple_watch_ultra_2_single.png' },
-    'Apple Watch Nike': { name: 'Apple Watch Nike', price: 'Sport bands & faces', image: '/apple_watch_three_models.jpg' },
-
-    // AirPods
-    'Explore All AirPods': { name: 'AirPods Family', price: 'High fidelity audio', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/music/home-img-1757682200_3577.jpg' },
-    'AirPods 4': { name: 'AirPods 4', price: 'Open ear comfort. From ₹12,900', image: '/airpods_category_uploaded.png' },
-    'AirPods Pro 3': { name: 'AirPods Pro 3', price: 'Intelligent noise cancellation. From ₹24,900', image: '/airpods_pro_3.jpg' },
-    'AirPods Max 2': { name: 'AirPods Max 2', price: 'High-fidelity acoustics. From ₹59,900', image: '/airpods_pro_3.jpg' },
-
-    // TV & Home
-    'Explore TV & Home': { name: 'TV & Home Ecosystem', price: 'Hub of smart devices', image: 'https://i3-prod-assets.indiaistore.com/files/uploads/categories/tv/home-img-1694070636_757.png' },
-    'Apple TV 4K': { name: 'Apple TV 4K', price: 'Cinematic experience. From ₹14,900', image: '/tvhome_category_uploaded.png' },
-    'HomePod': { name: 'HomePod (2nd Gen)', price: 'Deep acoustics. From ₹32,900', image: '/tv_home_homepods.jpg' },
-    'HomePod mini': { name: 'HomePod mini', price: 'Room filling sound. From ₹9,900', image: '/tv_home_homepods.jpg' },
-
-    // Accessories in Shop Accessories
-    'Explore All Accessories': { name: 'Accessories', price: 'Cables, cases & chargers', image: '/accessories_category_uploaded.png' },
-    'Shop All Accessories': { name: 'Accessories', price: 'Cables, cases & chargers', image: '/accessories_category_uploaded.png' },
-    'Mac': { name: 'Mac Accessories', price: 'Mice, keyboards & stands', image: '/accessories_category_uploaded.png' },
-    'Mac Accessories': { name: 'Mac Accessories', price: 'Mice, keyboards & stands', image: '/accessories_category_uploaded.png' },
-    'iPad': { name: 'iPad Accessories', price: 'Cases, Pencils & Keyboards', image: '/ipad_nav/dropdown_ipad_accessories.jpg' },
-    'iPad Accessories': { name: 'iPad Accessories', price: 'Cases, Pencils & Keyboards', image: '/ipad_nav/dropdown_ipad_accessories.jpg' },
-    'iPhone': { name: 'iPhone Accessories', price: 'Cases, MagSafe & chargers', image: '/iphone_nav/dropdown_iphone_accessories.png' },
-    'iPhone Accessories': { name: 'iPhone Accessories', price: 'Cases, MagSafe & chargers', image: '/iphone_nav/dropdown_iphone_accessories.png' },
-    'Apple Watch': { name: 'Watch Bands', price: 'Premium bands & loops', image: '/watch_category_uploaded.png' },
-    'Apple Watch Accessories': { name: 'Watch Bands', price: 'Premium bands & loops', image: '/watch_category_uploaded.png' },
-    'Watch Accessories': { name: 'Watch Bands', price: 'Premium bands & loops', image: '/watch_category_uploaded.png' },
-    'AirPods': { name: 'AirPods Accessories', price: 'Protective cases', image: '/airpods_category_uploaded.png' },
-    'AirPods Accessories': { name: 'AirPods Accessories', price: 'Protective cases', image: '/airpods_category_uploaded.png' },
-    'TV & Home': { name: 'Home Accessories', price: 'Mounts & smart plugs', image: '/tvhome_category_uploaded.png' },
-    'TV & Home Accessories': { name: 'Home Accessories', price: 'Mounts & smart plugs', image: '/tvhome_category_uploaded.png' }
-  };
-
   const renderProductPreview = (catKey) => {
-    const getFallbackForCategory = () => {
-      if (catKey === 'watch') return '/apple_watch_three_models.jpg';
-      if (catKey === 'airpods') return '/airpods_category_uploaded.png';
-      if (catKey === 'tv-home') return '/tvhome_category_uploaded.png';
-      if (catKey === 'accessories') return '/accessories_category_uploaded.png';
-      if (catKey === 'ipad') return '/ipad_category_v3.png';
-      if (catKey === 'iphone') return '/iphone_category_v2.jpg';
-      return '/macbook_category_v3.jpg';
-    };
+    const hasImage = hoveredProduct && hoveredProduct.image && typeof hoveredProduct.image === 'string' && hoveredProduct.image.trim().length > 0;
 
     return (
       <div className="hidden md:flex md:col-span-6 pl-4 flex-col text-left shrink-0 justify-center items-center">
-        {hoveredProduct ? (
-          <div className="w-full h-[420px] sm:h-[480px] rounded-3xl bg-white border border-zinc-200/80 p-4 shadow-xs overflow-hidden flex items-center justify-center transition-all duration-300 animate-in fade-in">
+        {hasImage ? (
+          <div className="w-full h-[420px] sm:h-[480px] rounded-3xl bg-white border border-zinc-200/80 p-4 shadow-xs overflow-hidden flex items-center justify-center">
             <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-white p-1">
               <img
-                src={resolveNavbarImageUrl(hoveredProduct.image)}
+                src={hoveredProduct.image}
                 alt={hoveredProduct.name || 'Preview'}
-                className="w-full h-full object-contain object-center transition-all duration-300 hover:scale-105 select-none"
+                loading="eager"
+                decoding="async"
+                className="w-full h-full object-contain object-center hover:scale-105 select-none"
                 style={{
                   imageRendering: 'high-quality',
                   WebkitBackfaceVisibility: 'hidden',
                   transform: 'translateZ(0)',
-                  filter: 'contrast(1.02) brightness(1.01)',
                   objectPosition: 'center'
                 }}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = getFallbackForCategory();
+                onError={() => {
+                  setHoveredProduct(prev => prev ? { ...prev, image: null } : null);
                 }}
               />
             </div>
           </div>
         ) : (
-          <div className="w-full h-[420px] sm:h-[480px] rounded-3xl bg-white border border-dashed border-zinc-200 flex items-center justify-center">
-            <span className="text-zinc-400 text-xs uppercase font-bold tracking-wider">Hover to Preview</span>
+          <div className="w-full h-[420px] sm:h-[480px] rounded-3xl bg-white border border-dashed border-zinc-200 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-3">
+              <svg className="w-6 h-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span className="text-zinc-600 font-medium text-sm mb-1">{hoveredProduct?.name || 'Hover to Preview'}</span>
+            <span className="text-zinc-400 text-xs">{hoveredProduct?.name ? 'No image uploaded' : 'Select an item to view'}</span>
           </div>
         )}
       </div>
@@ -1387,6 +1229,7 @@ export default function Navbar() {
       }
       setDynamicNavItems(items);
       dynamicNavItemsRef.current = items;
+      preloadNavImages(items);
     } catch (err) {
       console.error('Failed to load header categories:', err);
       setDynamicNavItems([]);
