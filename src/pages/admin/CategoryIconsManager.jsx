@@ -199,14 +199,32 @@ export default function CategoryIconsManager() {
     setSaving(true);
     setError(null);
     try {
-      // 1. Save to categoryIconGroups
+      // 1. Sanitize all icon queries and paths before saving
+      const sanitizedGroups = groups.map(grp => ({
+        ...grp,
+        icons: (grp.icons || []).map(ic => {
+          const lbl = (ic.label || '').trim();
+          const q = (ic.query || '').trim();
+          const cleanQ = (!q || (q.toLowerCase().includes('new') && q.toLowerCase().includes('model'))) ? lbl : q;
+          let path = (ic.path || '').trim();
+          if ((!path || path === `/${grp.categoryKey}`) && lbl && !lbl.toLowerCase().includes('care') && !lbl.toLowerCase().includes('all') && !lbl.toLowerCase().includes('compare')) {
+            path = `/${grp.categoryKey}?search=${lbl}`;
+          }
+          return {
+            ...ic,
+            query: cleanQ || lbl,
+            path: path || `/${grp.categoryKey}`
+          };
+        })
+      }));
+
       // 2. Also sync back to navbarMenuItems dropdownItems so Header Mega Dropdown & Category pages remain 100% in sync
       const response = await axiosClient.get('/settings');
       let navItems = response.data?.navbarMenuItems || [];
 
       const updatedNavItems = navItems.map(nav => {
         const lowerName = (nav.name || '').toLowerCase();
-        const matchedGroup = groups.find(g => lowerName.includes(g.categoryKey.replace('-home', '')) || lowerName.includes(g.categoryName.toLowerCase()));
+        const matchedGroup = sanitizedGroups.find(g => lowerName.includes(g.categoryKey.replace('-home', '')) || lowerName.includes(g.categoryName.toLowerCase()));
         if (matchedGroup) {
           return {
             ...nav,
@@ -224,9 +242,10 @@ export default function CategoryIconsManager() {
       });
 
       await axiosClient.put('/settings', {
-        categoryIconGroups: groups,
+        categoryIconGroups: sanitizedGroups,
         navbarMenuItems: updatedNavItems
       });
+      setGroups(sanitizedGroups);
       notifyAdminChange('categories', { action: 'update_category_icons' });
 
       showSuccessMessage('Category Icons & Models updated successfully!');
@@ -250,7 +269,24 @@ export default function CategoryIconsManager() {
       const updated = [...prev];
       const grp = { ...updated[currentGroupIndex] };
       const icons = [...(grp.icons || [])];
-      icons[iconIdx] = { ...icons[iconIdx], [field]: value };
+      const currentIcon = { ...icons[iconIdx], [field]: value };
+
+      if (field === 'label') {
+        const valTrim = (value || '').trim();
+        const curQ = (currentIcon.query || '').toLowerCase();
+        if (!currentIcon.query || (curQ.includes('new') && curQ.includes('model'))) {
+          currentIcon.query = valTrim;
+        }
+        const curPath = (currentIcon.path || '').trim();
+        const catKey = grp.categoryKey || '';
+        if (!curPath || curPath === `/${catKey}` || curPath.includes('search=New%20') || curPath.includes('search=New+')) {
+          if (valTrim && !valTrim.toLowerCase().includes('care') && !valTrim.toLowerCase().includes('all')) {
+            currentIcon.path = `/${catKey}?search=${valTrim}`;
+          }
+        }
+      }
+
+      icons[iconIdx] = currentIcon;
       grp.icons = icons;
       updated[currentGroupIndex] = grp;
       return updated;

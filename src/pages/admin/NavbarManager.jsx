@@ -325,7 +325,36 @@ export default function NavbarManager() {
     setSaving(true);
     setError(null);
     try {
-      await axiosClient.put('/settings', { navbarMenuItems: navItems });
+      const response = await axiosClient.get('/settings');
+      let iconGroups = response.data?.categoryIconGroups || [];
+
+      const updatedIconGroups = iconGroups.map(grp => {
+        const lowerKey = grp.categoryKey.replace('-home', '');
+        const lowerName = grp.categoryName.toLowerCase();
+        const matchedNav = navItems.find(n => {
+          const nLower = (n.name || '').toLowerCase();
+          return nLower.includes(lowerKey) || nLower.includes(lowerName);
+        });
+        if (matchedNav && Array.isArray(matchedNav.dropdownItems)) {
+          return {
+            ...grp,
+            icons: matchedNav.dropdownItems.map(d => ({
+              label: d.label,
+              path: d.path,
+              query: d.query || d.label,
+              image: d.image || '',
+              price: d.price || '',
+              isActive: d.isActive !== false
+            }))
+          };
+        }
+        return grp;
+      });
+
+      await axiosClient.put('/settings', { 
+        navbarMenuItems: navItems,
+        categoryIconGroups: updatedIconGroups 
+      });
       notifyAdminChange('categories', { action: 'update_navbar' });
       showSuccessMessage('Navbar Menu & Dropdown Sub-Items updated successfully!');
     } catch (err) {

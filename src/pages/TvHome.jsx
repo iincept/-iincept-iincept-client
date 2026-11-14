@@ -295,7 +295,10 @@ const resolveSubItemPath = (item) => {
     const normalized = normalizeTargetPath(item.path.trim());
     if (normalized && normalized !== '/tv-home') return normalized;
   }
-  const queryVal = item?.query || item?.label || item?.name || '';
+  let queryVal = item?.query || '';
+  if (!queryVal || (queryVal.toLowerCase().includes('new') && queryVal.toLowerCase().includes('model'))) {
+    queryVal = item?.label || item?.name || '';
+  }
   if (queryVal && queryVal.trim()) {
     return `/tv-home?search=${encodeURIComponent(queryVal.trim())}`;
   }
@@ -334,7 +337,11 @@ const getInitialSubItems = (categoryKey, defaultItems) => {
     if (cached) {
       const parsed = JSON.parse(cached);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return ensureAppleCareInSubItems(parsed);
+        const sanitized = parsed.map(item => ({
+          ...item,
+          path: resolveSubItemPath(item)
+        }));
+        return ensureAppleCareInSubItems(sanitized);
       }
     }
   } catch (e) {}
@@ -483,11 +490,14 @@ export default function TvHome() {
             const activeSub = tvGrp.icons.filter(d => d.isActive !== false);
             if (activeSub.length > 0) {
               const mapped = activeSub.map(d => {
+                const cleanQuery = (!d.query || (d.query.toLowerCase().includes('new') && d.query.toLowerCase().includes('model')))
+                  ? (d.label || '')
+                  : d.query;
                 const fallback = TVHOME_SUB_NAV_ITEMS.find(m => m.name.toLowerCase() === (d.label || '').toLowerCase());
                 return {
                   name: d.label,
-                  query: d.query || d.label,
-                  path: resolveSubItemPath(d),
+                  query: cleanQuery || d.label,
+                  path: resolveSubItemPath({ ...d, query: cleanQuery }),
                   image: resolveIconImage(d.image, d.label),
                   scale: fallback?.scale || 'scale-100'
                 };
@@ -507,11 +517,14 @@ export default function TvHome() {
             const activeSub = tvItem.dropdownItems.filter(d => d.isActive !== false);
             if (activeSub.length > 0) {
               const mapped = activeSub.map(d => {
+                const cleanQuery = (!d.query || (d.query.toLowerCase().includes('new') && d.query.toLowerCase().includes('model')))
+                  ? (d.label || '')
+                  : d.query;
                 const fallback = TVHOME_SUB_NAV_ITEMS.find(m => m.name.toLowerCase() === (d.label || '').toLowerCase());
                 return {
                   name: d.label,
-                  query: d.query || d.label,
-                  path: resolveSubItemPath(d),
+                  query: cleanQuery || d.label,
+                  path: resolveSubItemPath({ ...d, query: cleanQuery }),
                   image: resolveIconImage(d.image, d.label),
                   scale: fallback?.scale || 'scale-100'
                 };
@@ -803,9 +816,11 @@ export default function TvHome() {
   const getTvHomeSequenceRank = (productName) => {
     const name = (productName || '').toLowerCase();
     if (name.includes('apple tv') || name.includes('tv 4k') || name.includes('tv')) return 0;
-    if (name.includes('homepod mini') || name.includes('mini')) return 2;
-    if (name.includes('homepod')) return 1;
-    return 3;
+    if (name.includes('homeview') || name.includes('home view')) return 1;
+    if (name.includes('homepod mini 2') || name.includes('mini 2')) return 4;
+    if (name.includes('homepod mini') || name.includes('mini')) return 3;
+    if (name.includes('homepod')) return 2;
+    return 5;
   };
 
   const sortedProducts = useMemo(() => {
@@ -823,8 +838,22 @@ export default function TvHome() {
 
   const filteredProducts = sortedProducts.filter((prod) => {
     const search = searchParams.get('search') || '';
-    if (search && !matchesProductSearch(prod, search)) {
-      return false;
+    if (search) {
+      const sLower = search.trim().toLowerCase();
+      const sNormalized = sLower.replace(/[\s\-_]+/g, '');
+      const pTitle = (prod.title || prod.name || '').toLowerCase();
+
+      // When searching specifically for "HomePod" (not mini), exclude mini and mini 2
+      if ((sLower === 'homepod' || sNormalized === 'homepod') && pTitle.includes('mini')) {
+        return false;
+      }
+      // When searching specifically for "HomePod mini" (not mini 2), exclude mini 2
+      if ((sLower === 'homepod mini' || sNormalized === 'homepodmini') && (pTitle.includes('mini 2') || pTitle.includes('mini-2') || pTitle.includes('mini2'))) {
+        return false;
+      }
+      if (!matchesProductSearch(prod, search)) {
+        return false;
+      }
     }
 
     if (activeTab === 'available') return !prod.isSoldOut;
@@ -856,8 +885,17 @@ export default function TvHome() {
                 isActive = isAppleCareItem;
               } else if (currentSearch) {
                 const normSearch = currentSearch.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const normQuery = (item.query || item.name || item.label || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-                isActive = normSearch === normQuery || normSearch.includes(normQuery) || normQuery.includes(normSearch);
+                const effectiveQuery = (!item.query || (item.query.toLowerCase().includes('new') && item.query.toLowerCase().includes('model')))
+                  ? (item.name || item.label || '')
+                  : item.query;
+                const normQuery = effectiveQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (normSearch === normQuery) {
+                  isActive = true;
+                } else if (normSearch.startsWith('homepod') && normQuery.startsWith('homepod')) {
+                  isActive = normSearch === normQuery;
+                } else {
+                  isActive = normSearch.includes(normQuery) || normQuery.includes(normSearch);
+                }
               }
 
               return (
