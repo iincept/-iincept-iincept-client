@@ -89,7 +89,7 @@ export default function Checkout() {
     let connectivity = item?.connectivity || '';
     let ram = item?.ram || '';
     let processor = item?.processor || '';
-    let size = item?.size || item?.accessoriesSize || item?.bandSize || '';
+    let size = item?.strapSize || item?.caseSize || item?.size || item?.accessoriesSize || item?.bandSize || '';
     let appleCare = item?.appleCarePlan || (typeof item?.appleCare === 'string' ? item?.appleCare : '');
 
     // Extract details if baseName is formatted like "Product Name (Color / Storage / ...)"

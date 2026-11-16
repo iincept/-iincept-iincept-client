@@ -51,6 +51,8 @@ export default function ProductDetails() {
   const [selectedConnectivity, setSelectedConnectivity] = useState('');
   const [selectedBandSize, setSelectedBandSize] = useState('');
   const [selectedAccessoriesSize, setSelectedAccessoriesSize] = useState('');
+  const [selectedStrapSize, setSelectedStrapSize] = useState('');
+  const [selectedCaseSize, setSelectedCaseSize] = useState('');
   const [selectedAppleCare, setSelectedAppleCare] = useState(false);
   const [selectedAppleCarePlan, setSelectedAppleCarePlan] = useState(null);
   const [isAppleCareExpanded, setIsAppleCareExpanded] = useState(false);
@@ -693,16 +695,6 @@ export default function ProductDetails() {
     };
   });
 
-  let sizes = product?.sizes || [];
-  if (sizes.length === 0 && product?.variants && product.variants.length > 0) {
-    const uniqueSizes = [];
-    product.variants.forEach(v => {
-      if (v.size && !uniqueSizes.includes(v.size)) {
-        uniqueSizes.push(v.size);
-      }
-    });
-    sizes = uniqueSizes;
-  }
 
   let storages = [];
   const rawStorages = Array.isArray(product?.storage) ? [...product.storage] : [];
@@ -785,33 +777,101 @@ export default function ProductDetails() {
     });
   }
 
-  let bandSizes = Array.isArray(product?.bandSizes) ? [...product.bandSizes] : [];
-  if (product?.variants && product.variants.length > 0) {
-    product.variants.forEach(v => {
-      if (v.bandSize) {
-        const trimmedB = v.bandSize.toString().trim();
-        if (trimmedB && !bandSizes.some(b => b.toLowerCase() === trimmedB.toLowerCase())) {
-          bandSizes.push(trimmedB);
-        }
-      }
-    });
-  }
+  const KNOWN_STRAP_VALUES = [
+    's/m', 'm/l', 'small', 'medium', 'large', 'loop', 'solo loop', 'braided solo loop',
+    'sport band', 'sport loop', 'single tour', 'double tour', 'trail loop', 'alpine loop',
+    'ocean band', 'link bracelet', 'milanese loop', 'modern buckle'
+  ];
 
-  let accessoriesSizes = [];
-  const rawAccSizes = Array.isArray(product?.accessoriesSizes) ? [...product.accessoriesSizes] : [];
+  const currentCatGroup = getCategoryGroup(product);
+  const currentCatSlug = (product?.category?.slug || product?.category?.name || product?.category || '').toString().toLowerCase();
+  const currentProdTitle = (product?.title || product?.name || '').toString().toLowerCase();
+  const isWatchOrBand = currentCatGroup === 'watch' ||
+    currentCatSlug.includes('watch') ||
+    currentCatSlug.includes('wearable') ||
+    isAccessoryProduct(product) ||
+    product?.isWatchBand === true ||
+    (Array.isArray(product?.strapSizes) && product.strapSizes.length > 0) ||
+    /\b(watch\s*band|sport\s*band|ocean\s*band|milanese|sport\s*loop|solo\s*loop|alpine\s*loop|trail\s*loop|braided\s*solo|link\s*bracelet|modern\s*buckle|watch\s*strap)\b/i.test(currentProdTitle) ||
+    /(\bband\b|\bloop\b|\bstrap\b)/i.test(currentProdTitle);
+
+  // 1. Case Sizes extraction (e.g. 40mm, 42mm, 44mm, 46mm, 49mm)
+  let caseSizes = [];
+  const rawCaseSizes = [
+    ...(Array.isArray(product?.caseSizes) ? product.caseSizes : []),
+    ...(Array.isArray(product?.bandSizes) ? product.bandSizes : []),
+    ...(Array.isArray(product?.sizes) ? product.sizes : [])
+  ];
   if (product?.variants && product.variants.length > 0) {
     product.variants.forEach(v => {
-      if (v.accessoriesSize && v.accessoriesSize !== 'None' && v.accessoriesSize !== 'Not Applicable') {
-        rawAccSizes.push(v.accessoriesSize);
+      if (v.caseSize) rawCaseSizes.push(v.caseSize);
+      if (v.bandSize) rawCaseSizes.push(v.bandSize);
+      if (v.size && (/mm$/i.test(v.size.trim()) || isWatchOrBand)) {
+        rawCaseSizes.push(v.size);
       }
     });
   }
-  rawAccSizes.forEach(accSz => {
-    const trimmed = (accSz || '').toString().trim();
-    if (trimmed && trimmed !== 'None' && !accessoriesSizes.some(a => a.toLowerCase() === trimmed.toLowerCase())) {
-      accessoriesSizes.push(trimmed);
+  rawCaseSizes.forEach(cs => {
+    const trimmed = (cs || '').toString().trim();
+    if (!trimmed || trimmed === 'None' || trimmed === 'Not Applicable') return;
+    if (KNOWN_STRAP_VALUES.includes(trimmed.toLowerCase())) return;
+    if (isWatchOrBand && !/mm$/i.test(trimmed) && !/^\d+$/.test(trimmed)) return;
+    if (!caseSizes.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+      caseSizes.push(trimmed);
     }
   });
+
+  // 2. Strap Sizes extraction (e.g. S/M, M/L, Loop, Small, Medium, Large)
+  let strapSizes = [];
+  const rawStrapSizes = [
+    ...(Array.isArray(product?.strapSizes) ? product.strapSizes : []),
+    ...(Array.isArray(product?.accessoriesSizes) ? product.accessoriesSizes : [])
+  ];
+  if (product?.variants && product.variants.length > 0) {
+    product.variants.forEach(v => {
+      if (v.strapSize && v.strapSize !== 'None' && v.strapSize !== 'Not Applicable') {
+        rawStrapSizes.push(v.strapSize);
+      }
+      if (v.accessoriesSize && v.accessoriesSize !== 'None' && v.accessoriesSize !== 'Not Applicable') {
+        rawStrapSizes.push(v.accessoriesSize);
+      }
+      if (v.size && KNOWN_STRAP_VALUES.includes(v.size.trim().toLowerCase())) {
+        rawStrapSizes.push(v.size);
+      }
+    });
+  }
+  rawStrapSizes.forEach(st => {
+    const trimmed = (st || '').toString().trim();
+    if (!trimmed || trimmed === 'None' || trimmed === 'Not Applicable') return;
+    if (/^\d+\s*mm$/i.test(trimmed)) return;
+    if (!strapSizes.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+      strapSizes.push(trimmed);
+    }
+  });
+  let accessoriesSizes = strapSizes;
+
+  // 3. General sizes (e.g. 14-inch, 16-inch for MacBook, iPad, etc.)
+  let generalSizes = [];
+  const rawGenSizes = Array.isArray(product?.sizes) ? [...product.sizes] : [];
+  if (product?.variants && product.variants.length > 0) {
+    product.variants.forEach(v => {
+      if (v.size) rawGenSizes.push(v.size);
+    });
+  }
+  rawGenSizes.forEach(sz => {
+    const trimmed = (sz || '').toString().trim();
+    if (!trimmed || trimmed === 'None' || trimmed === 'Not Applicable') return;
+    if (KNOWN_STRAP_VALUES.includes(trimmed.toLowerCase())) return;
+    if (strapSizes.some(st => st.toLowerCase() === trimmed.toLowerCase())) return;
+    if (caseSizes.some(cs => cs.toLowerCase() === trimmed.toLowerCase())) return;
+    if (/^\d+\s*mm$/i.test(trimmed)) return;
+    if (!generalSizes.some(g => g.toLowerCase() === trimmed.toLowerCase())) {
+      generalSizes.push(trimmed);
+    }
+  });
+
+  let sizes = isWatchOrBand ? caseSizes : generalSizes;
+  let bandSizes = caseSizes;
 
   const activeColorName = selectedColor?.name || (colors[0]?.name || '');
   const rawGalleryImages = getColorImages(activeColorName);
@@ -881,12 +941,43 @@ export default function ProductDetails() {
         if (matchedVar.connectivity) setSelectedConnectivity(matchedVar.connectivity);
         else if (connectivities.length > 0) setSelectedConnectivity(connectivities[0]);
 
-        if (matchedVar.bandSize) setSelectedBandSize(matchedVar.bandSize);
-        else if (bandSizes.length > 0) setSelectedBandSize(bandSizes[0]);
+        if (matchedVar.caseSize) {
+          setSelectedCaseSize(matchedVar.caseSize);
+          setSelectedBandSize(matchedVar.caseSize);
+          setSelectedSize(matchedVar.caseSize);
+        } else if (matchedVar.bandSize) {
+          setSelectedCaseSize(matchedVar.bandSize);
+          setSelectedBandSize(matchedVar.bandSize);
+          setSelectedSize(matchedVar.bandSize);
+        } else if (matchedVar.size && /mm$/i.test(matchedVar.size)) {
+          setSelectedCaseSize(matchedVar.size);
+          setSelectedBandSize(matchedVar.size);
+          setSelectedSize(matchedVar.size);
+        } else if (caseSizes.length > 0) {
+          setSelectedCaseSize(caseSizes[0]);
+          setSelectedBandSize(caseSizes[0]);
+          setSelectedSize(caseSizes[0]);
+        } else {
+          setSelectedCaseSize('');
+          setSelectedBandSize('');
+        }
 
-        if (matchedVar.accessoriesSize && matchedVar.accessoriesSize !== 'None') setSelectedAccessoriesSize(matchedVar.accessoriesSize);
-        else if (accessoriesSizes.length > 0) setSelectedAccessoriesSize(accessoriesSizes[0]);
-        else setSelectedAccessoriesSize('');
+        if (matchedVar.strapSize) {
+          setSelectedStrapSize(matchedVar.strapSize);
+          setSelectedAccessoriesSize(matchedVar.strapSize);
+        } else if (matchedVar.accessoriesSize && matchedVar.accessoriesSize !== 'None') {
+          setSelectedStrapSize(matchedVar.accessoriesSize);
+          setSelectedAccessoriesSize(matchedVar.accessoriesSize);
+        } else if (matchedVar.size && KNOWN_STRAP_VALUES.includes(matchedVar.size.trim().toLowerCase())) {
+          setSelectedStrapSize(matchedVar.size);
+          setSelectedAccessoriesSize(matchedVar.size);
+        } else if (strapSizes.length > 0) {
+          setSelectedStrapSize(strapSizes[0]);
+          setSelectedAccessoriesSize(strapSizes[0]);
+        } else {
+          setSelectedStrapSize('');
+          setSelectedAccessoriesSize('');
+        }
 
         const varImg = matchedVar.images?.[0] || matchedVar.image;
         if (varImg) {
@@ -900,13 +991,15 @@ export default function ProductDetails() {
       } else {
         const initialColor = colors.length > 0 ? colors[0] : null;
         setSelectedColor(initialColor);
-        setSelectedSize(sizes.length > 0 ? sizes[0] : '');
+        setSelectedCaseSize(caseSizes.length > 0 ? caseSizes[0] : '');
+        setSelectedBandSize(caseSizes.length > 0 ? caseSizes[0] : '');
+        setSelectedStrapSize(strapSizes.length > 0 ? strapSizes[0] : '');
+        setSelectedAccessoriesSize(strapSizes.length > 0 ? strapSizes[0] : '');
+        setSelectedSize(generalSizes.length > 0 ? generalSizes[0] : (caseSizes.length > 0 ? caseSizes[0] : ''));
         setSelectedStorage(storages.length > 0 ? storages[0] : '');
         setSelectedRam(rams.length > 0 ? rams[0] : '');
         setSelectedGlass(glasses.length > 0 ? glasses[0] : '');
         setSelectedConnectivity(connectivities.length > 0 ? connectivities[0] : '');
-        setSelectedBandSize(bandSizes.length > 0 ? bandSizes[0] : '');
-        setSelectedAccessoriesSize(accessoriesSizes.length > 0 ? accessoriesSizes[0] : '');
 
         const activeColorName = initialColor?.name || '';
         const imgs = getColorImages(activeColorName);
@@ -2398,9 +2491,11 @@ export default function ProductDetails() {
     const processorVal = activeVar?.processor || activeVar?.chip || getProcessorSpec();
 
     const detailsArr = [];
-    if (selectedAccessoriesSize && selectedAccessoriesSize !== 'None') detailsArr.push(`Size: ${selectedAccessoriesSize}`);
-    if (selectedSize) detailsArr.push(selectedSize);
-    if (selectedBandSize) detailsArr.push(`Band: ${selectedBandSize}`);
+    if (selectedStrapSize && selectedStrapSize !== 'None') detailsArr.push(`Strap: ${selectedStrapSize}`);
+    else if (selectedAccessoriesSize && selectedAccessoriesSize !== 'None') detailsArr.push(`Strap: ${selectedAccessoriesSize}`);
+    if (selectedCaseSize) detailsArr.push(`Case: ${selectedCaseSize}`);
+    else if (selectedBandSize && isWatchOrBand) detailsArr.push(`Case: ${selectedBandSize}`);
+    else if (selectedSize && !isWatchOrBand) detailsArr.push(selectedSize);
     if (colorName) detailsArr.push(colorName);
     if (selectedConnectivity) detailsArr.push(selectedConnectivity);
     if (selectedStorage) detailsArr.push(selectedStorage);
@@ -2423,14 +2518,16 @@ export default function ProductDetails() {
 
     try {
       const result = await dispatch(addToCart({
-        id: `${id}-${selectedAccessoriesSize || 'nosz'}-${selectedSize || 'std'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${hasAppleCare ? (selectedAppleCarePlan?.id || currentAppleCarePlan?.sku || 'ac') : 'noac'}-${colorName}`,
+        id: `${id}-${selectedStrapSize || selectedAccessoriesSize || 'nostrap'}-${selectedCaseSize || selectedSize || 'nocase'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${hasAppleCare ? (selectedAppleCarePlan?.id || currentAppleCarePlan?.sku || 'ac') : 'noac'}-${colorName}`,
         name: `${cleanProductTitle(product.name || product.title)} (${nameDetails})`,
         price: unitPrice,
         image: activeImage || processedImage || colors[0]?.image || product.images?.[0] || product.image,
         quantity,
-        size: selectedSize,
-        accessoriesSize: selectedAccessoriesSize,
-        bandSize: selectedBandSize,
+        size: selectedSize || selectedCaseSize,
+        caseSize: selectedCaseSize,
+        strapSize: selectedStrapSize || selectedAccessoriesSize,
+        accessoriesSize: selectedAccessoriesSize || selectedStrapSize,
+        bandSize: selectedBandSize || selectedCaseSize,
         connectivity: selectedConnectivity,
         storage: selectedStorage,
         glass: glassVal,
@@ -2953,58 +3050,73 @@ export default function ProductDetails() {
               );
             })()}
 
-            {/* Accessories Size options (XXS, XS, Small, Medium, Large) */}
-            {accessoriesSizes && accessoriesSizes.length > 0 && (
+            {/* 1. Case Size options (Only shown if admin configured Case Sizes e.g. 40mm, 42mm, 44mm, 46mm, 49mm) */}
+            {caseSizes && caseSizes.length > 0 && (
               <div className="optgroup mb-8 text-left">
                 <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">
-                  Accessories Size
+                  Case Size
                 </label>
                 <div className="optrow flex flex-wrap gap-3">
-                  {accessoriesSizes.map((accSz) => (
-                    <div
-                      key={accSz}
-                      onClick={() => setSelectedAccessoriesSize(accSz)}
-                      className={`opt ${selectedAccessoriesSize === accSz ? 'active' : ''}`}
-                    >
-                      {accSz}
-                    </div>
-                  ))}
+                  {caseSizes.map((cs) => {
+                    const isActive = selectedCaseSize === cs || selectedBandSize === cs || selectedSize === cs;
+                    return (
+                      <div
+                        key={cs}
+                        onClick={() => {
+                          setSelectedCaseSize(cs);
+                          setSelectedBandSize(cs);
+                          setSelectedSize(cs);
+                        }}
+                        className={`opt ${isActive ? 'active' : ''}`}
+                      >
+                        {cs}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Size / Case Size options */}
-            {sizes && sizes.length > 0 && (
-              <div className="optgroup mb-8">
+            {/* 2. Strap Size options (Loop, S/M, M/L, etc. - Only shown if admin configured Strap Sizes) */}
+            {strapSizes && strapSizes.length > 0 && (
+              <div className="optgroup mb-8 text-left">
                 <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">
-                  {(product?.category?.name || product?.category || '').toString().toLowerCase().includes('watch') ? 'Case Size' : 'Size / Model'}
+                  Strap Size
                 </label>
                 <div className="optrow flex flex-wrap gap-3">
-                  {sizes.map((sz) => (
+                  {strapSizes.map((stSz) => {
+                    const isActive = selectedStrapSize === stSz || selectedAccessoriesSize === stSz;
+                    return (
+                      <div
+                        key={stSz}
+                        onClick={() => {
+                          setSelectedStrapSize(stSz);
+                          setSelectedAccessoriesSize(stSz);
+                        }}
+                        className={`opt ${isActive ? 'active' : ''}`}
+                      >
+                        {stSz}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 3. General Size / Model options (Only for general non-watch products with explicit sizes) */}
+            {!isWatchOrBand && generalSizes && generalSizes.length > 0 && (
+              <div className="optgroup mb-8 text-left">
+                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">
+                  Size / Model
+                </label>
+                <div className="optrow flex flex-wrap gap-3">
+                  {generalSizes.map((sz) => (
                     <div
                       key={sz}
                       onClick={() => setSelectedSize(sz)}
                       className={`opt ${selectedSize === sz ? 'active' : ''}`}
                     >
                       {sz}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Band Size options (S/M, M/L) */}
-            {bandSizes && bandSizes.length > 0 && (
-              <div className="optgroup mb-8">
-                <label className="block text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">Band Size</label>
-                <div className="optrow flex flex-wrap gap-3">
-                  {bandSizes.map((bs) => (
-                    <div
-                      key={bs}
-                      onClick={() => setSelectedBandSize(bs)}
-                      className={`opt ${selectedBandSize === bs ? 'active' : ''}`}
-                    >
-                      {bs}
                     </div>
                   ))}
                 </div>

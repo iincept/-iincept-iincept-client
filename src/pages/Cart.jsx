@@ -119,7 +119,10 @@ export default function Cart() {
                 <div className="text-left min-w-0 flex-1">
                   <h3 className="font-bold text-zinc-800 text-xs sm:text-sm line-clamp-1">{item.name}</h3>
                   <div className="text-[10px] text-zinc-500 space-y-0.5 mt-0.5 hidden sm:block">
-                    {item.accessoriesSize && item.accessoriesSize !== 'None' && <p>Accessories Size: <span className="text-zinc-700">{item.accessoriesSize}</span></p>}
+                    {(item.strapSize || item.accessoriesSize) && (item.strapSize || item.accessoriesSize) !== 'None' && (
+                      <p>Strap Size: <span className="text-zinc-700">{item.strapSize || item.accessoriesSize}</span></p>
+                    )}
+                    {item.caseSize && <p>Case Size: <span className="text-zinc-700">{item.caseSize}</span></p>}
                     {item.size && <p>Config: <span className="text-zinc-700">{item.size}</span></p>}
                     {item.color && (
                       <div className="flex items-center gap-1">

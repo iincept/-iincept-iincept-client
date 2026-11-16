@@ -601,13 +601,41 @@ export default function Accessories() {
     filteredProductsLengthRef.current = filteredProducts.length;
   }, [filteredProducts.length]);
 
+  const dynamicHeading = useMemo(() => {
+    if (!selectedProductFilter) return 'Accessories';
+    const filterLower = selectedProductFilter.toLowerCase().trim();
+    const matched = subItems.find(item => (item.query || item.name || '').toLowerCase().trim() === filterLower);
+
+    if (matched && matched.name) {
+      const n = matched.name.trim();
+      if (n.toLowerCase().endsWith('accessories')) return n;
+      return `${n} Accessories`;
+    }
+
+    const fallbackMap = {
+      iphone: 'iPhone Accessories',
+      ipad: 'iPad Accessories',
+      mac: 'Mac Accessories',
+      watch: 'Apple Watch Accessories',
+      'apple watch': 'Apple Watch Accessories',
+      airpods: 'AirPods Accessories',
+      home: 'Home Accessories',
+      'tv-home': 'TV & Home Accessories',
+      airtag: 'AirTag Accessories',
+      beats: 'Beats Accessories'
+    };
+    return fallbackMap[filterLower] || `${selectedProductFilter.charAt(0).toUpperCase() + selectedProductFilter.slice(1)} Accessories`;
+  }, [subItems, selectedProductFilter]);
+
   return (
     <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] pt-2 sm:pt-3 pb-8 select-none relative font-sans">
 
       {/* Title & Category Sub-Nav Header */}
       <div className="w-full bg-[#fcfcfc] pt-0 pb-2 select-none font-sans mb-3 px-4 sm:px-8 md:px-12 lg:px-16">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-2">Accessories</h1>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 text-left mb-2 transition-colors duration-200">
+            {dynamicHeading}
+          </h1>
 
           {/* Horizontal Accessories Category Selector Row (Apple Style) */}
           <div className="flex items-end justify-start gap-7 sm:gap-9 md:gap-11 lg:gap-12 overflow-x-auto no-scrollbar py-3 px-1">

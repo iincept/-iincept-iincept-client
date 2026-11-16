@@ -41,7 +41,9 @@ const transformCartItem = (dbItem) => {
     stock: p.stock || 10,
     color: dbItem.color || '',
     size: dbItem.size || '',
-    accessoriesSize: dbItem.accessoriesSize || '',
+    caseSize: dbItem.caseSize || '',
+    strapSize: dbItem.strapSize || dbItem.accessoriesSize || '',
+    accessoriesSize: dbItem.accessoriesSize || dbItem.strapSize || '',
     partNumber: dbItem.partNumber || p.partNumber || '',
   };
 };
@@ -119,7 +121,9 @@ export const addToCart = createAsyncThunk(
             image: item.image || t.image,
             color: item.color || t.color || '',
             size: item.size || t.size || '',
-            accessoriesSize: item.accessoriesSize || t.accessoriesSize || '',
+            caseSize: item.caseSize || t.caseSize || '',
+            strapSize: item.strapSize || t.strapSize || item.accessoriesSize || t.accessoriesSize || '',
+            accessoriesSize: item.accessoriesSize || t.accessoriesSize || item.strapSize || t.strapSize || '',
             bandSize: item.bandSize || '',
             connectivity: item.connectivity || '',
             storage: item.storage || '',
