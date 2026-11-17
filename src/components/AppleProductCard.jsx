@@ -781,7 +781,7 @@ export default function AppleProductCard({
         <div className="border-t border-zinc-200/60 my-3.5 sm:my-4" />
 
         {/* Colours & In-Stock Status Row */}
-        <div className={`flex items-center ${hasColors ? 'justify-between' : 'justify-end'} gap-2 min-h-[42px]`}>
+        <div className={`flex items-end sm:items-center ${hasColors ? 'justify-between' : 'justify-end'} gap-2 min-h-[42px]`}>
           {/* Colours Selector (only shown if colors were added from Admin Panel) */}
           {hasColors && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
@@ -834,7 +834,7 @@ export default function AppleProductCard({
 
           {/* In Stock Badge */}
           <div
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 select-none ${isSoldOut
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 select-none mb-1 sm:mb-0 mr-1 sm:mr-0 ${isSoldOut
               ? 'bg-zinc-100 text-zinc-500'
               : 'bg-[#eaf8ee] text-[#16a34a]'
               }`}
@@ -850,8 +850,10 @@ export default function AppleProductCard({
         {/* Divider Line */}
         <div className="border-t border-zinc-200/60 my-3.5 sm:my-4" />
 
-        {/* Bottom Pricing & Action Buttons Row */}
-        <div className="flex items-end justify-between gap-2.5 pt-0.5">
+        {/* Bottom Pricing & Action Buttons - Responsive Sections */}
+
+        {/* Desktop View: Keep existing desktop layout exactly as it is */}
+        <div className="hidden sm:flex items-end justify-between gap-2.5 pt-0.5">
           {/* Price & Savings Block */}
           <div className="flex flex-col min-w-0">
             <span className="text-[11px] sm:text-xs font-semibold text-zinc-400 tracking-tight">
@@ -898,6 +900,62 @@ export default function AppleProductCard({
               aria-label="Add to Cart"
             >
               <ShoppingCart className="h-5 w-5 stroke-[1.8]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile View: Price row with Green Save pill on right, and View + Add to Cart pill buttons below */}
+        <div className="block sm:hidden space-y-3 pt-0.5">
+          {/* Row 1: Starting From, Price, Strikethrough & Green Save Pill */}
+          <div className="flex items-end justify-between gap-2">
+            <div className="flex flex-col min-w-0">
+              <span className="text-[11px] font-semibold text-zinc-400 tracking-tight">
+                Starting From
+              </span>
+              <div className="flex items-baseline gap-1.5 flex-wrap mt-0.5">
+                <span className="text-xl font-black text-zinc-950 tracking-tight leading-none">
+                  ₹{sellingPrice.toLocaleString('en-IN')}
+                </span>
+                {hasDiscount && (
+                  <span className="text-xs font-bold text-zinc-400 line-through">
+                    ₹{originalMrp.toLocaleString('en-IN')}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Green Save Pill Badge on the right of Price Row */}
+            {hasDiscount && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-[#EAF8EE] text-[#16A34A] shrink-0 self-end mb-0.5">
+                Save ₹{savingsAmount.toLocaleString('en-IN')} ({discountPercent}%)
+              </span>
+            )}
+          </div>
+
+          {/* Row 2: Action Buttons (View + Add to Cart) Full Width */}
+          <div className="flex items-center gap-2 pt-0.5">
+            {/* View Button */}
+            <button
+              type="button"
+              onClick={handleQuickViewOpen}
+              className="flex-1 py-2 px-3 rounded-full border border-zinc-200/90 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-2xs active:scale-95"
+              title="View product"
+              aria-label="View product"
+            >
+              <Eye className="h-4 w-4 stroke-[2]" />
+              <span>View</span>
+            </button>
+
+            {/* Add to Cart Button */}
+            <button
+              type="button"
+              onClick={handleAddToCartClick}
+              className="flex-[1.3] py-2 px-3.5 rounded-full bg-[#18181b] hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-2xs active:scale-95"
+              title="Add to Cart"
+              aria-label="Add to Cart"
+            >
+              <ShoppingCart className="h-4 w-4 stroke-[2]" />
+              <span>Add to Cart</span>
             </button>
           </div>
         </div>

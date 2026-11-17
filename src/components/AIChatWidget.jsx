@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const PhoneCallIcon = (props) => (
   <svg
@@ -20,52 +20,162 @@ const WhatsAppIcon = (props) => (
   </svg>
 );
 
+const ChevronLeftIcon = (props) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M15 18l-6-6 6-6" />
+  </svg>
+);
+
+const ChevronRightIcon = (props) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M9 18l6-6-6-6" />
+  </svg>
+);
+
 export default function AIChatWidget() {
+  const [isOpen, setIsOpen] = useState(false);
+  const mobileRef = useRef(null);
+
   const phoneCallUrl = 'tel:+919971002348';
   const whatsappUrl = `https://wa.me/919971002348?text=${encodeURIComponent(
     'Hi Rahul, I am visiting iincept Apple Store and need assistance with Apple products and quotes.'
   )}`;
 
-  return (
-    <aside
-      aria-label="Quick Contact & Support"
-      className="fixed z-50 flex flex-col items-center select-none pointer-events-auto right-3 bottom-24 gap-3 sm:right-6 sm:bottom-6 sm:gap-3.5"
-    >
-      {/* 1. WhatsApp Button: Bright green circular background with lighter outer ring, centered white WhatsApp icon */}
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="
-          w-[58px] h-[58px] rounded-full bg-[#25D366] text-white
-          border-2 border-[#5ce292]
-          shadow-[0_4px_14px_rgba(0,0,0,0.18)]
-          flex items-center justify-center cursor-pointer transition-all duration-300
-          active:scale-95 hover:scale-105
-          sm:w-14 sm:h-14 sm:border-white/20 sm:shadow-2xl sm:hover:scale-110 sm:hover:bg-[#20ba5a]
-        "
-        aria-label="Chat on WhatsApp (+91 99710 02348)"
-        title="Chat on WhatsApp (+91 99710 02348)"
-      >
-        <WhatsAppIcon className="w-8 h-8 text-white drop-shadow-sm sm:w-7.5 sm:h-7.5" />
-      </a>
+  // Close mobile widget when user clicks outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleOutsideClick = (e) => {
+      if (mobileRef.current && !mobileRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleOutsideClick);
+    return () => document.removeEventListener('pointerdown', handleOutsideClick);
+  }, [isOpen]);
 
-      {/* 2. Call Button: Bright blue circular background with lighter outer ring, centered white phone icon */}
-      <a
-        href={phoneCallUrl}
-        className="
-          w-[58px] h-[58px] rounded-full bg-[#1877F2] text-white
-          border-2 border-[#5ba2f8]
-          shadow-[0_4px_14px_rgba(0,0,0,0.18)]
-          flex items-center justify-center cursor-pointer transition-all duration-300
-          active:scale-95 hover:scale-105 group
-          sm:w-14 sm:h-14 sm:border-white/20 sm:shadow-2xl sm:hover:scale-110 sm:hover:bg-[#166fe5]
-        "
-        aria-label="Call Customer Support (+91 99710 02348)"
-        title="Call Customer Support (+91 99710 02348)"
+  return (
+    <>
+      {/* ========================================================
+          1. MOBILE VIEW (Expand on 1-click, Collapse on 1-click)
+          ======================================================== */}
+      <aside
+        ref={mobileRef}
+        aria-label="Quick Contact & Support Mobile"
+        className="block sm:hidden fixed right-0 bottom-28 z-50 select-none"
       >
-        <PhoneCallIcon className="w-7 h-7 text-white drop-shadow-sm transition-transform duration-300 group-hover:rotate-12 sm:w-7 sm:h-7" />
-      </a>
-    </aside>
+        {!isOpen ? (
+          /* Collapsed State: Sleek half-pill tab with '<' on the right edge */
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="flex items-center justify-center w-7 h-12 bg-[#182032] text-white rounded-l-2xl shadow-[0_4px_16px_rgba(0,0,0,0.28)] active:scale-95 transition-all border-y border-l border-white/20 cursor-pointer animate-in fade-in duration-200"
+            title="Expand to show WhatsApp & Call"
+            aria-label="Expand to show WhatsApp & Call"
+          >
+            <ChevronLeftIcon className="w-4 h-4 text-white" />
+          </button>
+        ) : (
+          /* Expanded State: Top toggle '>' button + WhatsApp & Call capsule */
+          <div className="flex flex-col items-center gap-2.5 mr-2 animate-in slide-in-from-right-8 duration-300">
+            {/* Top Collapse Button (Chevron Right) */}
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="w-10 h-10 rounded-2xl bg-white shadow-lg border border-zinc-200/90 flex items-center justify-center text-[#182032] active:scale-90 transition-transform cursor-pointer"
+              title="Collapse"
+              aria-label="Collapse WhatsApp & Call"
+            >
+              <div className="w-6.5 h-6.5 rounded-xl bg-[#182032] text-white flex items-center justify-center shadow-xs">
+                <ChevronRightIcon className="w-3.5 h-3.5 text-white" />
+              </div>
+            </button>
+
+            {/* Bottom Capsule: WhatsApp + Call icons */}
+            <div className="flex flex-col items-center bg-[#182032] p-2 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.32)] border border-white/10 gap-2.5">
+              {/* WhatsApp Button */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-11 h-11 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-md active:scale-90 transition-transform hover:scale-105"
+                title="Chat on WhatsApp (+91 99710 02348)"
+                aria-label="Chat on WhatsApp (+91 99710 02348)"
+              >
+                <WhatsAppIcon className="w-6 h-6 text-white drop-shadow-xs" />
+              </a>
+
+              {/* Subtle Divider */}
+              <div className="w-5 h-px bg-white/20" />
+
+              {/* Call Button */}
+              <a
+                href={phoneCallUrl}
+                className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shadow-md active:scale-90 transition-all hover:scale-105"
+                title="Call Customer Support (+91 99710 02348)"
+                aria-label="Call Customer Support (+91 99710 02348)"
+              >
+                <PhoneCallIcon className="w-5 h-5 text-white" />
+              </a>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      {/* ========================================================
+          2. DESKTOP VIEW (Preserved exact static floating buttons)
+          ======================================================== */}
+      <aside
+        aria-label="Quick Contact & Support Desktop"
+        className="hidden sm:flex flex-col items-center select-none pointer-events-auto fixed right-6 bottom-6 gap-3.5 z-50"
+      >
+        {/* WhatsApp Button */}
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="
+            w-14 h-14 rounded-full bg-[#25D366] text-white
+            border-2 border-white/20 shadow-2xl
+            flex items-center justify-center cursor-pointer transition-all duration-300
+            hover:scale-110 hover:bg-[#20ba5a] active:scale-95
+          "
+          aria-label="Chat on WhatsApp (+91 99710 02348)"
+          title="Chat on WhatsApp (+91 99710 02348)"
+        >
+          <WhatsAppIcon className="w-7.5 h-7.5 text-white drop-shadow-sm" />
+        </a>
+
+        {/* Call Button */}
+        <a
+          href={phoneCallUrl}
+          className="
+            w-14 h-14 rounded-full bg-[#1877F2] text-white
+            border-2 border-white/20 shadow-2xl
+            flex items-center justify-center cursor-pointer transition-all duration-300
+            hover:scale-110 hover:bg-[#166fe5] active:scale-95 group
+          "
+          aria-label="Call Customer Support (+91 99710 02348)"
+          title="Call Customer Support (+91 99710 02348)"
+        >
+          <PhoneCallIcon className="w-7 h-7 text-white drop-shadow-sm transition-transform duration-300 group-hover:rotate-12" />
+        </a>
+      </aside>
+    </>
   );
 }
