@@ -6,7 +6,7 @@ import IinceptLogo from './IinceptLogo';
 const DEFAULT_FOOTER_DATA = {
   brandTitle: 'iiNCEPT',
   brandTagline: 'Official platform of Apple Authorised Distributors in India. Browse online, buy from trusted mono-brand resellers near you.',
-  copyrightText: 'Copyright © 2026 iiNCEPT Electronics. All rights reserved. Powered by Ingram Micro & Redington.',
+  copyrightText: 'Copyright © 2026 iiNCEPT.COM',
   columns: [
     {
       title: 'Shop',
@@ -537,7 +537,7 @@ export default function Footer() {
           </ul>
 
           <div className="indiaistore-footer-copyright">
-            {footerData?.copyrightText || ''}
+            {footerData?.copyrightText || 'Copyright © 2026 iiNCEPT.COM'}
           </div>
         </div>
 

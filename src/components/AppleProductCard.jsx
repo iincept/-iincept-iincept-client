@@ -784,7 +784,7 @@ export default function AppleProductCard({
         <div className={`flex items-center ${hasColors ? 'justify-between' : 'justify-end'} gap-2 min-h-[42px]`}>
           {/* Colours Selector (only shown if colors were added from Admin Panel) */}
           {hasColors && (
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
               <span className="text-sm sm:text-base font-bold text-zinc-900 tracking-tight">Colours:</span>
               <div className="flex items-center gap-1.5 sm:gap-2 py-0.5">
                 {normalizedColors.slice(0, 5).map((color, cIdx) => {
