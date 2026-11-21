@@ -2517,8 +2517,10 @@ export default function ProductDetails() {
     const nameDetails = detailsArr.join(' / ');
 
     try {
+      const safeCareCode = (selectedAppleCarePlan?.id || currentAppleCarePlan?.sku || 'ac').replace(/[\/\s]/g, '_');
+      const safeColor = (colorName || 'std').replace(/[\/\s]/g, '_');
       const result = await dispatch(addToCart({
-        id: `${id}-${selectedStrapSize || selectedAccessoriesSize || 'nostrap'}-${selectedCaseSize || selectedSize || 'nocase'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${hasAppleCare ? (selectedAppleCarePlan?.id || currentAppleCarePlan?.sku || 'ac') : 'noac'}-${colorName}`,
+        id: `${id}-${selectedStrapSize || selectedAccessoriesSize || 'nostrap'}-${selectedCaseSize || selectedSize || 'nocase'}-${selectedBandSize || 'std'}-${selectedConnectivity || 'std'}-${selectedStorage || 'std'}-${selectedRam || 'std'}-${glassVal || 'std'}-${hasAppleCare ? safeCareCode : 'noac'}-${safeColor}`,
         name: `${cleanProductTitle(product.name || product.title)} (${nameDetails})`,
         price: unitPrice,
         image: activeImage || processedImage || colors[0]?.image || product.images?.[0] || product.image,

@@ -90,8 +90,9 @@ const DEFAULT_WATCH_APPLECARE_ROWS = [
 
 const WATCH_SUB_NAV_ITEMS = [
   { name: 'Apple Watch Series 12', query: 'New Watch Model', path: '/watch?search=Apple Watch Series 12', image: '/watch_nav/nav_s12.png', scale: 'scale-100' },
-  { name: 'Apple Watch Ultra 4', query: 'New Watch Model', path: '/watch?search= Apple Watch Ultra 4', image: '/watch_nav/nav_ultra4.png', scale: 'scale-100' },
+  { name: 'Apple Watch Ultra 4', query: 'New Watch Model', path: '/watch?search=Apple Watch Ultra 4', image: '/watch_nav/nav_ultra4.png', scale: 'scale-100' },
   { name: 'Apple Watch SE 3', query: 'New Watch Model', path: '/watch?search=Apple Watch SE 3', image: '/watch_nav/nav_se3.png', scale: 'scale-95' },
+  { name: 'Apple Watch Bands', query: 'Bands', path: '/watch?search=Bands', image: '/uploads/upload_1795225037364_144.png', scale: 'scale-95' },
   { name: 'AppleCare +', query: 'New Watch Model', path: '/watch?tab=applecare', image: '/uploads/upload_1792413080706_797.png', scale: 'scale-100' }
 ];
 
@@ -105,6 +106,9 @@ const resolveSubItemPath = (item) => {
   }
   if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
     return '/compare?category=watch';
+  }
+  if (nameLower.includes('band') || queryLower.includes('band') || pathLower.includes('band') || nameLower.includes('strap')) {
+    return '/watch?search=Bands';
   }
   if (item?.path && item.path.trim()) {
     const normalized = normalizeTargetPath(item.path.trim());
@@ -166,6 +170,7 @@ const resolveIconImage = (img, label) => {
   }
   const lblLower = (label || '').toLowerCase().trim();
   if (lblLower.includes('care')) return '/uploads/upload_1792413080706_797.png';
+  if (lblLower.includes('band') || lblLower.includes('strap')) return '/uploads/upload_1795225037364_144.png';
   if (lblLower.includes('ultra')) return '/watch_nav/nav_ultra4.png';
   if (lblLower.includes('se')) return '/watch_nav/nav_se3.png';
   if (lblLower.includes('series') || lblLower.includes('12') || lblLower.includes('11') || lblLower.includes('10')) return '/watch_nav/nav_s12.png';
@@ -1262,6 +1267,70 @@ export default function Watch() {
     });
   }, [products]);
 
+  const dbWatchBands = useMemo(() => {
+    return products.filter(p => {
+      const pTitle = (p.title || p.name || '').toLowerCase();
+      const dev = (p.accessoryDevice || '').toString().toLowerCase().trim();
+
+      if (dev === 'watch') {
+        if (pTitle.includes('charger') || pTitle.includes('cable') || pTitle.includes('stand')) return false;
+        if (pTitle.includes('beats') || pTitle.includes('ear cup')) return false;
+        return true;
+      }
+
+      if (dev && dev !== 'watch') return false;
+
+      const isBandKeyword = pTitle.includes('band') || pTitle.includes('strap') || pTitle.includes('loop') || pTitle.includes('milanese') || pTitle.includes('link bracelet') || pTitle.includes('buckle');
+      if (!isBandKeyword) return false;
+
+      if (pTitle.includes('beats') || pTitle.includes('cushion') || pTitle.includes('crossbody') || pTitle.includes('wrist strap') || pTitle.includes('ear cup') || pTitle.includes('headphone')) {
+        return false;
+      }
+
+      return true;
+    }).map(p => {
+      const firstImg = extractFirstValidImage(p);
+      const primaryImg = p.displayImage || (p.images && p.images[0]) || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : '/watch_category.jpg');
+      const varPrices = (p.variants && Array.isArray(p.variants)) ? p.variants.map(v => v.price).filter(pr => typeof pr === 'number' && pr > 0) : [];
+      const effectivePrice = varPrices.length > 0 ? Math.min(...varPrices) : (p.price || 0);
+      const pId = p._id || p.id;
+      return {
+        id: pId,
+        _id: pId,
+        name: p.title || p.name,
+        price: effectivePrice,
+        priceStr: `₹${effectivePrice.toLocaleString('en-IN')}`,
+        discountPercent: p.discountPercent || 0,
+        discountPrice: p.discountPrice || 0,
+        displayImage: primaryImg,
+        colorImages: p.colorImages || {},
+        image: primaryImg,
+        images: (p.images && p.images.length > 0) ? p.images : [primaryImg],
+        variants: p.variants || [],
+        colors: Array.isArray(p.colors) ? p.colors.map(c => {
+          const name = typeof c === 'string' ? c : (c.name || '');
+          const matchedVariant = p.variants && Array.isArray(p.variants)
+            ? p.variants.find(v => (v.color || '').trim().toLowerCase() === name.trim().toLowerCase())
+            : null;
+          const val = typeof c === 'string' ? c : (c.colorHex || c.value || c.name || '');
+          const hex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+            ? normalizeHex(c.colorHex)
+            : (typeof c === 'object' && c.value && isValidHex(c.value))
+              ? normalizeHex(c.value)
+              : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+                ? normalizeHex(matchedVariant.colorHex)
+                : resolveColorValue(val);
+          return { name, value: hex, colorHex: hex };
+        }) : [],
+        rating: p.rating || 5.0,
+        isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false,
+        category: p.category,
+        description: p.description,
+        accessoryDevice: p.accessoryDevice
+      };
+    });
+  }, [products]);
+
   const combinedProducts = useMemo(() => {
     if (dbWatches.length > 0) return dbWatches;
     return getCachedWatchProducts();
@@ -1283,22 +1352,28 @@ export default function Watch() {
     return 3;
   };
 
+  const searchQuery = searchParams.get('search') || '';
+  const isBandsSearch = searchQuery.toLowerCase().includes('band');
+
+  const activeProductList = isBandsSearch ? dbWatchBands : combinedProducts;
+
   const sortedProducts = useMemo(() => {
-    return [...combinedProducts].sort((a, b) => {
+    return [...activeProductList].sort((a, b) => {
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
       if (sortBy === 'rating') return b.rating - a.rating;
 
-      const rA = getWatchSequenceRank(a.name || a.title);
-      const rB = getWatchSequenceRank(b.name || b.title);
-      if (rA !== rB) return rA - rB;
+      if (!isBandsSearch) {
+        const rA = getWatchSequenceRank(a.name || a.title);
+        const rB = getWatchSequenceRank(b.name || b.title);
+        if (rA !== rB) return rA - rB;
+      }
       return b.price - a.price;
     });
-  }, [combinedProducts, sortBy]);
+  }, [activeProductList, sortBy, isBandsSearch]);
 
   const filteredProducts = sortedProducts.filter((prod) => {
-    const search = searchParams.get('search') || '';
-    if (search && !matchesProductSearch(prod, search)) {
+    if (!isBandsSearch && searchQuery && !matchesProductSearch(prod, searchQuery)) {
       return false;
     }
 
@@ -1321,12 +1396,19 @@ export default function Watch() {
           <div className="flex items-end gap-7 sm:gap-9 md:gap-11 lg:gap-12 overflow-x-auto no-scrollbar py-3 px-1">
             {subItems.map((item, idx) => {
               const currentTab = searchParams.get('tab') || '';
-              const currentSearch = searchParams.get('search') || '';
-              const isAppleCareItem = (item.name || item.label || '').toLowerCase().includes('care');
-              const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
+              const currentSearch = (searchParams.get('search') || '').toLowerCase().trim();
+              const nameLower = (item.name || item.label || '').toLowerCase();
+              const queryLower = (item.query || '').toLowerCase().trim();
+              const isAppleCareItem = nameLower.includes('care');
+              const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.includes('care');
+              const isBandsItem = nameLower.includes('band') || queryLower.includes('band') || nameLower.includes('strap');
+              const isBandsActive = currentSearch.includes('band');
+
               const isActive = isAppleCareActive
                 ? isAppleCareItem
-                : (currentSearch && currentSearch.toLowerCase() === (item.query || '').toLowerCase());
+                : isBandsActive
+                  ? isBandsItem
+                  : (currentSearch && (currentSearch === queryLower || currentSearch === nameLower || currentSearch.includes(queryLower)));
 
               return (
                 <Link

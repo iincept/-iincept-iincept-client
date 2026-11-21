@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, ShieldCheck, Wrench, Headphones, Check } from 'lucide-react';
@@ -163,7 +163,7 @@ const IPAD_SUB_NAV_ITEMS = [
   { name: 'iPad mini', query: 'iPad mini', image: '/ipad_nav/ipad_mini.png', scale: 'scale-95' },
   { name: 'Apple Pencil', query: 'Pencil', image: '/ipad_nav/apple_pencil.png', scale: 'scale-95' },
   { name: 'Keyboards', query: 'Keyboard', image: '/ipad_nav/keyboards.png', scale: 'scale-95' },
-  { name: 'Accessories', path: '/accessories?product=ipad', image: '/ipad_nav/accessories.png', scale: 'scale-95' },
+  { name: 'Accessories', query: 'Accessories', image: '/ipad_nav/accessories.png', scale: 'scale-95' },
   { name: 'AppleCare+', path: '/ipad?tab=applecare', image: '/uploads/upload_1792413070647_667.png', scale: 'scale-100' }
 ];
 
@@ -178,14 +178,14 @@ const resolveSubItemPath = (item) => {
   if (nameLower.includes('compare') || queryLower.includes('compare') || pathLower.includes('compare')) {
     return '/compare?category=ipad';
   }
-  if (nameLower.includes('accessori') || queryLower.includes('accessori') || pathLower.includes('accessori')) {
-    return '/accessories?product=ipad';
-  }
   if (nameLower.includes('pencil') || queryLower.includes('pencil')) {
     return '/ipad?search=Pencil';
   }
   if (nameLower.includes('keyboard') || queryLower.includes('keyboard')) {
     return '/ipad?search=Keyboard';
+  }
+  if (nameLower.includes('accessori') || queryLower.includes('accessori') || pathLower.includes('accessori')) {
+    return '/ipad?search=Accessories';
   }
   if (item?.path && item.path.trim()) {
     const normalized = normalizeTargetPath(item.path.trim());
@@ -226,7 +226,7 @@ const ensureAppleCareInSubItems = (items = []) => {
 
 const getInitialSubItems = (categoryKey, defaultItems) => {
   try {
-    const cached = localStorage.getItem(`iincept_sub_items_v2_${categoryKey}`);
+    const cached = localStorage.getItem(`iincept_sub_items_v3_${categoryKey}`);
     if (cached) {
       const parsed = JSON.parse(cached);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -1232,7 +1232,7 @@ export default function Ipad() {
               });
               const withCare = ensureAppleCareInSubItems(mapped);
               try {
-                localStorage.setItem('iincept_sub_items_v2_ipad', JSON.stringify(withCare));
+                localStorage.setItem('iincept_sub_items_v3_ipad', JSON.stringify(withCare));
               } catch (e) {}
               setSubItems(prev => (JSON.stringify(prev) !== JSON.stringify(withCare) ? withCare : prev));
               return;
@@ -1256,7 +1256,7 @@ export default function Ipad() {
               });
               const withCare = ensureAppleCareInSubItems(mapped);
               try {
-                localStorage.setItem('iincept_sub_items_v2_ipad', JSON.stringify(withCare));
+                localStorage.setItem('iincept_sub_items_v3_ipad', JSON.stringify(withCare));
               } catch (e) {}
               setSubItems(prev => (JSON.stringify(prev) !== JSON.stringify(withCare) ? withCare : prev));
             }
@@ -1507,22 +1507,18 @@ export default function Ipad() {
     return null;
   };
 
-  const dbIpads = products.filter(p => {
-    const catName = p.category?.name || p.category?.toString() || '';
-    const catSlug = p.category?.slug || '';
-    return catName.toLowerCase() === 'ipads' ||
-      catSlug.toLowerCase() === 'ipads' ||
-      catName.toLowerCase().includes('ipad');
-  }).map(p => {
+  const mapToCardProduct = (p) => {
     const firstImg = extractFirstValidImage(p);
     const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/ipad_nav/ipad.png'));
+    const varPrices = (p.variants && Array.isArray(p.variants)) ? p.variants.map(v => v.price).filter(pr => typeof pr === 'number' && pr > 0) : [];
+    const effectivePrice = varPrices.length > 0 ? Math.min(...varPrices) : (p.price || 0);
     const pId = p._id || p.id;
     return {
       id: pId,
       _id: pId,
       name: p.title || p.name,
-      price: p.price,
-      priceStr: `₹${p.price.toLocaleString()}`,
+      price: effectivePrice,
+      priceStr: `₹${effectivePrice.toLocaleString('en-IN')}`,
       discountPercent: p.discountPercent,
       discountPrice: p.discountPrice,
       displayImage: primaryImg,
@@ -1572,9 +1568,59 @@ export default function Ipad() {
         };
       }) : [],
       rating: p.rating || 5.0,
-      isSoldOut: p.stock <= 0
+      isSoldOut: p.stock <= 0,
+      category: p.category,
+      description: p.description,
+      accessoryDevice: p.accessoryDevice
     };
-  });
+  };
+
+  const dbIpads = useMemo(() => {
+    return products.filter(p => {
+      const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
+      const catSlug = (p.category?.slug || '').toLowerCase();
+      const titleLower = (p.title || p.name || '').toLowerCase();
+      const isTabletCat = catName === 'ipads' || catSlug === 'ipads' || catName.includes('ipad');
+      const isAccessory = titleLower.includes('keyboard') || titleLower.includes('pencil') || titleLower.includes('folio') || titleLower.includes('case') || titleLower.includes('adapter') || titleLower.includes('cable');
+      return isTabletCat && !isAccessory;
+    }).map(mapToCardProduct);
+  }, [products]);
+
+  const dbIpadPencils = useMemo(() => {
+    return products.filter(p => {
+      const t = (p.title || p.name || '').toLowerCase();
+      return t.includes('pencil');
+    }).map(mapToCardProduct);
+  }, [products]);
+
+  const dbIpadKeyboards = useMemo(() => {
+    return products.filter(p => {
+      const t = (p.title || p.name || '').toLowerCase();
+      const dev = (p.accessoryDevice || '').toLowerCase().trim();
+      if (t.includes('iphone') || dev === 'mac' || dev === 'iphone') return false;
+      if (t.includes('magic keyboard (usb') && dev !== 'ipad') return false;
+      return (t.includes('keyboard') || t.includes('folio')) && (dev === 'ipad' || t.includes('ipad'));
+    }).map(mapToCardProduct);
+  }, [products]);
+
+  const dbIpadAccessories = useMemo(() => {
+    return products.filter(p => {
+      const t = (p.title || p.name || '').toLowerCase();
+      const dev = (p.accessoryDevice || '').toLowerCase().trim();
+      const catName = (p.category?.name || '').toLowerCase();
+      const catSlug = (p.category?.slug || '').toLowerCase();
+
+      if (t.includes('iphone') || dev === 'iphone' || dev === 'mac' || dev === 'watch') return false;
+
+      const isDevIpad = dev === 'ipad';
+      const isIpadAccTitle = (t.includes('ipad') || t.includes('pencil')) && (catName.includes('accessori') || catSlug.includes('accessori') || t.includes('keyboard') || t.includes('folio') || t.includes('adapter') || t.includes('pencil') || t.includes('case'));
+      
+      const isMainTablet = (t.includes('ipad pro') || t.includes('ipad air') || t.includes('ipad mini') || t === 'ipad' || t.includes('11-inch ipad')) && 
+        !t.includes('keyboard') && !t.includes('pencil') && !t.includes('folio') && !t.includes('case') && !t.includes('adapter') && !t.includes('cable');
+
+      return (isDevIpad || isIpadAccTitle) && !isMainTablet;
+    }).map(mapToCardProduct);
+  }, [products]);
 
   const combinedProducts = dbIpads.length > 0 ? dbIpads : getCachedIpadProducts();
 
@@ -1628,7 +1674,22 @@ export default function Ipad() {
     return modelRank;
   };
 
-  const sortedProducts = [...combinedProducts].sort((a, b) => {
+  const searchParam = (searchParams.get('search') || '').toLowerCase().trim();
+  const isPencilSearch = searchParam.includes('pencil');
+  const isKeyboardSearch = searchParam.includes('keyboard');
+  const isAccessoriesSearch = searchParam.includes('accessori');
+
+  // Determine active product list
+  let activeProductList = combinedProducts;
+  if (isPencilSearch) {
+    activeProductList = dbIpadPencils;
+  } else if (isKeyboardSearch) {
+    activeProductList = dbIpadKeyboards;
+  } else if (isAccessoriesSearch) {
+    activeProductList = dbIpadAccessories;
+  }
+
+  const sortedProducts = [...activeProductList].sort((a, b) => {
     if (sortBy === 'price-asc') return a.price - b.price;
     if (sortBy === 'price-desc') return b.price - a.price;
     if (sortBy === 'rating') return b.rating - a.rating;
@@ -1640,11 +1701,11 @@ export default function Ipad() {
     return (a.name || a.title || '').localeCompare(b.name || b.title || '');
   });
 
+  const isCustomCategorySearch = isPencilSearch || isKeyboardSearch || isAccessoriesSearch;
+
   const filteredProducts = sortedProducts.filter((prod) => {
-    const search = searchParams.get('search') || '';
-    if (search) {
-      const searchNorm = search.trim().toLowerCase();
-      const isBaseIpadQuery = searchNorm === 'ipad' || searchNorm === '11-inch ipad' || searchNorm === 'ipad 11-inch';
+    if (!isCustomCategorySearch && searchParam) {
+      const isBaseIpadQuery = searchParam === 'ipad' || searchParam === '11-inch ipad' || searchParam === 'ipad 11-inch';
       if (isBaseIpadQuery) {
         const titleLower = (prod.name || prod.title || '').toLowerCase();
         // Specifically match base iPad models (e.g. "11-inch iPad") and exclude Pro, Air, Mini, and accessories
@@ -1657,7 +1718,7 @@ export default function Ipad() {
           !titleLower.includes('folio') &&
           !titleLower.includes('case');
         if (!isBaseIpad) return false;
-      } else if (!matchesProductSearch(prod, search)) {
+      } else if (!matchesProductSearch(prod, searchParam)) {
         return false;
       }
     }
@@ -1681,12 +1742,29 @@ export default function Ipad() {
           <div className="flex items-end gap-7 sm:gap-9 md:gap-11 lg:gap-12 overflow-x-auto no-scrollbar py-3 px-1">
             {subItems.map((item, idx) => {
               const currentTab = searchParams.get('tab') || '';
-              const currentSearch = searchParams.get('search') || '';
-              const isAppleCareItem = (item.name || item.label || '').toLowerCase().includes('care');
-              const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
+              const currentSearch = (searchParams.get('search') || '').toLowerCase().trim();
+              const nameLower = (item.name || item.label || '').toLowerCase();
+              const queryLower = (item.query || '').toLowerCase().trim();
+              const isAppleCareItem = nameLower.includes('care');
+              const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.includes('care');
+
+              const isAccessoriesItem = nameLower.includes('accessori') || queryLower.includes('accessori');
+              const isPencilItem = nameLower.includes('pencil') || queryLower.includes('pencil');
+              const isKeyboardItem = nameLower.includes('keyboard') || queryLower.includes('keyboard');
+
+              const isAccessoriesActive = currentSearch.includes('accessori');
+              const isPencilActive = currentSearch.includes('pencil');
+              const isKeyboardActive = currentSearch.includes('keyboard');
+
               const isActive = isAppleCareActive
                 ? isAppleCareItem
-                : (currentSearch && currentSearch.toLowerCase() === (item.query || '').toLowerCase());
+                : isPencilItem
+                  ? isPencilActive
+                  : isKeyboardItem
+                    ? isKeyboardActive
+                    : isAccessoriesItem
+                      ? isAccessoriesActive
+                      : (currentSearch && currentSearch === queryLower);
 
               return (
                 <Link

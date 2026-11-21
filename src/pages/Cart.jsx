@@ -63,9 +63,12 @@ export default function Cart() {
     cartItems.forEach((item, idx) => {
       const itemTitle = item.name || item.title || 'Product';
       const skuText = (item.sku && !itemTitle.includes('SKU:')) ? ` (SKU: ${item.sku})` : '';
+      const careText = (item.appleCare || (item.name && item.name.toLowerCase().includes('applecare'))) 
+        ? `\n   • AppleCare+: ${item.appleCarePlan || 'Included'}` 
+        : '';
       const itemQty = item.quantity || 1;
       const itemPrice = (item.price || 0) * itemQty;
-      message += `${idx + 1}. *${itemTitle}${skuText}*\n   Qty: ${itemQty} | Price: ₹${itemPrice.toLocaleString('en-IN')}\n`;
+      message += `${idx + 1}. *${itemTitle}${skuText}*${careText}\n   Qty: ${itemQty} | Price: ₹${itemPrice.toLocaleString('en-IN')}\n`;
     });
 
     message += `\n💰 *Total Amount:* ₹${Math.max(0, total).toLocaleString('en-IN')}\n\n`;
@@ -131,6 +134,15 @@ export default function Cart() {
                       </div>
                     )}
                   </div>
+
+                  {/* AppleCare+ Plan Badge Attached Directly to this Product */}
+                  {Boolean(item.appleCare || (item.name && item.name.toLowerCase().includes('applecare'))) && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 mt-1.5 rounded-lg bg-rose-50 border border-rose-200/80 text-[10px] sm:text-[11px] font-bold text-rose-700 w-fit">
+                      <img src="/applecare_red_logo.png" alt="AppleCare+" className="w-3.5 h-3.5 object-contain shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      <span>{item.appleCarePlan || 'AppleCare+ Coverage Included'}</span>
+                    </div>
+                  )}
+
                   <span className="text-xs text-zinc-750 font-bold block sm:mt-1">₹{(Number(item.price) || 0).toLocaleString('en-IN')}</span>
                 </div>
               </div>

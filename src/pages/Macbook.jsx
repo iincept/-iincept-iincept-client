@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, SlidersHorizontal, ArrowUpDown, X, ShoppingBag, Check, ShieldCheck, Wrench, Headphones } from 'lucide-react';
@@ -138,7 +138,7 @@ const resolveSubItemPath = (item) => {
     return '/compare?category=mac';
   }
   if (nameLower.includes('accessori') || queryLower.includes('accessori') || pathLower.includes('accessori')) {
-    return '/accessories?product=mac';
+    return '/macbook?search=Accessories';
   }
   if (item?.path && item.path.trim()) {
     const normalized = normalizeTargetPath(item.path.trim());
@@ -1134,6 +1134,100 @@ export default function Macbook() {
     };
   });
 
+  const dbMacAccessories = useMemo(() => {
+    return products.filter(p => {
+      const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
+      const catSlug = (p.category?.slug || '').toLowerCase();
+      const pTitle = (p.title || p.name || '').toLowerCase();
+      const dev = (p.accessoryDevice || '').toString().toLowerCase().trim();
+
+      if (dev === 'mac') return true;
+      if (dev && dev !== 'mac') return false;
+
+      const isAccessory = catName.includes('accessori') || catSlug.includes('accessori') ||
+        pTitle.includes('mouse') || pTitle.includes('trackpad') || pTitle.includes('keyboard') ||
+        pTitle.includes('adapter') || pTitle.includes('charger') || pTitle.includes('cable') ||
+        pTitle.includes('magsafe');
+
+      if (!isAccessory) return false;
+
+      if (pTitle.includes('ipad') || pTitle.includes('iphone') || pTitle.includes('watch') || pTitle.includes('pencil') || pTitle.includes('folio')) {
+        return false;
+      }
+
+      const isMacRelated = pTitle.includes('mac') || pTitle.includes('mouse') || pTitle.includes('trackpad') ||
+        pTitle.includes('touch id') || pTitle.includes('magic keyboard') || pTitle.includes('thunderbolt') ||
+        pTitle.includes('usb-c to magsafe') || pTitle.includes('power adapter') || pTitle.includes('magsafe 3') ||
+        pTitle.includes('polishing cloth') || pTitle.includes('superdrive');
+
+      return isMacRelated;
+    }).map(p => {
+      const firstImg = extractFirstValidImage(p);
+      const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/avatar.png'));
+      const varPrices = (p.variants && Array.isArray(p.variants)) ? p.variants.map(v => v.price).filter(pr => typeof pr === 'number' && pr > 0) : [];
+      const effectivePrice = varPrices.length > 0 ? Math.min(...varPrices) : (p.price || 0);
+
+      const pId = p._id || p.id;
+      return {
+        id: pId,
+        _id: pId,
+        name: p.title || p.name,
+        price: effectivePrice,
+        priceStr: `₹${effectivePrice.toLocaleString('en-IN')}`,
+        discountPercent: p.discountPercent,
+        discountPrice: p.discountPrice,
+        displayImage: primaryImg,
+        colorImages: p.colorImages || {},
+        image: primaryImg,
+        images: p.images || [],
+        variants: p.variants || [],
+        ram: p.ram || [],
+        storage: p.storage || [],
+        specs: p.specs || [],
+        processors: p.processors || [],
+        colors: Array.isArray(p.colors) ? p.colors.map(c => {
+          const rawName = typeof c === 'string' ? c : (c.name || '');
+          const normName = rawName.replace(/\s+/g, ' ').trim();
+          const val = typeof c === 'string' ? c : (c.value || c.name || '');
+
+          let variantImage = typeof c === 'object' && c.image ? c.image : null;
+          let matchedVariant = null;
+          if (p.variants && Array.isArray(p.variants)) {
+            matchedVariant = p.variants.find(v => {
+              if (!v.color) return false;
+              const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
+              return vColor === normName.toLowerCase();
+            });
+            if (!variantImage && matchedVariant && matchedVariant.images && matchedVariant.images[0]) {
+              variantImage = matchedVariant.images[0];
+            }
+          }
+
+          const effectiveHex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+            ? normalizeHex(c.colorHex)
+            : (typeof c === 'object' && c.value && isValidHex(c.value))
+              ? normalizeHex(c.value)
+              : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+                ? normalizeHex(matchedVariant.colorHex)
+                : resolveColorValue(c?.colorHex || c?.value || val || normName);
+
+          return { 
+            name: normName, 
+            rawName: rawName,
+            value: effectiveHex,
+            colorHex: effectiveHex,
+            image: variantImage 
+          };
+        }) : [],
+        rating: p.rating || 5.0,
+        isSoldOut: p.stock <= 0,
+        category: p.category,
+        description: p.description,
+        accessoryDevice: p.accessoryDevice
+      };
+    });
+  }, [products]);
+
   const combinedProducts = dbMacbooks.length > 0 ? dbMacbooks : getCachedMacProducts();
 
   useEffect(() => {
@@ -1178,24 +1272,31 @@ export default function Macbook() {
     return sizeNum * 10 + subWeight;
   };
 
+  const searchParam = (searchParams.get('search') || '').toLowerCase().trim();
+  const isAccessoriesSearch = searchParam.includes('accessori');
+
+  // Base list of products: Mac Accessories when Accessories filter is active, otherwise Mac computers
+  const activeProductList = isAccessoriesSearch ? dbMacAccessories : combinedProducts;
+
   // Sorting logic
-  const sortedProducts = [...combinedProducts].sort((a, b) => {
+  const sortedProducts = [...activeProductList].sort((a, b) => {
     if (sortBy === 'price-asc') return a.price - b.price;
     if (sortBy === 'price-desc') return b.price - a.price;
     if (sortBy === 'rating') return b.rating - a.rating;
 
-    // Default sequence: 13-inch -> 14-inch -> 15-inch -> 16-inch -> others
-    const rankA = getMacSequenceRank(a.name || a.title);
-    const rankB = getMacSequenceRank(b.name || b.title);
-    if (rankA !== rankB) return rankA - rankB;
+    if (!isAccessoriesSearch) {
+      // Default sequence: 13-inch -> 14-inch -> 15-inch -> 16-inch -> others
+      const rankA = getMacSequenceRank(a.name || a.title);
+      const rankB = getMacSequenceRank(b.name || b.title);
+      if (rankA !== rankB) return rankA - rankB;
+    }
 
     return 0;
   });
 
   // Tab filtering logic (e.g. Filter Drawer Options) + Search Parameter filter
   const filteredProducts = sortedProducts.filter((prod) => {
-    const search = searchParams.get('search') || '';
-    if (search && !matchesProductSearch(prod, search)) {
+    if (!isAccessoriesSearch && searchParam && !matchesProductSearch(prod, searchParam)) {
       return false;
     }
 
@@ -1222,10 +1323,14 @@ export default function Macbook() {
               const nameLower = (item.name || item.label || '').toLowerCase();
               const isAppleCareItem = nameLower.includes('care');
               const isMacBookPro = nameLower.includes('pro');
+              const isAccessoriesItem = nameLower.includes('accessori') || (item.query || '').toLowerCase().includes('accessori');
               const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
+              const isAccessoriesActive = currentSearch.toLowerCase().includes('accessori');
               const isActive = isAppleCareActive
                 ? isAppleCareItem
-                : (currentSearch && currentSearch.toLowerCase() === (item.query || '').toLowerCase());
+                : isAccessoriesItem
+                  ? isAccessoriesActive
+                  : (currentSearch && currentSearch.toLowerCase() === (item.query || '').toLowerCase());
 
               return (
                 <Link

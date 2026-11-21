@@ -665,7 +665,7 @@ const IPHONE_SUB_NAV_ITEMS = [
   { name: 'iPhone 17e', query: 'iPhone 17e', path: '/iphone?search=iPhone 17e', image: '/iphone_nav/iphone_17e.png', scale: 'scale-100' },
   { name: 'iPhone 16', query: 'iPhone 16', path: '/iphone?search=iPhone 16', image: '/iphone_nav/iphone_16.png', scale: 'scale-100' },
   { name: 'Iphone 16e', query: 'Iphone 16e', path: '/iphone?search=Iphone 16e', image: '/uploads/upload_1794286381161_97.png', scale: 'scale-100' },
-  { name: 'Accessories', query: 'Accessories', path: '/accessories?product=iphone', image: '/iphone_nav/accessories.png', scale: 'scale-90' },
+  { name: 'Accessories', query: 'Accessories', path: '/iphone?search=Accessories', image: '/iphone_nav/accessories.png', scale: 'scale-90' },
   { name: 'AppleCare +', query: 'New iPhone Model', path: '/iphone?tab=applecare', image: '/uploads/upload_1792413047064_740.png', scale: 'scale-100' }
 ];
 
@@ -684,7 +684,7 @@ const resolveSubItemPath = (item) => {
     return '/compare?category=iphone';
   }
   if (nameLower.includes('accessori') || queryLower.includes('accessori') || pathLower.includes('accessori')) {
-    return '/accessories?product=iphone';
+    return '/iphone?search=Accessories';
   }
   if (item?.path && item.path.trim()) {
     let cleanPath = item.path.trim();
@@ -1337,6 +1337,97 @@ export default function Iphone() {
     });
   }, [products]);
 
+  const dbIphoneAccessories = useMemo(() => {
+    return products.filter(p => {
+      const catName = (p.category?.name || p.category?.toString() || '').toLowerCase();
+      const catSlug = (p.category?.slug || '').toLowerCase();
+      const pTitle = (p.title || p.name || '').toLowerCase();
+      const dev = (p.accessoryDevice || '').toString().toLowerCase().trim();
+
+      if (dev === 'iphone') return true;
+      if (dev && dev !== 'iphone') return false;
+
+      const isAccessory = catName.includes('accessori') || catSlug.includes('accessori') ||
+        pTitle.includes('case') || pTitle.includes('cover') || pTitle.includes('wallet') ||
+        pTitle.includes('magsafe') || pTitle.includes('charger') || pTitle.includes('cable');
+
+      if (!isAccessory) return false;
+
+      if (pTitle.includes('mac') || pTitle.includes('ipad') || pTitle.includes('watch') || pTitle.includes('pencil') || pTitle.includes('keyboard')) {
+        return false;
+      }
+
+      return pTitle.includes('iphone') || pTitle.includes('magsafe') || pTitle.includes('silicone case') || pTitle.includes('clear case') || pTitle.includes('fine woven') || pTitle.includes('finewoven') || pTitle.includes('wallet');
+    }).map(p => {
+      const firstImg = extractFirstValidImage(p);
+      const primaryImg = p.displayImage || (firstImg && !firstImg.includes('mock-cloud') ? firstImg : (p.image || '/avatar.png'));
+      const varPrices = (p.variants && Array.isArray(p.variants)) ? p.variants.map(v => v.price).filter(pr => typeof pr === 'number' && pr > 0) : [];
+      const effectivePrice = varPrices.length > 0 ? Math.min(...varPrices) : (p.price || 0);
+      const pId = p._id || p.id;
+      return {
+        id: pId,
+        _id: pId,
+        name: p.title || p.name,
+        price: effectivePrice,
+        priceStr: `₹${effectivePrice.toLocaleString('en-IN')}`,
+        discountPercent: p.discountPercent,
+        discountPrice: p.discountPrice,
+        displayImage: primaryImg,
+        colorImages: p.colorImages || {},
+        image: primaryImg,
+        images: p.images || [],
+        variants: p.variants || [],
+        stock: p.stock,
+        colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors.map(c => {
+          const rawName = typeof c === 'string' ? c : (c.name || '');
+          const normName = rawName.replace(/\s+/g, ' ').trim();
+          const val = typeof c === 'string' ? c : (c.value || c.name || '');
+
+          let variantImage = typeof c === 'object' && c.image ? c.image : null;
+          if (!variantImage && typeof c === 'object' && Array.isArray(c.images) && c.images[0]) {
+            variantImage = c.images[0];
+          }
+          const matchedVariant = p.variants && Array.isArray(p.variants)
+            ? p.variants.find(v => {
+                if (!v.color) return false;
+                const vColor = v.color.replace(/\s+/g, ' ').trim().toLowerCase();
+                return vColor === normName.toLowerCase();
+              })
+            : null;
+
+          if (!variantImage && matchedVariant) {
+            if (matchedVariant.image) {
+              variantImage = matchedVariant.image;
+            } else if (matchedVariant.images && matchedVariant.images[0]) {
+              variantImage = matchedVariant.images[0];
+            }
+          }
+
+          const hex = (typeof c === 'object' && c.colorHex && isValidHex(c.colorHex))
+            ? normalizeHex(c.colorHex)
+            : (typeof c === 'object' && c.value && isValidHex(c.value))
+              ? normalizeHex(c.value)
+              : (matchedVariant?.colorHex && isValidHex(matchedVariant.colorHex))
+                ? normalizeHex(matchedVariant.colorHex)
+                : resolveColorValue(c?.colorHex || c?.value || val);
+
+          return {
+            name: normName,
+            rawName: rawName,
+            value: hex,
+            colorHex: hex,
+            image: variantImage
+          };
+        }) : [],
+        rating: p.rating || 5.0,
+        isSoldOut: p.stock !== undefined && p.stock !== null ? p.stock <= 0 : false,
+        category: p.category,
+        description: p.description,
+        accessoryDevice: p.accessoryDevice
+      };
+    });
+  }, [products]);
+
   const combinedProducts = useMemo(() => {
     if (dbIphones.length > 0) {
       const filtered = dbIphones.filter(p => {
@@ -1386,25 +1477,30 @@ export default function Iphone() {
     return 15;
   };
 
+  const searchQuery = searchParams.get('search') || '';
+  const isAccessoriesSearch = searchQuery.toLowerCase().includes('accessori');
+
+  const activeProductList = isAccessoriesSearch ? dbIphoneAccessories : combinedProducts;
+
   const sortedProducts = useMemo(() => {
-    return [...combinedProducts].sort((a, b) => {
+    return [...activeProductList].sort((a, b) => {
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
       if (sortBy === 'rating') return b.rating - a.rating;
 
-      const rankA = getIphoneSequenceRank(a.name || a.title);
-      const rankB = getIphoneSequenceRank(b.name || b.title);
-      if (rankA !== rankB) return rankA - rankB;
+      if (!isAccessoriesSearch) {
+        const rankA = getIphoneSequenceRank(a.name || a.title);
+        const rankB = getIphoneSequenceRank(b.name || b.title);
+        if (rankA !== rankB) return rankA - rankB;
+      }
 
       return 0;
     });
-  }, [combinedProducts, sortBy]);
-
-  const searchQuery = searchParams.get('search') || '';
+  }, [activeProductList, sortBy, isAccessoriesSearch]);
 
   const filteredProducts = useMemo(() => {
     return sortedProducts.filter((prod) => {
-      if (searchQuery) {
+      if (!isAccessoriesSearch && searchQuery) {
         const searchNorm = searchQuery.trim().toLowerCase();
         const searchNoSpace = searchNorm.replace(/[\s\-_]+/g, '');
 
@@ -1440,7 +1536,7 @@ export default function Iphone() {
       if (activeTab === 'soldout') return prod.isSoldOut;
       return true;
     });
-  }, [sortedProducts, searchQuery, activeTab]);
+  }, [sortedProducts, searchQuery, activeTab, isAccessoriesSearch]);
 
   // Fallback: If search query produced 0 items, keep filteredProducts as [] so search results are accurately displayed
 
@@ -1460,13 +1556,18 @@ export default function Iphone() {
               const currentTab = searchParams.get('tab') || '';
               const currentSearch = searchParams.get('search') || '';
               const itemLowerName = (item.name || item.label || '').toLowerCase();
+              const itemQueryLower = (item.query || '').toLowerCase();
               const isAppleCareItem = itemLowerName.includes('care');
               const isAppleCareActive = currentTab.toLowerCase() === 'applecare' || currentSearch.toLowerCase().includes('care');
               const isShopAllItem = itemLowerName.includes('shop iphone') || itemLowerName === 'all';
+              const isAccessoriesItem = itemLowerName.includes('accessori') || itemQueryLower.includes('accessori');
+              const isAccessoriesActive = currentSearch.toLowerCase().includes('accessori');
 
               let isActive = false;
               if (isAppleCareActive) {
                 isActive = isAppleCareItem;
+              } else if (isAccessoriesActive) {
+                isActive = isAccessoriesItem;
               } else if (!currentSearch) {
                 isActive = isShopAllItem;
               } else {

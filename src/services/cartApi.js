@@ -5,18 +5,18 @@ export const getCart = async () => {
   return response.data;
 };
 
-export const addToCart = async (productId, quantity = 1) => {
-  const response = await axiosClient.post('/cart', { productId, quantity });
+export const addToCart = async (productId, quantity = 1, itemData = {}) => {
+  const response = await axiosClient.post('/cart', { productId, quantity, ...itemData });
   return response.data;
 };
 
 export const updateCartQuantity = async (productId, quantity) => {
-  const response = await axiosClient.put(`/cart/${productId}`, { quantity });
+  const response = await axiosClient.put('/cart', { id: productId, quantity });
   return response.data;
 };
 
 export const removeFromCart = async (productId) => {
-  const response = await axiosClient.delete(`/cart/${productId}`);
+  const response = await axiosClient.delete('/cart', { data: { id: productId } });
   return response.data;
 };
 
