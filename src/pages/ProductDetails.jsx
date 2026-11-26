@@ -1488,12 +1488,16 @@ export default function ProductDetails() {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('airpods 5') || (r.model || '').toLowerCase().includes('airpods')) || activeRows[0];
         }
       } else if (catGroup === 'tv-home') {
-        if (lowerTitle.includes('mini')) {
+        if (lowerTitle.includes('homeview') || lowerTitle.includes('home view')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('homeview') || (r.model || '').toLowerCase().includes('home view') || (r.title || '').toLowerCase().includes('homeview')) || activeRows[0];
+        } else if (lowerTitle.includes('mini')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('mini'));
         } else if (lowerTitle.includes('homepod')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase() === 'homepod') || activeRows.find(r => (r.model || '').toLowerCase().includes('homepod'));
+        } else if (lowerTitle.includes('tv')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('tv'));
         } else {
-          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('tv')) || activeRows[0];
+          matchedCare = activeRows.find(r => lowerTitle.includes((r.model || '').toLowerCase()) || (r.model || '').toLowerCase().includes(lowerTitle)) || activeRows[0];
         }
       }
 
@@ -2127,6 +2131,18 @@ export default function ProductDetails() {
     };
 
     const TVHOME_CARE_FALLBACKS = {
+      'homeview': {
+        model: 'Apple HomeView',
+        title: 'AppleCare+ for Apple HomeView',
+        description: 'Apple-certified coverage for Apple HomeView with expert technical support.',
+        sku: 'SGRT3HN/A',
+        mrp: '₹5,590',
+        discount: '18% OFF',
+        salePrice: '₹4,584',
+        duration: '1 Year',
+        image: '/uploads/upload_1794667975032_527.png',
+        isActive: true
+      },
       'apple-tv': {
         model: 'Apple TV',
         title: 'AppleCare+ for Apple TV',
@@ -2245,7 +2261,8 @@ export default function ProductDetails() {
       else if (lowerTitle.includes('pro')) fallbackKey = 'airpods-pro';
       else fallbackKey = 'airpods-std';
     } else if (catGroup === 'tv-home') {
-      if (lowerTitle.includes('mini')) fallbackKey = 'homepod-mini';
+      if (lowerTitle.includes('homeview') || lowerTitle.includes('home view')) fallbackKey = 'homeview';
+      else if (lowerTitle.includes('mini')) fallbackKey = 'homepod-mini';
       else if (lowerTitle.includes('homepod')) fallbackKey = 'homepod';
       else fallbackKey = 'apple-tv';
     }
@@ -2260,7 +2277,7 @@ export default function ProductDetails() {
             sku: matchedCare.sku || fb.sku,
             sku1yr: matchedCare.sku1yr || fb.sku1yr,
             sku2yr: matchedCare.sku2yr || fb.sku2yr,
-            model: fb.model || matchedCare.model,
+            model: matchedCare.model || fb.model,
             description: matchedCare.description || fb.description,
             description1yr: matchedCare.description1yr || fb.description1yr,
             description2yr: matchedCare.description2yr || fb.description2yr,
@@ -2273,7 +2290,7 @@ export default function ProductDetails() {
             salePrice: matchedCare.salePrice || fb.salePrice,
             salePrice1yr: matchedCare.salePrice1yr || fb.salePrice1yr,
             salePrice2yr: matchedCare.salePrice2yr || fb.salePrice2yr,
-            duration: matchedCare.duration || fb.duration,
+            duration: matchedCare.duration || catTable?.durationLabel || fb.duration,
             image: matchedCare.image || fb.image
           }
         : fb;
@@ -2325,6 +2342,7 @@ export default function ProductDetails() {
       features,
       price: price > 0 ? price : 2900,
       friendlyCatName,
+      tableDuration: catTable?.durationLabel,
       matchedPlan: matchedCare
     };
   };
@@ -2346,42 +2364,39 @@ export default function ProductDetails() {
   const currentAppleCarePlan = (() => {
     if (!activeCarePlan) return null;
 
-    if (catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods' || catGroup === 'tv-home') {
+    if (catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods') {
       const activeDuration = catGroup === 'iphone'
         ? selectedIphoneDuration
         : (catGroup === 'watch'
           ? selectedWatchDuration
           : (catGroup === 'airpods'
             ? selectedAirpodsDuration
-            : (catGroup === 'tv-home'
-              ? selectedTvHomeDuration
-              : selectedIpadDuration)));
+            : selectedIpadDuration));
       const is1Yr = activeDuration === '1yr';
       const isIphone = catGroup === 'iphone';
       const isWatch = catGroup === 'watch';
       const isAirpods = catGroup === 'airpods';
-      const isTvHome = catGroup === 'tv-home';
-      const friendlyModelName = isIphone ? 'iPhone' : (isWatch ? 'Apple Watch' : (isAirpods ? 'AirPods' : (isTvHome ? 'Apple TV / HomePod' : 'iPad')));
+      const friendlyModelName = isIphone ? 'iPhone' : (isWatch ? 'Apple Watch' : (isAirpods ? 'AirPods' : 'iPad'));
 
       const mrp = is1Yr
-        ? (activeCarePlan.mrp1yr || (isIphone ? '₹12,999' : (isWatch ? '₹4,499' : (isAirpods ? '₹2,499' : (isTvHome ? '₹1,499' : '₹8,999')))))
-        : (activeCarePlan.mrp2yr || activeCarePlan.mrp || (isIphone ? '₹25,900' : (isWatch ? '₹8,990' : (isAirpods ? '₹4,890' : (isTvHome ? '₹2,900' : '₹17,900')))));
+        ? (activeCarePlan.mrp1yr || (isIphone ? '₹12,999' : (isWatch ? '₹4,499' : (isAirpods ? '₹2,499' : '₹8,999'))))
+        : (activeCarePlan.mrp2yr || activeCarePlan.mrp || (isIphone ? '₹25,900' : (isWatch ? '₹8,990' : (isAirpods ? '₹4,890' : '₹17,900'))));
       const discount = is1Yr
         ? (activeCarePlan.discount1yr || '18% OFF')
         : (activeCarePlan.discount2yr || activeCarePlan.discount || '18% OFF');
       const salePrice = is1Yr
-        ? (activeCarePlan.salePrice1yr || (isIphone ? '₹10,659' : (isWatch ? '₹3,689' : (isAirpods ? '₹2,049' : (isTvHome ? '₹1,229' : '₹7,379')))))
-        : (activeCarePlan.salePrice2yr || activeCarePlan.salePrice || (isIphone ? '₹21,238' : (isWatch ? '₹7,372' : (isAirpods ? '₹4,010' : (isTvHome ? '₹2,378' : '₹14,678')))));
+        ? (activeCarePlan.salePrice1yr || (isIphone ? '₹10,659' : (isWatch ? '₹3,689' : (isAirpods ? '₹2,049' : '₹7,379'))))
+        : (activeCarePlan.salePrice2yr || activeCarePlan.salePrice || (isIphone ? '₹21,238' : (isWatch ? '₹7,372' : (isAirpods ? '₹4,010' : '₹14,678'))));
       const sku = is1Yr
-        ? (activeCarePlan.sku1yr || (activeCarePlan.sku ? `${activeCarePlan.sku.replace(/-2YR$/i, '')}-1YR` : (isIphone ? 'DHHA2HN/A' : (isWatch ? 'DHGJ2HN/A' : (isAirpods ? 'DG7Y2HN/A' : (isTvHome ? 'S9634HN/A-1YR' : 'DFQK2HN/A'))))))
-        : (activeCarePlan.sku2yr || activeCarePlan.sku || (isIphone ? 'SHJ83HN/A' : (isWatch ? 'SH0G3HN/A' : (isAirpods ? 'SYLW2HN/A' : (isTvHome ? 'S9634HN/A' : 'SXT02HN/A')))));
+        ? (activeCarePlan.sku1yr || (activeCarePlan.sku ? `${activeCarePlan.sku.replace(/-2YR$/i, '')}-1YR` : (isIphone ? 'DHHA2HN/A' : (isWatch ? 'DHGJ2HN/A' : (isAirpods ? 'DG7Y2HN/A' : 'DFQK2HN/A')))))
+        : (activeCarePlan.sku2yr || activeCarePlan.sku || (isIphone ? 'SHJ83HN/A' : (isWatch ? 'SH0G3HN/A' : (isAirpods ? 'SYLW2HN/A' : 'SXT02HN/A'))));
       const desc = is1Yr
         ? (activeCarePlan.description1yr || `1 Year Apple-certified coverage for ${activeCarePlan.model || friendlyModelName}.`)
         : (activeCarePlan.description2yr || activeCarePlan.description || `2 Years Apple-certified coverage for ${activeCarePlan.model || friendlyModelName}.`);
       const dur = is1Yr ? '1 Year' : '2 Years';
       const rawTitle = activeCarePlan.title || `AppleCare+ for ${activeCarePlan.model || friendlyModelName}`;
       const titleWithoutDur = rawTitle.replace(/\s*\((?:1\s*Year|2\s*Years|3\s*Years)\)/gi, '').trim();
-      const numSale = parseInt(String(salePrice).replace(/[^0-9]/g, ''), 10) || (is1Yr ? (isIphone ? 10659 : (isWatch ? 3689 : (isAirpods ? 2049 : (isTvHome ? 1229 : 7379)))) : (isIphone ? 21238 : (isWatch ? 7372 : (isAirpods ? 4010 : (isTvHome ? 2378 : 14678)))));
+      const numSale = parseInt(String(salePrice).replace(/[^0-9]/g, ''), 10) || (is1Yr ? (isIphone ? 10659 : (isWatch ? 3689 : (isAirpods ? 2049 : 7379))) : (isIphone ? 21238 : (isWatch ? 7372 : (isAirpods ? 4010 : 14678))));
 
       return {
         ...activeCarePlan,
@@ -2394,11 +2409,11 @@ export default function ProductDetails() {
         description: desc,
         duration: dur,
         badgeText: `AppleCare+ (${dur})`,
-        image: activeCarePlan.image || (isIphone ? '/iphone_nav/iphone_16.png' : (isWatch ? '/uploads/upload_1789377186182_249.jpeg' : (isAirpods ? '/uploads/upload_1789366058920_902.jpeg' : (isTvHome ? '/uploads/upload_1789438370600_868.jpeg' : '/ipad_nav/ipad.png'))))
+        image: activeCarePlan.image || (isIphone ? '/iphone_nav/iphone_16.png' : (isWatch ? '/uploads/upload_1789377186182_249.jpeg' : (isAirpods ? '/uploads/upload_1789366058920_902.jpeg' : '/ipad_nav/ipad.png')))
       };
     }
 
-    // Non-iPad categories:
+    // Single-plan categories: Mac and TV & Home (Exact values directly from Admin Panel)
     const isMacProduct = catGroup === 'mac' ||
       lowerTitle.includes('macbook') ||
       lowerTitle.includes('mbp') ||
@@ -2414,17 +2429,14 @@ export default function ProductDetails() {
       (activeCarePlan.model || '').toLowerCase().includes('display') ||
       (activeCarePlan.title || '').toLowerCase().includes('mac');
 
-    const defaultDur = catGroup === 'tv-home'
-      ? ((activeCarePlan.model || '').toLowerCase().includes('tv') ? '3 Years' : '2 Years')
-      : (isMacProduct ? '3 Years' : '2 Years');
-    const dur = isMacProduct ? '3 Years' : (activeCarePlan.duration || defaultDur);
-    const badgeText = isMacProduct
-      ? 'AppleCare+ (3 Years)'
-      : (activeCarePlan.badgeText || `AppleCare+ (${dur})`);
+    const dur = activeCarePlan.duration || appleCareInfo?.tableDuration || (catGroup === 'tv-home' ? '1 Year' : (isMacProduct ? '3 Years' : '2 Years'));
+    const rawTitle = (activeCarePlan.title || `AppleCare+ for ${activeCarePlan.model || product?.title || 'Apple Device'}`).trim();
+    const badgeText = activeCarePlan.badgeText || (dur ? `AppleCare+ (${dur})` : 'AppleCare+');
     const numSale = parseInt(String(activeCarePlan.salePrice || activeCarePlan.yearly || activeCarePlan.mrp || '').replace(/[^0-9]/g, ''), 10) || appleCareInfo?.price || 2900;
 
     return {
       ...activeCarePlan,
+      title: rawTitle,
       price: numSale,
       duration: dur,
       badgeText
@@ -3298,7 +3310,7 @@ export default function ProductDetails() {
                         {/* Top Left Badge */}
                         <div className="w-full flex items-center justify-start z-10 mb-1">
                           <span className={`text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide whitespace-nowrap transition-colors ${
-                            ((catGroup === 'ipad' && selectedIpadDuration === '1yr') || (catGroup === 'iphone' && selectedIphoneDuration === '1yr') || (catGroup === 'watch' && selectedWatchDuration === '1yr') || (catGroup === 'airpods' && selectedAirpodsDuration === '1yr') || (catGroup === 'tv-home' && selectedTvHomeDuration === '1yr')) ? 'bg-[#0071e3]' : 'bg-[#FF2D55]'
+                            ((catGroup === 'ipad' && selectedIpadDuration === '1yr') || (catGroup === 'iphone' && selectedIphoneDuration === '1yr') || (catGroup === 'watch' && selectedWatchDuration === '1yr') || (catGroup === 'airpods' && selectedAirpodsDuration === '1yr')) ? 'bg-[#0071e3]' : 'bg-[#FF2D55]'
                           }`}>
                             {currentAppleCarePlan.badgeText}
                           </span>
@@ -3313,7 +3325,7 @@ export default function ProductDetails() {
                                 : catGroup === 'iphone' ? '/iphone_nav/iphone_16.png'
                                 : catGroup === 'watch' ? '/uploads/upload_1789377186182_249.jpeg'
                                 : catGroup === 'airpods' ? '/uploads/upload_1789366058920_902.jpeg'
-                                : catGroup === 'tv-home' ? '/uploads/upload_1789438370600_868.jpeg'
+                                : catGroup === 'tv-home' ? (lowerTitle.includes('homeview') ? '/uploads/upload_1794667975032_527.png' : '/uploads/upload_1789438370600_868.jpeg')
                                 : '/mac_nav/mac_mini.png'
                               )
                             }
@@ -3347,8 +3359,8 @@ export default function ProductDetails() {
                       {/* RIGHT COLUMN: Info & Pricing Block */}
                       <div className="md:col-span-7 space-y-3 flex flex-col justify-between h-full text-left">
                         <div>
-                          {/* Duration Selector Pills for iPad, iPhone, Watch, AirPods and TV & Home (Matching Reference Design) */}
-                          {(catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods' || catGroup === 'tv-home') && (
+                          {/* Duration Selector Pills for iPad, iPhone, Watch, AirPods (Dual-Duration Categories) */}
+                          {(catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods') && (
                             <div className="flex items-center gap-1.5 mb-2.5 bg-zinc-100/80 p-1 rounded-xl w-fit">
                               <button
                                 type="button"
@@ -3357,11 +3369,10 @@ export default function ProductDetails() {
                                   if (catGroup === 'iphone') setSelectedIphoneDuration('1yr');
                                   else if (catGroup === 'watch') setSelectedWatchDuration('1yr');
                                   else if (catGroup === 'airpods') setSelectedAirpodsDuration('1yr');
-                                  else if (catGroup === 'tv-home') setSelectedTvHomeDuration('1yr');
                                   else setSelectedIpadDuration('1yr');
                                 }}
                                 className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                                  (catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : (catGroup === 'tv-home' ? selectedTvHomeDuration : selectedIpadDuration)))) === '1yr'
+                                  (catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : selectedIpadDuration))) === '1yr'
                                     ? 'bg-white text-[#0071e3] shadow-xs ring-1 ring-black/5'
                                     : 'text-zinc-600 hover:text-zinc-900'
                                 }`}
@@ -3375,11 +3386,10 @@ export default function ProductDetails() {
                                   if (catGroup === 'iphone') setSelectedIphoneDuration('2yr');
                                   else if (catGroup === 'watch') setSelectedWatchDuration('2yr');
                                   else if (catGroup === 'airpods') setSelectedAirpodsDuration('2yr');
-                                  else if (catGroup === 'tv-home') setSelectedTvHomeDuration('2yr');
                                   else setSelectedIpadDuration('2yr');
                                 }}
                                 className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                                  (catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : (catGroup === 'tv-home' ? selectedTvHomeDuration : selectedIpadDuration)))) === '2yr'
+                                  (catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : selectedIpadDuration))) === '2yr'
                                     ? 'bg-white text-[#FF2D55] shadow-xs ring-1 ring-black/5'
                                     : 'text-zinc-600 hover:text-zinc-900'
                                 }`}
@@ -3390,7 +3400,7 @@ export default function ProductDetails() {
                           )}
 
                           <div className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#FF2D55] mb-1">
-                            APPLE CARE+{(catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods' || catGroup === 'tv-home') ? ` • ${(catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : (catGroup === 'tv-home' ? selectedTvHomeDuration : selectedIpadDuration)))) === '1yr' ? '1 YEAR PLAN' : '2 YEAR PLAN'}` : ''}
+                            APPLE CARE+{(catGroup === 'ipad' || catGroup === 'iphone' || catGroup === 'watch' || catGroup === 'airpods') ? ` • ${(catGroup === 'iphone' ? selectedIphoneDuration : (catGroup === 'watch' ? selectedWatchDuration : (catGroup === 'airpods' ? selectedAirpodsDuration : selectedIpadDuration))) === '1yr' ? '1 YEAR PLAN' : '2 YEAR PLAN'}` : (currentAppleCarePlan.duration ? ` • ${currentAppleCarePlan.duration.toUpperCase()}` : '')}
                           </div>
                           <h3 className="font-extrabold text-[#1D1D1F] text-lg sm:text-xl leading-snug tracking-tight">
                             {currentAppleCarePlan.title}
