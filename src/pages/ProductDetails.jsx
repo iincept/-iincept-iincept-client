@@ -554,7 +554,7 @@ export default function ProductDetails() {
       'guard', 'film', 'skin', 'stand', 'mount', 'hub', 'dock', 'dongle', 'converter',
       'adapter', 'charger', 'charging', 'cable', 'cord', 'connector', 'strap', 'band',
       'loop', 'wallet', 'keychain', 'lanyard', 'airtag', 'cleaning cloth', 'polishing cloth',
-      'pencil', 'magic mouse', 'magic keyboard', 'magic trackpad', 'power adapter'
+      'pencil', 'magic mouse', 'magic keyboard', 'magic trackpad', 'power adapter', 'earpod'
     ];
 
     return accessoryKeywords.some(kw => title.includes(kw));
@@ -1425,13 +1425,17 @@ export default function ProductDetails() {
         } else if (lowerTitle.includes('pro 16') || (lowerTitle.includes('pro') && lowerTitle.includes('16'))) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro 16') || (r.model || '').toLowerCase().includes('16-inch'));
         } else if (lowerTitle.includes('mini')) {
-          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('mini'));
+          const isM6Mini = lowerTitle.includes('m6');
+          matchedCare = (isM6Mini && activeRows.find(r => (r.model || '').toLowerCase().includes('mini') && (r.model || '').toLowerCase().includes('m6')))
+            || activeRows.find(r => (r.model || '').toLowerCase().includes('mini'));
         } else if (lowerTitle.includes('display xdr') || lowerTitle.includes('studio display xdr')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('display xdr'));
         } else if (lowerTitle.includes('studio display')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('apple studio display') || ((r.model || '').toLowerCase().includes('studio display') && !(r.model || '').toLowerCase().includes('xdr')));
         } else if (lowerTitle.includes('studio') && !lowerTitle.includes('display')) {
-          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('mac studio') || ((r.model || '').toLowerCase().includes('studio') && !(r.model || '').toLowerCase().includes('display')));
+          const isM5Studio = lowerTitle.includes('m5');
+          matchedCare = (isM5Studio && activeRows.find(r => (r.model || '').toLowerCase().includes('studio') && !(r.model || '').toLowerCase().includes('display') && (r.model || '').toLowerCase().includes('m5')))
+            || activeRows.find(r => (r.model || '').toLowerCase().includes('mac studio') || ((r.model || '').toLowerCase().includes('studio') && !(r.model || '').toLowerCase().includes('display')));
         } else if (lowerTitle.includes('imac')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('imac'));
         }
@@ -1446,10 +1450,16 @@ export default function ProductDetails() {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('pro') && !(r.model || '').toLowerCase().includes('max')) || activeRows[0];
         } else if (lowerTitle.includes('17e')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('17e'));
+        } else if (lowerTitle.includes('air')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('air'))
+            || activeRows.find(r => (r.model || '').toLowerCase() === 'iphone 17');
         } else if (lowerTitle.includes('17')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase() === 'iphone 17');
+        } else if (lowerTitle.includes('16e')) {
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('16e'))
+            || activeRows.find(r => (r.model || '').toLowerCase().includes('16'));
         } else if (lowerTitle.includes('16')) {
-          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('16'));
+          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('16') && !(r.model || '').toLowerCase().includes('16e'));
         } else {
           matchedCare = activeRows.find(r => lowerTitle.includes((r.model || '').toLowerCase()) || (r.model || '').toLowerCase().includes(lowerTitle)) || activeRows[0];
         }
@@ -1463,7 +1473,10 @@ export default function ProductDetails() {
         } else if (lowerTitle.includes('11') && lowerTitle.includes('air')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('air 11') || (r.model || '').toLowerCase().includes('air 11″'));
         } else if (lowerTitle.includes('mini')) {
-          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('mini'));
+          const isA20Mini = lowerTitle.includes('a20');
+          matchedCare = isA20Mini
+            ? (activeRows.find(r => (r.model || '').toLowerCase().includes('mini') && (r.model || '').toLowerCase().includes('a20')) || activeRows.find(r => (r.model || '').toLowerCase().includes('mini')))
+            : (activeRows.find(r => (r.model || '').toLowerCase().includes('mini') && !(r.model || '').toLowerCase().includes('a20')) || activeRows.find(r => (r.model || '').toLowerCase().includes('mini')));
         } else if (!lowerTitle.includes('pro') && !lowerTitle.includes('air')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('a16') || (r.model || '').toLowerCase().includes('pad ('));
         } else {
@@ -1495,7 +1508,10 @@ export default function ProductDetails() {
         } else if (lowerTitle.includes('homepod')) {
           matchedCare = activeRows.find(r => (r.model || '').toLowerCase() === 'homepod') || activeRows.find(r => (r.model || '').toLowerCase().includes('homepod'));
         } else if (lowerTitle.includes('tv')) {
-          matchedCare = activeRows.find(r => (r.model || '').toLowerCase().includes('tv'));
+          const isTv4th = lowerTitle.includes('4th');
+          matchedCare = isTv4th
+            ? (activeRows.find(r => (r.model || '').toLowerCase().includes('tv') && (r.model || '').toLowerCase().includes('4th')) || activeRows.find(r => (r.model || '').toLowerCase().includes('tv')))
+            : (activeRows.find(r => (r.model || '').toLowerCase().includes('tv') && !(r.model || '').toLowerCase().includes('4th')) || activeRows.find(r => (r.model || '').toLowerCase().includes('tv')));
         } else {
           matchedCare = activeRows.find(r => lowerTitle.includes((r.model || '').toLowerCase()) || (r.model || '').toLowerCase().includes(lowerTitle)) || activeRows[0];
         }
